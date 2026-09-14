@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>THDCIL 11 MW Solar — Commercial Settlement App</title>
+<!-- Tailwind CSS, Chart.js, SheetJS (Excel) & jsPDF / PDF.js -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  body { font-family: 'Inter', sans-serif; }
+  .table-container { max-height: calc(100vh - 280px); }
+  @media (max-width: 768px) { .table-container { max-height: 480px; } }
+</style>
+<style>
+#periodUploadPanel .date-upload-done{border-color:#86efac;background:#f0fdf4}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+<!-- Top App Bar -->
+<header class="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white sticky top-0 z-30 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center text-amber-300 text-xl font-bold">
+        <i class="fa-solid fa-solar-panel"></i>
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">THDCIL 11 MW Solar</h1>
+        <p class="text-xs text-blue-200">Portfolio: N2UP0NVN0289 • Exact Precision Engine</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- DATE-SPECIFIC CLEAR DATA -->
+      <div class="flex items-center bg-rose-900/40 border border-rose-500/50 rounded-lg overflow-hidden shadow-sm">
+        <input type="date" id="clearDateInput" class="bg-transparent px-2 py-1.5 text-xs text-rose-100 font-semibold outline-none border-r border-rose-500/50 [color-scheme:dark]" title="Select date to clear">
+        <button onclick="clearDateData()" title="Clear Data for Selected Date" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-500 text-white font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Clear Day</span>
+        </button>
+      </div>
+      <button onclick="clearAllData()" title="Wipe All Data" class="px-2.5 py-1.5 text-xs bg-rose-800 hover:bg-rose-700 text-white rounded-lg font-medium transition flex items-center gap-1 ml-1">
+        <i class="fa-solid fa-burst"></i> Wipe
+      </button>
+    </div>
+  </div>
+  
+  <!-- Navigation Bar -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-2 overflow-x-auto scrollbar-none py-1.5 text-xs sm:text-sm font-semibold border-t border-white/10">
+    <button class="nav-btn active px-3.5 py-1.5 rounded-lg bg-white text-blue-900 shadow-sm whitespace-nowrap transition" data-target="dashboard"><i class="fa-solid fa-chart-line mr-1.5"></i>Dashboard</button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="entry"><i class="fa-solid fa-file-arrow-up mr-1.5"></i>Data Upload</button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="trades"><i class="fa-solid fa-list-check mr-1.5"></i>Blockwise</button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="billing"><i class="fa-solid fa-receipt mr-1.5"></i>Billing & Margins</button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="reports"><i class="fa-solid fa-file-invoice mr-1.5"></i>Export Reports</button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="obligations"><i class="fa-solid fa-scale-balanced mr-1.5"></i>Obligations</button>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="page-sec space-y-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="kpis"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2"><i class="fa-solid fa-chart-column text-blue-600"></i> Monthly Energy & Revenue</h2>
+        </div>
+        <div class="relative flex-1 min-h-[280px]"><canvas id="monthlyChart"></canvas></div>
+      </div>
+      <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
+        <h2 class="font-bold text-slate-800 text-sm sm:text-base mb-3 flex items-center gap-2"><i class="fa-solid fa-table-list text-emerald-600"></i> Monthly Summary</h2>
+        <div class="overflow-y-auto flex-1 max-h-[300px]">
+          <table class="w-full text-xs text-right">
+            <thead class="text-slate-500 bg-slate-50 sticky top-0 font-semibold border-b border-slate-200">
+              <tr><th class="p-2 text-left">Month</th><th class="p-2">MU</th><th class="p-2">₹ Lakh</th><th class="p-2">Avg MCP</th></tr>
+            </thead>
+            <tbody id="monthRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IEX EXCEL, TEMPLATE & PDF UPLOAD -->
+  <section id="entry" class="page-sec hidden space-y-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-slate-800 text-xl">Universal Daily Data Uploader</h2>
+          <p class="text-sm text-slate-500">Upload your raw <strong>IEX DOR (.xls, .pdf)</strong> OR use our <strong>Standard Excel Template</strong>.</p>
+        </div>
+      </div>
+
+      <div class="mb-5 mt-6 flex flex-wrap items-end gap-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Trade Date Override (Optional)</label>
+          <input id="manualTradeDate" type="date" class="border border-blue-300 bg-white rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="text-xs text-slate-500 pb-2">If auto-detection fails, select the date here before uploading.</div>
+      </div>
+      
+      <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+        <div class="flex flex-wrap items-end gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
+            <input id="uploadStartDate" type="date"
+              class="border border-blue-300 bg-white rounded-lg px-3 py-2 text-sm font-semibold text-slate-700">
+          </div>
+          <div class="pb-2 text-slate-400 font-bold">→</div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
+            <input id="uploadEndDate" type="date"
+              class="border border-blue-300 bg-white rounded-lg px-3 py-2 text-sm font-semibold text-slate-700">
+          </div>
+          <button onclick="createDateWiseUploadSlots()"
+            class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm">
+            <i class="fa-solid fa-calendar-range mr-1"></i> Select Period
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2">
+          Example: 01-09-2026 to 08-09-2026 select karne par neeche 8 date-wise Excel upload slots banenge.
+        </p>
+        <div id="dateWiseUploadSlots" class="hidden mt-4 border-t border-blue-100 pt-4"></div>
+      </div>
+
+      <div class="border-2 border-dashed border-emerald-200 bg-emerald-50/50 rounded-2xl p-10 text-center mt-6">
+        <div class="flex justify-center gap-4 mb-4 text-emerald-400 text-5xl">
+          <i class="fa-solid fa-file-excel"></i>
+          <i class="fa-solid fa-file-pdf"></i>
+        </div>
+        <p class="text-base font-semibold text-slate-700 mb-2">Drag & Drop your Excel or PDF file here</p>
+        
+        <div class="flex flex-wrap justify-center gap-3 mt-6">
+          <button onclick="document.getElementById('uploadFile').click()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl text-base transition shadow-md flex items-center">
+            <i class="fa-solid fa-upload mr-2"></i> Upload File
+          </button>
+          
+          <button onclick="downloadTemplate()" class="bg-white border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold py-3 px-6 rounded-xl text-base transition shadow-sm flex items-center">
+            <i class="fa-solid fa-download mr-2"></i> Download Template
+          </button>
+        </div>
+        <input id="uploadFile" type="file" accept=".xlsx, .xls, .csv, .pdf" class="hidden" onchange="handleFileUpload(event)">
+      </div>
+
+      <div id="uploadStatus" class="hidden mt-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+          <div>
+            <p class="text-sm font-bold">Upload Successful</p>
+            <p class="text-xs font-medium text-emerald-600" id="uploadStatusMsg"></p>
+          </div>
+        </div>
+        <div class="text-right text-[11px] sm:text-xs font-bold bg-white px-3 py-2 rounded-lg border border-emerald-100 shadow-sm" id="uploadStats">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCKWISE TRADES -->
+  <section id="trades" class="page-sec hidden space-y-4">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-end justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">From Date</label><input id="tFrom" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">To Date</label><input id="tTo" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none"></div>
+        <button onclick="renderTrades()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition self-end">Filter</button>
+      </div>
+      <button onclick="exportTrades()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Export CSV</button>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="table-container overflow-y-auto">
+        <table class="w-full text-xs text-right divide-y divide-slate-200">
+          <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold tracking-wider uppercase text-[11px]">
+            <tr><th class="p-3 text-left">Date</th><th class="p-3">Block</th><th class="p-3">Time Period</th><th class="p-3">Qty (MW)</th><th class="p-3">Qty (MWh)</th><th class="p-3">MCP (₹/MWh)</th><th class="p-3">Traded Value (₹)</th></tr>
+          </thead>
+          <tbody id="tradeRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BILLING & MARGINS — NVVN ANNEXURE FORMAT -->
+  <section id="billing" class="page-sec hidden space-y-6">
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 class="font-extrabold text-slate-800 text-lg flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice-dollar text-blue-700"></i>
+            NVVN Billing — Annexure 1 Format
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">Page 4–5 style billing: Delivery Date, SELL/RTM, Traded Quantum, Trade Value, Corridor Charges, PX Fees, GST, Power Exchange Net, NVVN Margin, GST and final NVVN Net.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportBillingExcel()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-3 py-2 rounded-lg text-xs"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+          <button onclick="exportBillingPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold px-3 py-2 rounded-lg text-xs"><i class="fa-solid fa-file-pdf mr-1"></i> PDF</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><div class="text-[10px] uppercase font-bold text-blue-600">Portfolio</div><div class="font-extrabold text-sm">N2UP0NVN0289</div></div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200"><div class="text-[10px] uppercase font-bold text-slate-500">Txn Type</div><div class="font-extrabold text-sm">SELL</div></div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200"><div class="text-[10px] uppercase font-bold text-slate-500">Market Segment</div><div class="font-extrabold text-sm">RTM</div></div>
+        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100"><div class="text-[10px] uppercase font-bold text-emerald-600">Billing Basis</div><div class="font-extrabold text-sm">Sheet1 / 96 Blocks</div></div>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-sliders text-blue-600 mr-1"></i> NVVN / PX Rate Settings</h3>
+        <span class="text-[10px] text-slate-500">Defaults: PX ₹0.02/kWh + 18% GST • NVVN ₹0.0099/kWh + 18% GST</span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">PX Fees ₹/kWh</label><input type="number" id="pxRateInput" step="0.0001" class="w-full border rounded-lg p-2 text-xs font-bold" onchange="updateMarginRates()"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">GST on PX %</label><input type="number" id="pxGstRateInput" step="0.1" class="w-full border rounded-lg p-2 text-xs font-bold" onchange="updateMarginRates()"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">NVVN Margin ₹/kWh</label><input type="number" id="nvvnRateInput" step="0.0001" class="w-full border rounded-lg p-2 text-xs font-bold" onchange="updateMarginRates()"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">GST on NVVN %</label><input type="number" id="nvvnGstRateInput" step="0.1" class="w-full border rounded-lg p-2 text-xs font-bold" onchange="updateMarginRates()"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="billKpis"></div>
+<div class="mt-4 p-3 rounded-xl border border-blue-200 bg-blue-50/60">
+  <div class="flex flex-wrap items-end gap-3">
+    <label class="text-[10px] font-bold text-slate-600">Billing Start Date
+      <input id="billingStartDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+    </label>
+    <label class="text-[10px] font-bold text-slate-600">Billing End Date
+      <input id="billingEndDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+    </label>
+    <button onclick="applyBillingPeriod()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs">Apply Billing Period</button>
+    <button onclick="resetBillingPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs">Reset</button>
+    <span id="billingRangeMsg" class="text-[10px] font-bold text-blue-700 ml-auto"></span>
+  </div>
+</div>
+
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-3 bg-slate-50 border-b border-slate-200">
+        <h3 class="font-extrabold text-slate-800 text-sm">Annexure 1 — Daily Sale / Billing Statement</h3>
+        <p class="text-[10px] text-slate-500">Structured to reproduce the supplied invoice Page 4 rows and Page 5 Sub Total / Grand Total.</p>
+      </div>
+      <div class="overflow-auto">
+        <table id="billingTable" class="w-full text-right divide-y divide-slate-300" style="font-size:10px; min-width:1500px;">
+          <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase">
+            <tr>
+              <th class="p-2 border">Sl.No.</th>
+              <th class="p-2 border text-left">Delivery (Schedule) Date</th>
+              <th class="p-2 border">Txn Type<br>(Sale/Buy)</th>
+              <th class="p-2 border">Mkt Seg#</th>
+              <th class="p-2 border">Traded Quantum</th>
+              <th class="p-2 border">Trade Value</th>
+              <th class="p-2 border">Corridor Charges</th>
+              <th class="p-2 border">Power Exchange Fees</th>
+              <th class="p-2 border">GST on Power Exchange Fees</th>
+              <th class="p-2 border">Net receivable (+) / payable (-) Power Exchange</th>
+              <th class="p-2 border">NVVN Margin</th>
+              <th class="p-2 border">GST on NVVN Margin</th>
+              <th class="p-2 border">Net receivable (+) / payable (-) NVVN</th>
+            </tr>
+          </thead>
+          <tbody id="billRows"></tbody>
+          <tfoot id="billFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADVANCED REPORTS (FIXED ALIGNMENT) -->
+  <section id="reports" class="page-sec hidden space-y-4">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-end gap-3 w-full">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Report Start Date</label>
+          <input id="reportStartDate" type="date" onchange="renderReports()"
+                 class="border border-blue-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Report End Date</label>
+          <input id="reportEndDate" type="date" onchange="renderReports()"
+                 class="border border-blue-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700">
+        </div>
+        <button onclick="setReportPeriodFromData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs">
+          <i class="fa-solid fa-calendar-range mr-1"></i> Apply Period
+        </button>
+        <button onclick="clearReportPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs">
+          Clear
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-bold text-slate-700">Grouping View:</label>
+        <select id="reportGroup" onchange="renderReports()" class="border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+          <option value="day">Day-wise Snapshot</option>
+          <option value="month">Month-wise Summary</option>
+          <option value="quarter">Quarter-wise Summary</option>
+          <option value="fy">Financial Year (FY) Summary</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="exportReportExcel()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+          <i class="fa-solid fa-file-excel"></i> Excel
+        </button>
+        <button onclick="exportReportPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+          <i class="fa-solid fa-file-pdf"></i> PDF
+        </button>
+      </div>
+      <div id="reportPeriodNote" class="w-full text-[10px] text-slate-500 mt-2">Report Period: All</div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="table-container overflow-y-auto">
+        <table id="reportsTable" class="w-full text-xs text-right divide-y divide-slate-200">
+          <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold uppercase text-[10px] sm:text-[11px]">
+            <tr>
+              <th class="p-3 text-left">Period</th>
+              <th class="p-3">Qty (MWh)</th>
+              <th class="p-3">Avg MCP (₹)</th>
+              <th class="p-3">Gross Value (₹)</th>
+              <th class="p-3 text-rose-600">Grid Chg (₹)</th>
+              <th class="p-3 text-amber-600">PX (Fee+GST) (₹)</th>
+              <th class="p-3 text-blue-600">NVVN (Mar+GST) (₹)</th>
+              <th class="p-3 text-rose-700 font-bold">Total Ded. (₹)</th>
+              <th class="p-3 text-emerald-700 font-black">Net Recv. (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="reportRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBLIGATIONS / DEDUCTIONS -->
+  <section id="obligations" class="page-sec hidden space-y-6">
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3"><div class="flex flex-wrap items-end gap-3 mb-3 pb-3 border-b border-blue-100">
+          <label class="text-[10px] font-bold text-slate-600">Start Date
+            <input id="manualStartDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+          </label>
+          <span class="pb-2 text-slate-400 font-bold">→</span>
+          <label class="text-[10px] font-bold text-slate-600">End Date
+            <input id="manualEndDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+          </label>
+          <button type="button" onclick="applyManualOverridePeriod()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs">
+            <i class="fa-solid fa-calendar-range mr-1"></i> Apply Period
+          </button>
+          <button type="button" onclick="clearManualOverridePeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs">Clear</button>
+          <span id="manualPeriodStatus" class="text-[10px] text-slate-500 pb-2">Select period to view manual overrides.</span>
+        </div>
+<label class="text-xs font-bold text-slate-600">Date:</label><input id="oDate" type="date" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-semibold outline-none" onchange="loadObligation()"></div>
+        <button onclick="saveObligation()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm">Save Manual Override</button>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">NLDC App (₹)</label><input id="o_nldcApp" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">NLDC Sched (₹)</label><input id="o_nldcSched" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">CTU Trans (₹)</label><input id="o_ctu" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">STU Trans (₹)</label><input id="o_stu" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">SLDC Sched (₹)</label><input id="o_sldc" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
+      </div>
+    </div>
+    
+<div class="mb-4 p-4 rounded-xl border border-blue-200 bg-blue-50/60">
+  <div class="flex flex-wrap items-end gap-3">
+    <label class="text-[10px] font-bold text-slate-600">Start Date
+      <input id="obStartDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+    </label>
+    <span class="pb-2 text-slate-400 font-bold">→</span>
+    <label class="text-[10px] font-bold text-slate-600">End Date
+      <input id="obEndDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+    </label>
+    <button type="button" onclick="applyObligationPeriod()"
+      class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs">
+      <i class="fa-solid fa-calendar-range mr-1"></i> Apply Period
+    </button>
+    <button type="button" onclick="clearObligationPeriod()"
+      class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs">
+      Clear
+    </button>
+  </div>
+  <div id="obPeriodStatus" class="text-[10px] text-slate-500 mt-2">
+    Select a Start Date and End Date to view corridor charges for a period.
+  </div>
+</div>
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="table-container overflow-y-auto">
+        <table class="w-full text-right divide-y divide-slate-200" style="font-size: 11px;">
+          <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold uppercase text-[10px]">
+            <tr>
+              <th class="p-3 text-left">Date</th>
+              <th class="p-3">NLDC App</th>
+              <th class="p-3">NLDC Sched</th>
+              <th class="p-3">CTU Trans</th>
+              <th class="p-3">STU Trans</th>
+              <th class="p-3">SLDC Sched</th>
+              <th class="p-3 font-bold text-rose-600">Total Corridor (₹)</th>
+              <th class="p-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="obRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const KEY = "thdc11mw_app_reports_v32_sheet1_master";
+const OLD_KEYS = [
+  "thdc11mw_app_reports_v32_sheet1_master",
+  "thdc11mw_app_reports_v32",
+  "thdc11mw_app_excel_v4"
+];
+
+// Keep only the compact data actually required by the app.
+// Raw Sheet1/report blobs are NEVER persisted in localStorage.
+function compactState(s){
+  return {
+    trades:(Array.isArray(s?.trades)?s.trades:[]).map(t=>({
+      date:t.date, block:Number(t.block)||0, period:t.period||"",
+      qty:Number(t.qty)||0, mcp:Number(t.mcp)||0,
+      amount:Number.isFinite(Number(t.amount))?Number(t.amount):undefined
+    })),
+    obligations:(Array.isArray(s?.obligations)?s.obligations:[]).map(o=>({
+      date:o.date,
+      nldcApp:Number(o.nldcApp)||0, nldcSched:Number(o.nldcSched)||0,
+      nldcSchedBuy:Number(o.nldcSchedBuy)||0, nldcSchedSell:Number(o.nldcSchedSell)||0,
+      ctu:Number(o.ctu)||0, stu:Number(o.stu)||0, sldc:Number(o.sldc)||0,
+      distribution:Number(o.distribution)||0, other:Number(o.other)||0
+    }))
+  };
+}
+
+function loadCompactState(){
+  for(const k of OLD_KEYS){
+    try{
+      const raw=localStorage.getItem(k);
+      if(!raw) continue;
+      const parsed=JSON.parse(raw);
+      if(parsed && (Array.isArray(parsed.trades)||Array.isArray(parsed.obligations)))
+        return compactState(parsed);
+    }catch(e){}
+  }
+  return {trades:[],obligations:[]};
+}
+let state = loadCompactState();
+
+/* 60-MONTH STORAGE: IndexedDB replaces localStorage for the growing dataset.
+   60 months × 96 blocks/day is comfortably within normal browser IndexedDB
+   quotas; only small preferences remain in localStorage. */
+const DB_NAME="THDCIL_11MW_SOLAR_DB";
+const DB_VERSION=1;
+const STORE_NAME="app_state";
+let dbReady=null;
+
+function openSolarDB(){
+  if(dbReady)return dbReady;
+  dbReady=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return dbReady;
+}
+async function loadStateFromIndexedDB(){
+  try{
+    const db=await openSolarDB();
+    const data=await new Promise((resolve,reject)=>{
+      const q=db.transaction(STORE_NAME,"readonly").objectStore(STORE_NAME).get("master");
+      q.onsuccess=()=>resolve(q.result);
+      q.onerror=()=>reject(q.error);
+    });
+    if(data && Array.isArray(data.trades)){
+      state=compactState(data);
+      return true;
+    }
+  }catch(e){console.warn("IndexedDB load failed",e);}
+  return false;
+}
+async function saveStateToIndexedDB(){
+  try{
+    const db=await openSolarDB();
+    const payload=compactState(state);
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(STORE_NAME,"readwrite");
+      tx.objectStore(STORE_NAME).put(payload,"master");
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+      tx.onabort=()=>reject(tx.error);
+    });
+    return true;
+  }catch(e){console.error("IndexedDB save failed",e);return false;}
+}
+function save(){ saveStateToIndexedDB(); }
+
+/* Clear only old oversized application caches. */
+try{
+  localStorage.removeItem("thdc11mw_app_reports_v32");
+  localStorage.removeItem("thdc11mw_app_excel_v4");
+  localStorage.removeItem("thdc11mw_app_reports_v32_sheet1_master");
+}catch(e){}
+// STRICT EXCEL DEFAULT RATES
+let nvvnRate = parseFloat(localStorage.getItem(KEY+"_nvrate")) || 0.0099; // ₹/kWh
+let nvvnGst = parseFloat(localStorage.getItem(KEY+"_nvgst")) || 18.0;    // %
+let pxRate = parseFloat(localStorage.getItem(KEY+"_pxrate")) || 0.02;     // ₹/kWh
+let pxGst = parseFloat(localStorage.getItem(KEY+"_pxgst")) || 18.0;       // %
+
+const months = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+const mNames = {Apr:"Apr",May:"May",Jun:"Jun",Jul:"Jul",Aug:"Aug",Sep:"Sep",Oct:"Oct",Nov:"Nov",Dec:"Dec",Jan:"Jan",Feb:"Feb",Mar:"Mar"};
+
+const $ = id => document.getElementById(id);
+function save() {
+  const payload=JSON.stringify(compactState(state));
+  try{
+    localStorage.setItem(KEY,payload);
+    return true;
+  }catch(e){
+    // Quota-safe recovery: remove obsolete raw/master copies, then retry once.
+    for(const k of OLD_KEYS){
+      if(k!==KEY) { try{localStorage.removeItem(k);}catch(_){} }
+    }
+    try{
+      localStorage.setItem(KEY,payload);
+      return true;
+    }catch(e2){
+      alert("Data is too large for browser storage. The analysis is still active, but old cached report data should be cleared once.");
+      return false;
+    }
+  }
+}
+function money(n) { return "₹" + (n||0).toLocaleString("en-IN", { maximumFractionDigits: 2 }); }
+function qtyMwh(t) { return Math.abs(t.qty) * 0.25; }
+
+// CRITICAL FIX: Strict Block-level rounding matching Excel perfectly
+function roundPrecise(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
+function amount(t) {
+  if(Number.isFinite(Number(t.amount))) return Math.abs(Number(t.amount));
+  return Math.abs(t.qty) * t.mcp * 0.25;
+} 
+
+function period(b) { let s=(b-1)*15,e=b*15; const f=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0"); return f(s)+"-"+(b===96?"24:00":f(e)); }
+function monthKey(d) { return months[(+d.slice(5,7)-4+12)%12]; }
+function sortedTrades() { return [...state.trades].sort((a,b) => a.date.localeCompare(b.date) || a.block - b.block); }
+
+function updateMarginRates() {
+  nvvnRate = parseFloat($("nvvnRateInput").value) || 0;
+  nvvnGst = parseFloat($("nvvnGstRateInput").value) || 0;
+  pxRate = parseFloat($("pxRateInput").value) || 0;
+  pxGst = parseFloat($("pxGstRateInput").value) || 0;
+
+  localStorage.setItem(KEY+"_nvrate", nvvnRate);
+  localStorage.setItem(KEY+"_nvgst", nvvnGst);
+  localStorage.setItem(KEY+"_pxrate", pxRate);
+  localStorage.setItem(KEY+"_pxgst", pxGst);
+
+  renderBilling(); renderReports();
+}
+
+function clearDateData() {
+  let d = $("clearDateInput").value;
+  if (!d) {
+    alert("Please select a date from the calendar icon to clear its data.");
+    return;
+  }
+  if (confirm(`⚠️ Are you sure you want to delete ALL trades and obligations for ${d}?`)) {
+    let trCount = state.trades.length;
+    let obCount = state.obligations.length;
+    state.trades = state.trades.filter(x => x.date !== d);
+    state.obligations = state.obligations.filter(x => x.date !== d);
+    
+    let trDeleted = trCount - state.trades.length;
+    let obDeleted = obCount - state.obligations.length;
+    
+    if (trDeleted === 0 && obDeleted === 0) alert(`No data found in the system for ${d}.`);
+    else {
+        save();
+        alert(`✅ Data cleared successfully for ${d}.\nDeleted ${trDeleted} trade blocks and ${obDeleted} obligation records.`);
+        location.reload();
+    }
+  }
+}
+
+function clearAllData() {
+  if(confirm("⚠️ Are you sure you want to permanently delete ALL trades and obligations data?")) {
+    state = { trades: [], obligations: [] };
+    save(); location.reload();
+  }
+}
+
+function downloadTemplate() {
+  const headers = [
+    ["Delivery Date", "Block", "Scheduled Qty (MW)", "MCP (Rs/MWh)", "NLDC Application Fees", "Operating Charges - Sell", "CTU Transmission Charges", "STU Transmission Charges", "SLDC Scheduling"]
+  ];
+  const today = new Date().toISOString().slice(0, 10);
+  headers.push([today, 27, -0.250, 3500.00, 4.83, 34.05, 0, 0, 1500]);
+  headers.push([today, 28, -0.500, 3200.00, "", "", "", "", ""]);
+  let wb = XLSX.utils.aoa_to_sheet(headers);
+  let book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, wb, "Sheet1");
+  XLSX.writeFile(book, "THDC_11MW_Upload_Template.xlsx");
+}
+
+document.querySelectorAll(".nav-btn").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".nav-btn").forEach(x => { x.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm"); x.classList.add("text-blue-100"); });
+  b.classList.add("active", "bg-white", "text-blue-900", "shadow-sm"); b.classList.remove("text-blue-100");
+  document.querySelectorAll(".page-sec").forEach(x => x.classList.add("hidden"));
+  $(b.dataset.target).classList.remove("hidden"); refreshPage(b.dataset.target);
+});
+
+function refreshPage(p) {
+  if(p==="dashboard") renderDashboard();
+  if(p==="trades") renderTrades();
+  if(p==="reports") renderReports();
+  if(p==="billing") renderBilling();
+  if(p==="obligations") { loadObligation(); renderObligations(); }
+}
+
+// UNIFIED UPLOADER
+
+// ===== STRICT IEX SHEET1 UPLOADER =====
+function normalizeDateValue(v, forcedDate=""){
+  if(forcedDate) return forcedDate;
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  if(typeof v==="number"){
+    const d=new Date((v-25569)*86400*1000);
+    return isNaN(d)? "": d.toISOString().slice(0,10);
+  }
+  const s=String(v??"").trim();
+  let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if(m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+  if(m){
+    const mm={Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
+    const yy=m[3].length===2?"20"+m[3]:m[3];
+    return mm[m[2]]?`${yy}-${mm[m[2]]}-${m[1].padStart(2,"0")}`:"";
+  }
+  return "";
+}
+function nval(v){
+  const n=parseFloat(String(v??"").replace(/,/g,"").replace(/[₹]/g,"").trim());
+  return Number.isFinite(n)?n:NaN;
+}
+function keyFor(row, aliases){
+  const keys=Object.keys(row||{});
+  const norm=s=>String(s??"").toLowerCase().replace(/[\s_\-().:/]+/g,"").replace(/₹/g,"rs");
+  const ns=keys.map(k=>({raw:k,n:norm(k)}));
+  for(const a of aliases){
+    const na=norm(a);
+    const hit=ns.find(x=>x.n===na);
+    if(hit) return hit.raw;
+  }
+  for(const a of aliases){
+    const na=norm(a);
+    const hit=ns.find(x=>x.n.includes(na)||na.includes(x.n));
+    if(hit) return hit.raw;
+  }
+  return undefined;
+}
+function blockValue(v){
+  const n=nval(v);
+  if(Number.isInteger(n)&&n>=1&&n<=96) return n;
+  const s=String(v??"").trim();
+  const m=s.match(/^(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})$/);
+  if(m){
+    const h=+m[1], mi=+m[2];
+    if(h>=0&&h<24&&[0,15,30,45].includes(mi)) return h*4+mi/15+1;
+  }
+  return null;
+}
+function validateDaily11MW(date){
+  const a=state.trades.filter(x=>x.date===date);
+  const blocks=new Set(a.map(x=>x.block));
+  const missing=[];
+  for(let b=1;b<=96;b++) if(!blocks.has(b)) missing.push(b);
+  const energy=a.reduce((s,x)=>s+qtyMwh(x),0);
+  return {blocks:a.length,missing,energy,physicalOK:energy<=264.000001};
+}
+function showUploadValidation(date, extra=""){
+  const v=validateDaily11MW(date);
+  const existing=$("uploadStatusMsg"), stats=$("uploadStats"), box=$("uploadStatus");
+  if(!box||!existing||!stats)return;
+  const level=!v.physicalOK?"ERROR":(v.missing.length?"WARNING":"VALID");
+  existing.innerHTML=`<b>${level}</b> • ${date} • ${v.blocks}/96 blocks • ${v.energy.toFixed(3)} MWh${extra?` • ${extra}`:""}`;
+  stats.innerHTML=`Missing: ${v.missing.length} ${v.missing.length?`(Blocks ${v.missing.slice(0,12).join(", ")}${v.missing.length>12?"…":""})`:""}<br>11 MW limit: ${v.physicalOK?"OK":"EXCEEDED"}`;
+  box.classList.remove("hidden");
+}
+function importStrictSheet1(workbook, forcedDate=""){
+  const ws=workbook.Sheets["Sheet1"];
+  if(!ws) throw new Error("Sheet1 required. Sheet2/Sheet3 are ignored.");
+
+  const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+  if(!matrix.length) throw new Error("Sheet1 is empty.");
+
+  let headerRow=-1;
+  for(let r=0;r<Math.min(matrix.length,120);r++){
+    const text=matrix[r].map(v=>String(v??"").toLowerCase()).join(" | ");
+    if(text.includes("period") && text.includes("qty in mw") && text.includes("rate/mwh")){
+      headerRow=r; break;
+    }
+  }
+  if(headerRow<0) throw new Error("Actual IEX Sheet1 layout not found. Expected Period + Qty in MW + Rate/MWh.");
+
+  let tradeDate=forcedDate||"";
+  if(!tradeDate){
+    for(let r=0;r<headerRow;r++){
+      for(let c=0;c<matrix[r].length;c++){
+        if(String(matrix[r][c]??"").toLowerCase().includes("delivery date")){
+          for(let k=c+1;k<matrix[r].length;k++){
+            const d=normalizeDateValue(matrix[r][k],"");
+            if(d){tradeDate=d;break;}
+          }
+        }
+      }
+      if(tradeDate)break;
+    }
+  }
+  if(!tradeDate) throw new Error("Delivery Date not found in Sheet1. Please select Trade Date Override.");
+
+  // ---- IEX Sheet1 Charges section ----
+  // IEX DOR Sheet1: charge labels are in column E (index 4),
+  // corresponding charge amounts are in column N (index 13).
+  const cleanText=v=>String(v??"").replace(/\s+/g," ").trim().toLowerCase();
+  const parseCharge=v=>{
+    if(typeof v==="number") return Number.isFinite(v)?v:0;
+    const s=String(v??"").replace(/,/g,"").replace(/[₹`*]/g,"").trim();
+    if(!s || s==="-" || s==="—") return 0;
+    const n=parseFloat(s);
+    return Number.isFinite(n)?n:0;
+  };
+  const obligation={
+    date:tradeDate,
+    nldcApp:0,
+    ctu:0,
+    nldcSchedBuy:0,
+    nldcSchedSell:0,
+    stu:0,
+    distribution:0,
+    other:0,
+    sldc:0
+  };
+
+  for(let r=0;r<matrix.length;r++){
+    const label=cleanText(matrix[r]?.[4]);
+    if(!label) continue;
+    const value=parseCharge(matrix[r]?.[13]);
+
+    if(label.includes("nldc application fees")){
+      obligation.nldcApp=value;
+    }else if(label.includes("ctu transmission charges")){
+      obligation.ctu=value;
+    }else if(label.includes("nldc scheduling") && label.includes("operating") && label.includes("buy")){
+      obligation.nldcSchedBuy=value;
+    }else if(label.includes("nldc scheduling") && label.includes("operating") && label.includes("sell")){
+      obligation.nldcSchedSell=value;
+    }else if(label.includes("stu transmission charges")){
+      obligation.stu=value;
+    }else if(label.includes("distribution charges")){
+      obligation.distribution=value;
+    }else if(label.includes("any other charges")){
+      obligation.other=value;
+    }else if(label.includes("sldc scheduling") && label.includes("operating")){
+      obligation.sldc=value;
+    }
+  }
+
+  // Fallback for shifted/merged IEX layouts: search the whole row only when
+  // the exact Sheet1 label-column match was not found.
+  const chargeFallback=(needle, current)=>{
+    if(current!==0) return current;
+    for(let r=0;r<matrix.length;r++){
+      const row=matrix[r]||[];
+      const txt=row.map(cleanText).join(" | ");
+      if(!txt.includes(needle)) continue;
+      for(let c=row.length-1;c>=0;c--){
+        const n=parseCharge(row[c]);
+        if(n!==0 || String(row[c]??"").trim()==="0" || String(row[c]??"").trim()==="0.00"){
+          return n;
+        }
+      }
+    }
+    return current;
+  };
+  obligation.nldcApp=chargeFallback("nldc application fees",obligation.nldcApp);
+  obligation.ctu=chargeFallback("ctu transmission charges",obligation.ctu);
+  obligation.nldcSchedBuy=chargeFallback("nldc scheduling & operating charges - buy",obligation.nldcSchedBuy);
+  obligation.nldcSchedSell=chargeFallback("nldc scheduling & operating charges - sell",obligation.nldcSchedSell);
+  obligation.stu=chargeFallback("stu transmission charges",obligation.stu);
+  obligation.distribution=chargeFallback("distribution charges",obligation.distribution);
+  obligation.other=chargeFallback("any other charges",obligation.other);
+  obligation.sldc=chargeFallback("sldc scheduling and operating charges",obligation.sldc);
+
+  const records=[], seen=new Set();
+  const add=(period, qtyCell, rateCell, amountCell, block)=>{
+    if(!period || !/^\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}$/.test(period)) return;
+    const rawQ=nval(qtyCell), rate=nval(rateCell), amount=nval(amountCell);
+    if(!Number.isFinite(rawQ)) return;
+    const key=tradeDate+"|"+block;
+    if(seen.has(key)) return;
+    seen.add(key);
+    records.push({
+      date:tradeDate, block, period,
+      qty:rawQ,
+      mcp:Number.isFinite(rate)?rate:0,
+      amount:Number.isFinite(amount)?Math.abs(amount):Math.abs(rawQ)*((Number.isFinite(rate)?rate:0))*0.25
+    });
+  };
+
+  for(let r=headerRow+1;r<matrix.length;r++){
+    add(String(matrix[r]?.[2]??"").trim(),matrix[r]?.[4],matrix[r]?.[8],matrix[r]?.[9],r-headerRow);
+    add(String(matrix[r]?.[11]??"").trim(),matrix[r]?.[15],matrix[r]?.[19],matrix[r]?.[22],49+(r-(headerRow+1)));
+  }
+
+  if(!records.length) throw new Error("Sheet1 trade table found, but no valid block rows were found.");
+
+  let newN=0,updN=0,skipN=0;
+  records.forEach(t=>{
+    const idx=state.trades.findIndex(x=>x.date===t.date&&x.block===t.block);
+    const obj={date:t.date,block:t.block,qty:t.qty,mcp:t.mcp,amount:t.amount,period:t.period};
+    if(idx>=0){
+      const old=state.trades[idx];
+      if(old.qty===obj.qty && old.mcp===obj.mcp && Math.abs((old.amount??0)-obj.amount)<0.01) skipN++;
+      else {state.trades[idx]=Object.assign({},old,obj);updN++;}
+    }else{state.trades.push(obj);newN++;}
+  });
+
+  // Replace the obligation for this date from the uploaded Sheet1, so a
+  // re-uploaded file cannot leave stale/zero corridor charges behind.
+  const oi=state.obligations.findIndex(x=>x.date===tradeDate);
+  if(oi>=0) state.obligations[oi]=obligation; else state.obligations.push(obligation);
+
+  save();
+  const v=validateDaily11MW(tradeDate);
+  showUploadValidation(tradeDate,`New ${newN} • Updated ${updN} • Duplicate unchanged ${skipN}`);
+  if($("uploadStatusMsg")) {
+    const corridorTotal=Math.abs(obligation.nldcApp+obligation.ctu+obligation.nldcSchedBuy+obligation.nldcSchedSell+
+      obligation.stu+obligation.distribution+obligation.other+obligation.sldc);
+    $("uploadStatusMsg").innerHTML=
+      `<b>Sheet1 ✓</b> • Delivery Date: ${tradeDate} • 96-block layout detected • ${records.length} rows
+       <br><b>Corridor Charges: ₹${corridorTotal.toFixed(2)}</b>
+       <br><span class="text-[10px]">NLDC App ₹${obligation.nldcApp.toFixed(2)} • CTU ₹${obligation.ctu.toFixed(2)}
+       • NLDC Buy ₹${obligation.nldcSchedBuy.toFixed(2)} • NLDC Sell ₹${obligation.nldcSchedSell.toFixed(2)}
+       • STU ₹${obligation.stu.toFixed(2)} • Distribution ₹${obligation.distribution.toFixed(2)}
+       • Other ₹${obligation.other.toFixed(2)} • SLDC ₹${obligation.sldc.toFixed(2)}</span>`;
+  }
+  if($("uploadStats")) $("uploadStats").innerHTML=
+    `New: ${newN} | Updated: ${updN} | Duplicate unchanged: ${skipN} | ${v.blocks}/96 blocks | ${v.energy.toFixed(3)} MWh`;
+
+  renderDashboard(); renderBilling(); renderReports(); renderTrades();
+  if(typeof render96BlockStudy==="function") render96BlockStudy(tradeDate);
+  return {newN,updN,skipN,dates:[tradeDate],records,obligation};
+}
+function handleFileUpload(evt) {
+  const file=evt.target.files[0];
+  if(!file)return;
+  const ext=file.name.split(".").pop().toLowerCase();
+  if(ext==="pdf"){
+    // Keep the existing PDF pipeline, but do not let it affect Excel Sheet1 validation.
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        const pdf=await pdfjsLib.getDocument(new Uint8Array(e.target.result)).promise;
+        let text="";
+        for(let i=1;i<=pdf.numPages;i++){
+          const page=await pdf.getPage(i), c=await page.getTextContent();
+          text+=c.items.map(x=>x.str).join(" ")+" ";
+        }
+        processExtractedText(text,null);
+      }catch(err){alert("Error reading PDF file: "+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+      const forced=$("manualTradeDate")?.value||"";
+      const r=importStrictSheet1(wb,forced);
+      $("uploadStatusMsg").innerText=`Sheet1 only • ${r.dates.join(", ")}`;
+      $("uploadStats").innerHTML=`New: ${r.newN} | Updated: ${r.updN} | Skipped duplicate: ${r.skipN}`;
+      if($("uploadStatusMsg")) $("uploadStatusMsg").innerHTML += `<br><span class="text-[10px] text-slate-500">Sheet1 parsed using header-based detection.</span>`;$("uploadStatus").classList.remove("hidden");
+      $("uploadFile").value="";
+    }catch(err){
+      alert("Sheet1 validation failed: "+err.message);
+      $("uploadFile").value="";
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+
+// PERIOD / DATE-WISE EXCEL UPLOAD
+function localISODate(d){
+  const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return x.toISOString().slice(0,10);
+}
+function enumerateDates(start,end){
+  const out=[];
+  let d=new Date(start+"T00:00:00");
+  const e=new Date(end+"T00:00:00");
+  while(d<=e){ out.push(localISODate(d)); d.setDate(d.getDate()+1); }
+  return out;
+}
+function preparePeriodUpload(){
+  const s=$("periodStartDate").value, e=$("periodEndDate").value;
+  if(!s||!e){ alert("Please select both Start Date and End Date."); return; }
+  if(s>e){ alert("End Date cannot be earlier than Start Date."); return; }
+
+  const dates=enumerateDates(s,e);
+  const panel=$("periodUploadPanel"), box=$("dateUploadRows");
+  $("periodUploadHelp").innerText=`Selected period: ${formatInvoiceDate(s)} to ${formatInvoiceDate(e)}. Upload one Excel file for each date.`;
+  $("periodUploadCount").innerText=`${dates.length} date${dates.length>1?"s":""} selected`;
+
+  box.innerHTML=dates.map((d,i)=>`
+    <div class="flex flex-wrap items-center gap-3 p-3 rounded-xl border bg-slate-50" id="dateRow_${d}">
+      <div class="w-28 font-extrabold text-slate-700 text-xs">${formatInvoiceDate(d)}</div>
+      <input type="file" accept=".xls,.xlsx,.xlsm,.csv" id="dateFile_${d}" class="hidden"
+             onchange="uploadPeriodDateFile('${d}',this)">
+      <button onclick="document.getElementById('dateFile_${d}').click()" class="bg-white border border-blue-300 text-blue-700 font-bold px-3 py-2 rounded-lg text-xs">
+        <i class="fa-solid fa-file-excel mr-1"></i> Select Excel
+      </button>
+      <span id="dateFileName_${d}" class="text-[10px] text-slate-500">No file selected</span>
+      <span id="dateFileStatus_${d}" class="ml-auto text-[10px] font-bold text-slate-400">Pending</span>
+    </div>`).join("");
+  panel.classList.remove("hidden");
+}
+async function uploadPeriodDateFile(date,fileInput){
+  const file=fileInput.files && fileInput.files[0];
+  if(!file) return;
+  const status=$("dateFileStatus_"+date), name=$("dateFileName_"+date);
+  name.innerText=file.name;
+  status.innerText="Processing…";
+  status.className="ml-auto text-[10px] font-bold text-blue-600";
+
+  try{
+    const ext=file.name.split(".").pop().toLowerCase();
+    if(ext==="pdf"){
+      // For PDF, reuse the existing pipeline with the selected date override.
+      const override=$("manualTradeDate");
+      const old=override ? override.value : "";
+      if(override) override.value=date;
+      const reader=new FileReader();
+      await new Promise((resolve,reject)=>{
+        reader.onload=async e=>{
+          try{
+            const typedarray=new Uint8Array(e.target.result);
+            const pdf=await pdfjsLib.getDocument(typedarray).promise;
+            let fullText="";
+            for(let i=1;i<=pdf.numPages;i++){
+              const page=await pdf.getPage(i);
+              const content=await page.getTextContent();
+              fullText+=content.items.map(item=>item.str).join(" ")+" ";
+            }
+            processExtractedText(fullText,null);
+            resolve();
+          }catch(err){reject(err);}
+        };
+        reader.onerror=reject;
+        reader.readAsArrayBuffer(file);
+      });
+      if(override) override.value=old;
+    }else{
+      const reader=new FileReader();
+      await new Promise((resolve,reject)=>{
+        reader.onload=e=>{
+          try{
+            const data=new Uint8Array(e.target.result);
+            const workbook=XLSX.read(data,{type:"array"});
+            const firstSheet=workbook.Sheets[workbook.SheetNames[0]];
+            const jsonFlat=XLSX.utils.sheet_to_json(firstSheet);
+            const rows2D=XLSX.utils.sheet_to_json(firstSheet,{header:1});
+            const ok=processFlatData(jsonFlat,date);
+            if(!ok){
+              // Fallback for non-standard Excel layouts.
+              const override=$("manualTradeDate");
+              const old=override ? override.value : "";
+              if(override) override.value=date;
+              processExtractedText(rows2D.map(row=>row.join(" ")).join(" "),rows2D);
+              if(override) override.value=old;
+            }
+            resolve();
+          }catch(err){reject(err);}
+        };
+        reader.onerror=reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    status.innerText="✓ Uploaded";
+    status.className="ml-auto text-[10px] font-bold text-emerald-600";
+  }catch(err){
+    console.error(err);
+    status.innerText="✕ Failed";
+    status.className="ml-auto text-[10px] font-bold text-rose-600";
+    alert(`Upload failed for ${formatInvoiceDate(date)}: ${err.message||err}`);
+  }finally{
+    renderDashboard();
+    if(typeof renderBilling==="function") renderBilling();
+    if(typeof renderReports==="function") renderReports();
+  }
+}
+
+
+function uploadDateISOToDisplay(d){
+  const p=d.split("-");
+  return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
+}
+function uploadDateList(start,end){
+  const out=[];
+  let d=new Date(start+"T00:00:00"), e=new Date(end+"T00:00:00");
+  while(d<=e){
+    const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+    out.push(x.toISOString().slice(0,10));
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+function createDateWiseUploadSlots(){
+  const s=$("uploadStartDate").value, e=$("uploadEndDate").value;
+  if(!s||!e){ alert("Start Date aur End Date dono select kijiye."); return; }
+  if(s>e){ alert("End Date, Start Date se pehle nahi ho sakti."); return; }
+
+  const dates=uploadDateList(s,e);
+  const box=$("dateWiseUploadSlots");
+  box.classList.remove("hidden");
+  box.innerHTML=`
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <div class="text-sm font-extrabold text-slate-800">Date-wise Excel Upload</div>
+        <div class="text-[10px] text-slate-500">${uploadDateISOToDisplay(s)} → ${uploadDateISOToDisplay(e)} • ${dates.length} Excel files required</div>
+      </div>
+      <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded-full">${dates.length} Dates</span>
+    </div>
+    <div class="grid gap-2">
+      ${dates.map((d,i)=>`
+        <div id="periodRow_${d}" class="flex flex-wrap items-center gap-3 bg-white border border-slate-200 rounded-lg p-2.5">
+          <div class="w-28 text-xs font-extrabold text-slate-700">${uploadDateISOToDisplay(d)}</div>
+          <input id="periodFile_${d}" type="file" accept=".xls,.xlsx,.xlsm,.csv" class="hidden"
+                 onchange="uploadOnePeriodExcel('${d}', this)">
+          <button onclick="document.getElementById('periodFile_${d}').click()"
+                  class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-xs">
+            <i class="fa-solid fa-file-excel mr-1"></i> Upload Excel
+          </button>
+          <span id="periodName_${d}" class="text-[10px] text-slate-500 flex-1">No file selected</span>
+          <span id="periodStatus_${d}" class="text-[10px] font-bold text-slate-400">Pending</span>
+        </div>`).join("")}
+    </div>`;
+}
+
+function uploadOnePeriodExcel(date,input){
+  const file=input.files && input.files[0];
+  if(!file) return;
+
+  const oldDate=$("manualTradeDate").value;
+  const name=$("periodName_"+date), status=$("periodStatus_"+date), row=$("periodRow_"+date);
+  name.textContent=file.name;
+  status.textContent="Processing...";
+  status.className="text-[10px] font-bold text-blue-600";
+
+  // Existing uploader is reused, but the selected row date is forced as the
+  // Trade Date Override so each file lands on the correct date.
+  $("manualTradeDate").value=date;
+
+  try{
+    const dt=new DataTransfer();
+    dt.items.add(file);
+    $("uploadFile").files=dt.files;
+    handleFileUpload({target:$("uploadFile")});
+
+    setTimeout(()=>{
+      status.textContent="✓ Uploaded";
+      status.className="text-[10px] font-bold text-emerald-600";
+      row.classList.add("bg-emerald-50");
+      $("manualTradeDate").value=oldDate;
+    },500);
+  }catch(err){
+    console.error(err);
+    status.textContent="✕ Failed";
+    status.className="text-[10px] font-bold text-rose-600";
+    $("manualTradeDate").value=oldDate;
+  }
+}
+
+// DASHBOARD
+let mChartInstance = null;
+function renderDashboard() {
+  let ts = sortedTrades(), totalQty = ts.reduce((s,t)=>s+qtyMwh(t),0), rev = ts.reduce((s,t)=>s+amount(t),0), avg = totalQty ? rev/totalQty : 0;
+  $("kpis").innerHTML = [
+    { t: "Traded Quantum", v: (totalQty/1000).toFixed(3)+" MU", c: "blue", i: "fa-bolt" },
+    { t: "Traded Value", v: "₹"+(rev/100000).toFixed(2)+" L", c: "emerald", i: "fa-indian-rupee-sign" },
+    { t: "Weighted Price", v: "₹"+avg.toFixed(2), c: "amber", i: "fa-scale-balanced" },
+    { t: "Active Days", v: new Set(ts.map(t=>t.date)).size+" Days", c: "indigo", i: "fa-calendar-check" }
+  ].map(x => `<div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border border-slate-200"><div><p class="text-[11px] font-bold text-slate-500 uppercase">${x.t}</p><h3 class="text-xl font-extrabold text-slate-800 mt-1">${x.v}</h3></div><div class="w-10 h-10 rounded-xl bg-${x.c}-50 text-${x.c}-600 flex items-center justify-center text-lg"><i class="fa-solid ${x.i}"></i></div></div>`).join("");
+  
+  let a = months.map(m => { let x=ts.filter(t=>monthKey(t.date)===m), q=x.reduce((s,t)=>s+qtyMwh(t),0), r=x.reduce((s,t)=>s+amount(t),0); return {m, q:q/1000, r:r/100000, w:q?x.reduce((s,t)=>s+qtyMwh(t)*t.mcp,0)/q:0}; });
+  $("monthRows").innerHTML = a.filter(x=>x.q>0).map(x=>`<tr><td class="p-2 font-bold">${mNames[x.m]}</td><td class="p-2">${x.q.toFixed(3)}</td><td class="p-2 font-bold text-emerald-700">₹${x.r.toFixed(2)}</td><td class="p-2">₹${x.w.toFixed(1)}</td></tr>`).join("") || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No data found.</td></tr>';
+  
+  if(mChartInstance) mChartInstance.destroy();
+  mChartInstance = new Chart($("monthlyChart").getContext("2d"), { type: 'bar', data: { labels: a.map(x=>x.m), datasets: [{label:'Quantum (MU)', data:a.map(x=>x.q), backgroundColor:'#3b82f6'}, {label:'Value (₹ L)', data:a.map(x=>x.r), backgroundColor:'#10b981', yAxisID:'y1'}] }, options: { responsive: true, maintainAspectRatio: false, scales: { y1: {position:'right', grid:{drawOnChartArea:false}} } } });
+}
+
+// TRADES
+function renderTrades() {
+  let f=$("tFrom").value, t=$("tTo").value;
+  $("tradeRows").innerHTML = sortedTrades().filter(x=>(!f||x.date>=f)&&(!t||x.date<=t)).map(x=>`<tr><td class="p-3 font-semibold">${x.date}</td><td class="p-3">${x.block}</td><td class="p-3 font-mono text-slate-500">${period(x.block)}</td><td class="p-3 font-bold">${Math.abs(x.qty).toFixed(3)}</td><td class="p-3 text-blue-700 font-bold">${qtyMwh(x).toFixed(3)}</td><td class="p-3">₹${x.mcp.toFixed(2)}</td><td class="p-3 text-emerald-700 font-bold">₹${amount(x).toFixed(2)}</td></tr>`).join("");
+}
+
+function exportTrades() {
+  let rows = [["Date","Block","Period","Qty (MW)","Qty (MWh)","MCP (₹/MWh)","Amount (₹)"]];
+  sortedTrades().forEach(x => rows.push([x.date, x.block, period(x.block), Math.abs(x.qty).toFixed(3), qtyMwh(x).toFixed(3), x.mcp, amount(x).toFixed(2)]));
+  let wb = XLSX.utils.aoa_to_sheet(rows);
+  let book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, wb, "Trades");
+  XLSX.writeFile(book, "THDC_11MW_Trades.xlsx");
+}
+
+// BILLING ENGINE
+function obFor(d) { return state.obligations.find(x=>x.date===d) || {
+  nldcApp:0,nldcSched:0,ctu:0,nldcSchedBuy:0,nldcSchedSell:0,stu:0,distribution:0,other:0,sldc:0
+}; }
+
+function buildBillingRows() {
+  const allDates=[...new Set(sortedTrades().map(x=>x.date))].sort();
+  const bs=$('billingStartDate')?.value||'';
+  const be=$('billingEndDate')?.value||'';
+  const from=bs||allDates[0]||'';
+  const to=be||allDates[allDates.length-1]||'';
+  const dates=allDates.filter(d=>(!from||d>=from)&&(!to||d<=to));
+  const rows=[];
+  dates.forEach((d,idx)=>{
+    const a=sortedTrades().filter(x=>x.date===d);
+    if(!a.length) return;
+    const q=roundPrecise(a.reduce((s,x)=>s+qtyMwh(x),0));
+    const tradeValue=roundPrecise(a.reduce((s,x)=>s+amount(x),0));
+    const o=obFor(d);
+    const corridor=Math.abs(roundPrecise(
+      (Number(o.nldcApp)||0)+(Number(o.ctu)||0)+
+      (Number(o.nldcSchedBuy)||0)+(Number(o.nldcSchedSell)||0)+
+      (Number(o.stu)||0)+(Number(o.distribution)||0)+
+      (Number(o.other)||0)+(Number(o.sldc)||0)
+    ));
+    const pxFee=roundPrecise(q*1000*pxRate);
+    const pxGstAmt=roundPrecise(pxFee*(pxGst/100));
+    const powerExchangeNet=roundPrecise(tradeValue-corridor-pxFee-pxGstAmt);
+    const nvvnMargin=roundPrecise(q*1000*nvvnRate);
+    const nvvnGstAmt=roundPrecise(nvvnMargin*(nvvnGst/100));
+    const nvvnNet=roundPrecise(powerExchangeNet-nvvnMargin-nvvnGstAmt);
+    rows.push({sl:901+idx,date:d,txn:"SELL",seg:"RTM",q,tradeValue,corridor,pxFee,pxGst:pxGstAmt,powerExchangeNet,nvvnMargin,nvvnGst:nvvnGstAmt,nvvnNet});
+  });
+  return rows;
+}
+
+function formatInvoiceDate(d) {
+  const p=d.split("-");
+  return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
+}
+
+function applyBillingPeriod() {
+  const bs=$("billingStartDate")?.value||"";
+  const be=$("billingEndDate")?.value||"";
+  if(bs && be && bs>be){ alert("Billing End Date cannot be before Start Date."); return; }
+  window.billingPeriod={start:bs,end:be};
+  const note=$("billingPeriodStatus");
+  if(note) note.textContent=`Applied: ${bs||"All"} → ${be||"All"}`;
+  renderBilling();
+}
+function resetBillingPeriod() {
+  const dates=[...new Set(sortedTrades().map(x=>x.date))].sort();
+  if($('billingStartDate')) $('billingStartDate').value=dates[0]||'';
+  if($('billingEndDate')) $('billingEndDate').value=dates[dates.length-1]||'';
+  renderBilling();
+}
+
+function renderBilling() {
+  $("nvvnRateInput").value=nvvnRate;
+  $("nvvnGstRateInput").value=nvvnGst;
+  $("pxRateInput").value=pxRate;
+  $("pxGstRateInput").value=pxGst;
+
+  const allDates=[...new Set(sortedTrades().map(x=>x.date))].sort();
+  const bs=$('billingStartDate'), be=$('billingEndDate');
+  if(bs && !bs.value && allDates.length) bs.value=allDates[0];
+  if(be && !be.value && allDates.length) be.value=allDates[allDates.length-1];
+
+  const rows=buildBillingRows();
+  const rangeMsg=$('billingRangeMsg');
+  if(rangeMsg) rangeMsg.textContent=(bs?.value&&be?.value)?`Billing period: ${formatInvoiceDate(bs.value)} to ${formatInvoiceDate(be.value)}`:'All loaded dates';
+  if(!rows.length){
+    $("billRows").innerHTML='<tr><td colspan="13" class="p-8 text-center text-slate-400">No billing data. Upload Sheet1 and Run Analysis first.</td></tr>';
+    $("billFoot").innerHTML="";
+    $("billKpis").innerHTML="";
+    return;
+  }
+
+  const totals=rows.reduce((s,x)=>({
+    q:s.q+x.q,tradeValue:s.tradeValue+x.tradeValue,corridor:s.corridor+x.corridor,
+    pxFee:s.pxFee+x.pxFee,pxGst:s.pxGst+x.pxGst,powerExchangeNet:s.powerExchangeNet+x.powerExchangeNet,
+    nvvnMargin:s.nvvnMargin+x.nvvnMargin,nvvnGst:s.nvvnGst+x.nvvnGst,nvvnNet:s.nvvnNet+x.nvvnNet
+  }),{q:0,tradeValue:0,corridor:0,pxFee:0,pxGst:0,powerExchangeNet:0,nvvnMargin:0,nvvnGst:0,nvvnNet:0});
+
+  $("billKpis").innerHTML=[
+    {t:"Traded Quantum",v:totals.q.toFixed(4)+" MWh"},
+    {t:"Trade Value",v:money(totals.tradeValue)},
+    {t:"Power Exchange Net",v:money(totals.powerExchangeNet)},
+    {t:"Final NVVN Net",v:money(totals.nvvnNet)}
+  ].map(k=>`<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200"><p class="text-[10px] font-bold uppercase text-slate-500">${k.t}</p><h3 class="text-lg font-black text-slate-800 mt-1">${k.v}</h3></div>`).join("");
+
+  $("billRows").innerHTML=rows.map(x=>`
+    <tr class="hover:bg-slate-50 font-medium">
+      <td class="p-2 border text-center">${x.sl}</td>
+      <td class="p-2 border text-left font-bold">${formatInvoiceDate(x.date)}</td>
+      <td class="p-2 border text-center">SELL</td>
+      <td class="p-2 border text-center">RTM</td>
+      <td class="p-2 border">${x.q.toFixed(4)}</td>
+      <td class="p-2 border">${x.tradeValue.toFixed(4)}</td>
+      <td class="p-2 border text-rose-600">${x.corridor.toFixed(4)}</td>
+      <td class="p-2 border text-amber-700">${x.pxFee.toFixed(4)}</td>
+      <td class="p-2 border text-amber-700">${x.pxGst.toFixed(4)}</td>
+      <td class="p-2 border font-bold text-emerald-700">${x.powerExchangeNet.toFixed(4)}</td>
+      <td class="p-2 border text-blue-700">${x.nvvnMargin.toFixed(4)}</td>
+      <td class="p-2 border text-blue-700">${x.nvvnGst.toFixed(4)}</td>
+      <td class="p-2 border font-black text-emerald-800 bg-emerald-50">${x.nvvnNet.toFixed(4)}</td>
+    </tr>`).join("");
+
+  const f=v=>Number(v||0).toFixed(4);
+  $("billFoot").innerHTML=`
+    <tr class="bg-slate-100 font-extrabold">
+      <td class="p-2 border" colspan="4">Sub Total (SALE)</td>
+      <td class="p-2 border">${f(totals.q)}</td><td class="p-2 border">${f(totals.tradeValue)}</td>
+      <td class="p-2 border">${f(totals.corridor)}</td><td class="p-2 border">${f(totals.pxFee)}</td>
+      <td class="p-2 border">${f(totals.pxGst)}</td><td class="p-2 border">${f(totals.powerExchangeNet)}</td>
+      <td class="p-2 border">${f(totals.nvvnMargin)}</td><td class="p-2 border">${f(totals.nvvnGst)}</td>
+      <td class="p-2 border bg-emerald-100 text-emerald-800">${f(totals.nvvnNet)}</td>
+    </tr>
+    <tr class="bg-blue-50 font-black">
+      <td class="p-2 border" colspan="4">Grand Total</td>
+      <td class="p-2 border">${f(totals.q)}</td><td class="p-2 border">${f(totals.tradeValue)}</td>
+      <td class="p-2 border">${f(totals.corridor)}</td><td class="p-2 border">${f(totals.pxFee)}</td>
+      <td class="p-2 border">${f(totals.pxGst)}</td><td class="p-2 border">${f(totals.powerExchangeNet)}</td>
+      <td class="p-2 border">${f(totals.nvvnMargin)}</td><td class="p-2 border">${f(totals.nvvnGst)}</td>
+      <td class="p-2 border bg-emerald-100 text-emerald-900">${f(totals.nvvnNet)}</td>
+    </tr>`;
+}
+
+function exportBillingExcel() {
+  const rows=buildBillingRows();
+  const aoa=[
+    ["Annexure 1 to NVVN Reimbursement Invoice"],
+    ["Client: THDC INDIA LIMITED","Portfolio: N2UP0NVN0289"],
+    [],
+    ["Sl.No.","Delivery (Schedule) Date","Txn Type (Sale/Buy)","Mkt Seg#","Traded Quantum","Trade Value","Corridor Charges","Power Exchange Fees","GST on Power Exchange Fees","Net receivable (+) / payable (-) Power Exchange","NVVN Margin","GST on NVVN Margin","Net receivable (+) / payable (-) NVVN"],
+    ...rows.map(x=>[x.sl,formatInvoiceDate(x.date),x.txn,x.seg,x.q,x.tradeValue,x.corridor,x.pxFee,x.pxGst,x.powerExchangeNet,x.nvvnMargin,x.nvvnGst,x.nvvnNet])
+  ];
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"]=[8,18,16,10,15,16,16,18,22,27,16,19,27].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,"Annexure");
+  XLSX.writeFile(wb,"THDC_11MW_NVVN_Annexure_Billing.xlsx");
+}
+
+function exportBillingPDF() {
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF("landscape","mm","a3");
+  doc.setFontSize(15); doc.text("Annexure 1 to NVVN Reimbursement Invoice",14,14);
+  doc.setFontSize(9); doc.text("Client: THDC INDIA LIMITED | Portfolio: N2UP0NVN0289 | SELL / RTM",14,20);
+  doc.autoTable({
+    html:"#billingTable",startY:25,theme:"grid",
+    styles:{fontSize:6.5,cellPadding:1.5,halign:"right"},
+    headStyles:{fillColor:[55,65,81],fontSize:6.5},
+    columnStyles:{0:{halign:"center"},1:{halign:"left"},2:{halign:"center"},3:{halign:"center"}}
+  });
+  doc.save("THDC_11MW_NVVN_Annexure_Billing.pdf");
+}
+
+function getGroupingKey(dateStr, type) {
+    let d = new Date(dateStr); let y = d.getFullYear(); let m = d.getMonth(); 
+    if (type === 'day') return dateStr; 
+    if (type === 'month') return `${mNames[months[(m-3+12)%12]]} ${y}`;
+    let fyYr = m < 3 ? y - 1 : y; 
+    let fy = `FY ${String(fyYr).slice(-2)}-${String(fyYr+1).slice(-2)}`;
+    if (type === 'fy') return fy;
+    let q = m < 3 ? 'Q4' : m < 6 ? 'Q1' : m < 9 ? 'Q2' : 'Q3';
+    if (type === 'quarter') return `${fy} ${q}`;
+}
+
+function getReportDateFilteredTrades(){
+  const s=$("reportStartDate")?.value || "";
+  const e=$("reportEndDate")?.value || "";
+  return sortedTrades().filter(t=>(!s||t.date>=s)&&(!e||t.date<=e));
+}
+
+function setReportPeriodFromData(){
+  const a=sortedTrades();
+  if(!a.length){ alert("No data available."); return; }
+  $("reportStartDate").value=a[0].date;
+  $("reportEndDate").value=a[a.length-1].date;
+  renderReports();
+}
+
+function clearReportPeriod(){
+  $("reportStartDate").value="";
+  $("reportEndDate").value="";
+  renderReports();
+}
+
+function renderReports() {
+  let groupBy=$("reportGroup").value;
+  let map={};
+  const trades=getReportDateFilteredTrades();
+
+  let dailyMap={};
+  trades.forEach(t=>{
+    if(!dailyMap[t.date]) dailyMap[t.date]={q:0,r:0};
+    dailyMap[t.date].q+=qtyMwh(t);
+    dailyMap[t.date].r+=amount(t);
+  });
+
+  Object.keys(dailyMap).sort().forEach(d=>{
+    let dayData=dailyMap[d];
+    let o=obFor(d);
+    let gridChg=(o.nldcApp||0)+(o.nldcSched||0)+(o.ctu||0)+(o.stu||0)+(o.sldc||0);
+    let pxM=roundPrecise(dayData.q*1000*pxRate);
+    let pxG=roundPrecise(pxM*(pxGst/100));
+    let nvM=roundPrecise(dayData.q*1000*nvvnRate);
+    let nvG=roundPrecise(nvM*(nvvnGst/100));
+    let key=getGroupingKey(d,groupBy);
+    if(!map[key]) map[key]={q:0,r:0,grid:0,px:0,nvvn:0};
+    map[key].q+=dayData.q;
+    map[key].r+=dayData.r;
+    map[key].grid+=gridChg;
+    map[key].px+=(pxM+pxG);
+    map[key].nvvn+=(nvM+nvG);
+  });
+
+  $("reportRows").innerHTML=Object.entries(map).map(([k,x])=>{
+    let w=x.q?x.r/x.q:0;
+    let totalDed=roundPrecise(x.grid+x.px+x.nvvn);
+    let net=roundPrecise(x.r-totalDed);
+    return `<tr class="hover:bg-slate-50 font-medium">
+      <td class="p-3 text-left font-bold text-slate-800">${k}</td>
+      <td class="p-3 text-blue-700 font-bold">${x.q.toFixed(3)}</td>
+      <td class="p-3 text-slate-600">₹${w.toFixed(2)}</td>
+      <td class="p-3 text-emerald-700 font-bold">₹${x.r.toFixed(2)}</td>
+      <td class="p-3 text-rose-600 font-semibold">₹${x.grid.toFixed(2)}</td>
+      <td class="p-3 text-amber-600 font-semibold">₹${x.px.toFixed(2)}</td>
+      <td class="p-3 text-blue-600 font-semibold">₹${x.nvvn.toFixed(2)}</td>
+      <td class="p-3 text-rose-700 font-bold">₹${totalDed.toFixed(2)}</td>
+      <td class="p-3 text-emerald-700 font-black bg-emerald-50/50">₹${net.toFixed(2)}</td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="9" class="p-6 text-center text-slate-400">No data available for selected period</td></tr>';
+
+  const s=$("reportStartDate")?.value||"All";
+  const e=$("reportEndDate")?.value||"All";
+  const note=$("reportPeriodNote");
+  if(note) note.textContent=`Report Period: ${s} → ${e} • ${trades.length} trade rows`;
+}
+
+function exportReportExcel() {
+  let wb=XLSX.utils.table_to_book(document.getElementById("reportsTable"),{sheet:"Summary"});
+  const s=$("reportStartDate").value||"ALL", e=$("reportEndDate").value||"ALL";
+  XLSX.writeFile(wb,`THDC_11MW_${$("reportGroup").value}_${s}_TO_${e}_Report.xlsx`);
+}
+
+function exportReportPDF() {
+  const { jsPDF } = window.jspdf; 
+  const doc = new jsPDF('landscape');
+  doc.setFontSize(14); 
+  doc.setTextColor(30, 64, 175); 
+  doc.text("THDCIL 11 MW Solar — Performance & Settlement Report", 14, 15);
+  const rs=$("reportStartDate").value||"ALL", re=$("reportEndDate").value||"ALL";
+  doc.text(`Report Period: ${rs} to ${re}`,14,20);
+  doc.setFontSize(9); 
+  doc.setTextColor(100); 
+  doc.text(`Generated: ${new Date().toLocaleDateString()} | NVVNL Rate: ₹${nvvnRate}/kWh (+${nvvnGst}% GST) | PX Rate: ₹${pxRate}/kWh (+${pxGst}% GST)`, 14, 22);
+
+  doc.autoTable({ 
+    html: '#reportsTable', 
+    startY: 32, 
+    theme: 'grid', 
+    headStyles: { fillColor: [30, 58, 138], fontSize: 8 }, 
+    styles: { fontSize: 7.5, cellPadding: 2.5 } 
+  });
+  doc.save(`THDC_11MW_${$("reportGroup").value}_${rs}_TO_${re}_Report.pdf`);
+}
+
+// OBLIGATIONS TAB
+function loadObligation() {
+  const d=$("oDate")?.value||"";
+  const o=obFor(d);
+  $("o_nldcApp").value=Number(o.nldcApp||0).toFixed(2);
+  $("o_nldcSched").value=Number(
+    o.nldcSched!==undefined ? o.nldcSched :
+    ((o.nldcSchedBuy||0)+(o.nldcSchedSell||0))
+  ).toFixed(2);
+  $("o_ctu").value=Number(o.ctu||0).toFixed(2);
+  $("o_stu").value=Number(o.stu||0).toFixed(2);
+  $("o_sldc").value=Number(o.sldc||0).toFixed(2);
+}
+
+function saveObligation() {
+  const d=$("oDate")?.value||"";
+  if(!d){ alert("Please select Date."); return; }
+
+  // These are the actual visible manual fields in this version.
+  // NLDC Sched is a combined field, exactly as displayed in the table.
+  const o={
+    date:d,
+    nldcApp:Number($("o_nldcApp")?.value)||0,
+    nldcSched:Number($("o_nldcSched")?.value)||0,
+    ctu:Number($("o_ctu")?.value)||0,
+    stu:Number($("o_stu")?.value)||0,
+    sldc:Number($("o_sldc")?.value)||0,
+    // Keep the full eight-component model available; absent components are zero.
+    nldcSchedBuy:0,
+    nldcSchedSell:Number($("o_nldcSched")?.value)||0,
+    distribution:0,
+    other:0
+  };
+
+  const i=state.obligations.findIndex(x=>x.date===d);
+  if(i>=0) state.obligations[i]=o;
+  else state.obligations.push(o);
+
+  save();
+  renderObligations();
+  renderBilling();
+  renderReports();
+
+  const total=o.nldcApp+o.nldcSched+o.ctu+o.stu+o.sldc;
+  alert("Saved for "+d+" • Total Corridor Charges: ₹"+total.toFixed(2));
+}
+
+function deleteObligation(date) {
+  const o=state.obligations.find(x=>x.date===date);
+  if(!o) return;
+  const total=Math.abs(
+    Number(o.nldcApp||0)+Number(o.nldcSched||0)+Number(o.ctu||0)+
+    Number(o.stu||0)+Number(o.sldc||0)+Number(o.distribution||0)+Number(o.other||0));
+
+  if(!confirm(`Delete corridor charges for ${date}?\nTotal: ₹${total.toFixed(2)}\n\nThis will remove only the corridor-charge record, not the 96-block trade data.`)) return;
+
+  state.obligations=state.obligations.filter(x=>x.date!==date);
+  save();
+  renderObligations();
+  renderBilling();
+  renderReports();
+
+  if($("oDate")?.value===date) loadObligation();
+}
+
+function applyObligationPeriod(){
+  const s=$("obStartDate")?.value||"", e=$("obEndDate")?.value||"";
+  if(s&&e&&s>e){alert("End Date cannot be before Start Date.");return;}
+  window.obligationPeriod={start:s,end:e};
+  if($("obPeriodStatus")) $("obPeriodStatus").textContent=`Applied: ${s||"All"} → ${e||"All"}`;
+  renderObligations();
+}
+function clearObligationPeriod(){
+  window.obligationPeriod={start:"",end:""};
+  if($("obStartDate")) $("obStartDate").value="";
+  if($("obEndDate")) $("obEndDate").value="";
+  if($("obPeriodStatus")) $("obPeriodStatus").textContent="Showing all corridor-charge dates.";
+  renderObligations();
+}
+function applyManualOverridePeriod(){
+  const s=$("manualStartDate")?.value||"", e=$("manualEndDate")?.value||"";
+  if(s&&e&&s>e){alert("End Date cannot be before Start Date.");return;}
+  window.manualOverridePeriod={start:s,end:e};
+  if($("manualPeriodStatus")) $("manualPeriodStatus").textContent=`Applied: ${s||"All"} → ${e||"All"}`;
+  // Keep the existing obligation period in sync with the manual override period.
+  window.obligationPeriod={start:s,end:e};
+  if($("obStartDate")) $("obStartDate").value=s;
+  if($("obEndDate")) $("obEndDate").value=e;
+  renderObligations();
+}
+function clearManualOverridePeriod(){
+  window.manualOverridePeriod={start:"",end:""};
+  window.obligationPeriod={start:"",end:""};
+  if($("manualStartDate")) $("manualStartDate").value="";
+  if($("manualEndDate")) $("manualEndDate").value="";
+  if($("obStartDate")) $("obStartDate").value="";
+  if($("obEndDate")) $("obEndDate").value="";
+  if($("manualPeriodStatus")) $("manualPeriodStatus").textContent="Showing all manual override dates.";
+  renderObligations();
+}
+function renderObligations() {
+  const bp=window.obligationPeriod||{start:"",end:""};
+  const a=[...state.obligations]
+    .filter(x=>(!bp.start||x.date>=bp.start)&&(!bp.end||x.date<=bp.end))
+    .sort((x,y)=>x.date.localeCompare(y.date));
+  $("obRows").innerHTML=a.map(o=>{
+    const sched=(Number(o.nldcSched)!==0 || o.nldcSched!==undefined)
+      ? Number(o.nldcSched||0)
+      : Number(o.nldcSchedBuy||0)+Number(o.nldcSchedSell||0);
+    const tot=Math.abs(Number(o.nldcApp||0)+sched+Number(o.ctu||0)+Number(o.stu||0)+Number(o.sldc||0)
+      +Number(o.distribution||0)+Number(o.other||0));
+    return `<tr class="hover:bg-slate-50 font-medium">
+      <td class="p-3 text-left font-bold border-r">${o.date}</td>
+      <td class="p-3">${Number(o.nldcApp||0).toFixed(2)}</td>
+      <td class="p-3">${sched.toFixed(2)}</td>
+      <td class="p-3">${Number(o.ctu||0).toFixed(2)}</td>
+      <td class="p-3">${Number(o.stu||0).toFixed(2)}</td>
+      <td class="p-3 border-r">${Number(o.sldc||0).toFixed(2)}</td>
+      <td class="p-3 font-bold text-rose-600">₹${tot.toFixed(2)}</td>
+        <td class="p-3 text-center">
+          <button onclick="deleteObligation('${o.date}')"
+            class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-1.5 rounded-lg text-[10px]"
+            title="Delete this date's corridor charges">
+            <i class="fa-solid fa-trash mr-1"></i>Delete
+          </button>
+        </td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="8" class="p-5 text-center text-slate-400">No corridor charge data saved.</td></tr>`;
+}
+
+window.obligationPeriod={start:"",end:""};
+if(state.obligations.length){
+  const oo=[...state.obligations].sort((a,b)=>a.date.localeCompare(b.date));
+  if($("obStartDate")) $("obStartDate").value=oo[0].date;
+  if($("obEndDate")) $("obEndDate").value=oo[oo.length-1].date;
+  window.obligationPeriod={start:oo[0].date,end:oo[oo.length-1].date};
+}
+// Init — load the multi-month dataset from IndexedDB before rendering.
+async function bootstrapSolarApp(){
+  await loadStateFromIndexedDB();
+
+  let all=sortedTrades();
+  if(all.length){
+    let l=all[all.length-1].date;
+    if($("tFrom"))$("tFrom").value=all[0].date;
+    if($("tTo"))$("tTo").value=l;
+    if($("oDate"))$("oDate").value=l;
+    if($("clearDateInput"))$("clearDateInput").value=l;
+  }
+  renderDashboard();
+  if(sortedTrades().length){
+    if($("reportStartDate"))$("reportStartDate").value=sortedTrades()[0].date;
+    if($("reportEndDate"))$("reportEndDate").value=sortedTrades()[sortedTrades().length-1].date;
+  }
+  renderReports();
+  if(typeof renderObligations==="function")renderObligations();
+}
+bootstrapSolarApp();
+</script>
+
+<script>
+function render96BlockStudy(date){
+  const heat=$("heatmap96"), rows=$("blockStudyRows");
+  if(!heat||!rows)return;
+  const d=date || $("clearDateInput")?.value || sortedTrades()[0]?.date || "";
+  const by={};
+  sortedTrades().filter(t=>t.date===d).forEach(t=>by[t.block]=t);
+  const p=b=>{let s=(b-1)*15,e=b*15,f=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");return f(s)+"-"+(b===96?"24:00":f(e));};
+  heat.innerHTML=Array.from({length:96},(_,i)=>{
+    const b=i+1,t=by[b],m=t?Math.abs(t.qty)*0.25:0;
+    const cls=t?(m>2.75?"bg-blue-800":m>0?"bg-blue-500":"bg-slate-300"):"bg-slate-200";
+    return `<div class="${cls} rounded text-white text-[9px] h-7 flex items-center justify-center" title="Block ${b}: ${t?m.toFixed(3)+' MWh':'No Data'}">${b}</div>`;
+  }).join("");
+  rows.innerHTML=Array.from({length:96},(_,i)=>{
+    const b=i+1,t=by[b],m=t?Math.abs(t.qty)*0.25:0;
+    return `<tr class="border-b"><td class="p-2 text-left font-bold">${b}</td><td class="p-2">${p(b)}</td><td class="p-2">${t?Math.abs(t.qty).toFixed(4):"—"}</td><td class="p-2">${m.toFixed(4)}</td><td class="p-2">${t?(+t.mcp).toFixed(2):"—"}</td><td class="p-2">${t?(m*t.mcp).toFixed(2):"0.00"}</td><td class="p-2 font-bold ${t?'text-emerald-600':'text-rose-500'}">${t?'VALID':'NO DATA'}</td></tr>`;
+  }).join("");
+  const v=validateDaily11MW(d);
+  if($("heatmapStatus")) $("heatmapStatus").textContent=`${d||"No date"} • ${v.blocks}/96 blocks • ${v.energy.toFixed(3)} MWh • ${v.physicalOK?"PHYSICAL LIMIT OK":"PHYSICAL LIMIT ERROR"}`;
+}
+const _rd=window.renderDashboard;
+window.renderDashboard=function(){try{_rd&&_rd();}finally{render96BlockStudy();}};
+</script>
+</body>
+</html>
