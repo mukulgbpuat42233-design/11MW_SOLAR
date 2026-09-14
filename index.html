@@ -56,8 +56,8 @@
   <div class="max-w-7xl mx-auto px-4 py-2.5 sm:px-6 flex items-center justify-between flex-wrap gap-3">
     <!-- Brand Logo and Name (Clickable to return directly to Front Page) -->
     <div onclick="goToHomePage()" class="flex items-center space-x-3.5 cursor-pointer select-none group" title="Return to Front Page / Dashboard">
-      <div class="w-12 h-12 rounded-xl bg-white p-1 shadow-md flex items-center justify-center border border-white/80 shrink-0 group-hover:ring-2 group-hover:ring-amber-400 transition transform group-hover:scale-105">
-        <img src="thdc_emblem.png" onerror="this.src='thdcil_emblem.svg'" alt="THDCIL Official Emblem" class="w-full h-full object-contain" referrerPolicy="no-referrer">
+      <div class="w-12 h-12 rounded-xl bg-white p-1.5 shadow-md flex items-center justify-center border border-white/80 shrink-0 group-hover:ring-2 group-hover:ring-amber-400 transition transform group-hover:scale-105">
+        <img src="thdc_emblem.png?v=3" onerror="this.src='thdcil_emblem.svg'" alt="THDCIL Official Emblem" class="w-full h-full object-contain mx-auto block" referrerPolicy="no-referrer">
       </div>
       <div>
         <div class="flex items-center gap-2 flex-wrap">
@@ -124,26 +124,26 @@
   <section id="dashboard" class="page-sec space-y-6">
     <!-- Market Segment & Transaction Type Quick Filter -->
     <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-layer-group text-blue-700"></i> Market Segment:
         </span>
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold" id="dashSegPills">
-          <button type="button" class="dash-seg-btn active px-3 py-1 rounded-lg bg-white text-blue-900 shadow-sm transition" onclick="setDashboardSeg('ALL')">All</button>
-          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('G-DAM')">G-DAM</button>
-          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('DAM')">DAM</button>
-          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('TAM')">TAM</button>
-          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('RTM')">RTM</button>
+        <div class="inline-flex rounded-xl bg-slate-100/90 p-1 text-xs font-bold gap-1 border border-slate-200/60 shadow-inner" id="dashSegPills">
+          <button type="button" data-seg="ALL" class="dash-seg-btn active px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-2 ring-blue-300/80 font-extrabold scale-105 transition-all duration-150 cursor-pointer select-none" onclick="setDashboardSeg('ALL')">All</button>
+          <button type="button" data-seg="G-DAM" class="dash-seg-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardSeg('G-DAM')"><i class="fa-solid fa-leaf text-emerald-500 mr-1"></i>G-DAM</button>
+          <button type="button" data-seg="DAM" class="dash-seg-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardSeg('DAM')"><i class="fa-solid fa-sun text-cyan-500 mr-1"></i>DAM</button>
+          <button type="button" data-seg="TAM" class="dash-seg-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardSeg('TAM')"><i class="fa-solid fa-calendar-days text-purple-500 mr-1"></i>TAM</button>
+          <button type="button" data-seg="RTM" class="dash-seg-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardSeg('RTM')"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>RTM</button>
         </div>
       </div>
-      <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-arrow-right-arrow-left text-emerald-600"></i> Transaction Type:
         </span>
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold" id="dashTxnPills">
-          <button type="button" class="dash-txn-btn active px-3 py-1 rounded-lg bg-white text-emerald-800 shadow-sm transition" onclick="setDashboardTxn('ALL')">All</button>
-          <button type="button" class="dash-txn-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardTxn('SELL')">SELL</button>
-          <button type="button" class="dash-txn-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardTxn('BUY')">BUY</button>
+        <div class="inline-flex rounded-xl bg-slate-100/90 p-1 text-xs font-bold gap-1 border border-slate-200/60 shadow-inner" id="dashTxnPills">
+          <button type="button" data-txn="ALL" class="dash-txn-btn active px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-md ring-2 ring-slate-300/80 font-extrabold scale-105 transition-all duration-150 cursor-pointer select-none" onclick="setDashboardTxn('ALL')">All</button>
+          <button type="button" data-txn="SELL" class="dash-txn-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardTxn('SELL')"><i class="fa-solid fa-arrow-trend-up text-emerald-500 mr-1"></i>SELL</button>
+          <button type="button" data-txn="BUY" class="dash-txn-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardTxn('BUY')"><i class="fa-solid fa-arrow-trend-down text-rose-500 mr-1"></i>BUY</button>
         </div>
       </div>
     </div>
@@ -861,10 +861,10 @@ function compactState(s){
     })),
     obligations:(Array.isArray(s?.obligations)?s.obligations:[]).map(o=>({
       date:o.date,
-      nldcApp:Number(o.nldcApp)||0, nldcSched:Number(o.nldcSched)||0,
-      nldcSchedBuy:Number(o.nldcSchedBuy)||0, nldcSchedSell:Number(o.nldcSchedSell)||0,
-      ctu:Number(o.ctu)||0, stu:Number(o.stu)||0, sldc:Number(o.sldc)||0,
-      distribution:Number(o.distribution)||0, other:Number(o.other)||0
+      nldcApp:Math.abs(Number(o.nldcApp)||0), nldcSched:Math.abs(Number(o.nldcSched)||0),
+      nldcSchedBuy:Math.abs(Number(o.nldcSchedBuy)||0), nldcSchedSell:Math.abs(Number(o.nldcSchedSell)||0),
+      ctu:Math.abs(Number(o.ctu)||0), stu:Math.abs(Number(o.stu)||0), sldc:Math.abs(Number(o.sldc)||0),
+      distribution:Math.abs(Number(o.distribution)||0), other:Math.abs(Number(o.other)||0)
     }))
   };
 }
@@ -970,7 +970,8 @@ function save() {
     }
   }
 }
-function money(n) { return "₹" + Number(n||0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function money(n) { return "₹ " + Math.abs(Number(n||0)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function formatIndianCurrency(n) { return Math.abs(Number(n||0)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function qtyMwh(t) { return Math.abs(t.qty) * 0.25; }
 
 // CRITICAL FIX: Strict Block-level rounding matching Excel perfectly
@@ -1207,11 +1208,11 @@ function importStrictSheet1(workbook, forcedDate=""){
   // corresponding charge amounts are in column N (index 13).
   const cleanText=v=>String(v??"").replace(/\s+/g," ").trim().toLowerCase();
   const parseCharge=v=>{
-    if(typeof v==="number") return Number.isFinite(v)?v:0;
-    const s=String(v??"").replace(/,/g,"").replace(/[₹`*]/g,"").trim();
+    if(typeof v==="number") return Number.isFinite(v)?Math.abs(v):0;
+    const s=String(v??"").replace(/,/g,"").replace(/[₹`*()]/g,"").trim();
     if(!s || s==="-" || s==="—") return 0;
     const n=parseFloat(s);
-    return Number.isFinite(n)?n:0;
+    return Number.isFinite(n)?Math.abs(n):0;
   };
   const obligation={
     date:tradeDate,
@@ -1337,15 +1338,17 @@ function importStrictSheet1(workbook, forcedDate=""){
   const v=validateDaily11MW(tradeDate);
   showUploadValidation(tradeDate,`New ${newN} • Updated ${updN} • Duplicate unchanged ${skipN}`);
   if($("uploadStatusMsg")) {
-    const corridorTotal=Math.abs(obligation.nldcApp+obligation.ctu+obligation.nldcSchedBuy+obligation.nldcSchedSell+
-      obligation.stu+obligation.distribution+obligation.other+obligation.sldc);
+    const corridorTotal=Math.abs(obligation.nldcApp)+Math.abs(obligation.ctu)+
+      Math.abs(obligation.nldcSchedBuy)+Math.abs(obligation.nldcSchedSell)+
+      Math.abs(obligation.stu)+Math.abs(obligation.distribution)+
+      Math.abs(obligation.other)+Math.abs(obligation.sldc);
     $("uploadStatusMsg").innerHTML=
       `<b>Sheet1 ✓</b> • Delivery Date: ${tradeDate} • Segment: <span class="px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 font-bold text-[11px]">${detectedSeg}</span> • Txn: <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px]">${detectedTxn}</span> • 96-block layout detected • ${records.length} rows
-       <br><b>Corridor Charges: ₹${corridorTotal.toFixed(2)}</b>
-       <br><span class="text-[10px]">NLDC App ₹${obligation.nldcApp.toFixed(2)} • CTU ₹${obligation.ctu.toFixed(2)}
-       • NLDC Buy ₹${obligation.nldcSchedBuy.toFixed(2)} • NLDC Sell ₹${obligation.nldcSchedSell.toFixed(2)}
-       • STU ₹${obligation.stu.toFixed(2)} • Distribution ₹${obligation.distribution.toFixed(2)}
-       • Other ₹${obligation.other.toFixed(2)} • SLDC ₹${obligation.sldc.toFixed(2)}</span>`;
+       <br><b>Corridor Charges: ₹ ${corridorTotal.toFixed(2)}</b>
+       <br><span class="text-[10px]">NLDC App ₹ ${Math.abs(obligation.nldcApp).toFixed(2)} • CTU ₹ ${Math.abs(obligation.ctu).toFixed(2)}
+       • NLDC Buy ₹ ${Math.abs(obligation.nldcSchedBuy).toFixed(2)} • NLDC Sell ₹ ${Math.abs(obligation.nldcSchedSell).toFixed(2)}
+       • STU ₹ ${Math.abs(obligation.stu).toFixed(2)} • Distribution ₹ ${Math.abs(obligation.distribution).toFixed(2)}
+       • Other ₹ ${Math.abs(obligation.other).toFixed(2)} • SLDC ₹ ${Math.abs(obligation.sldc).toFixed(2)}</span>`;
   }
   if($("uploadStats")) $("uploadStats").innerHTML=
     `New: ${newN} | Updated: ${updN} | Duplicate unchanged: ${skipN} | ${v.blocks}/96 blocks | ${v.energy.toFixed(3)} MWh`;
@@ -1591,37 +1594,61 @@ let mChartInstance = null;
 window.dashSeg = "ALL";
 window.dashTxn = "ALL";
 
-function setDashboardSeg(seg) {
-  window.dashSeg = seg;
+const segColorMap = {
+  'ALL': 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-2 ring-blue-300/80 font-extrabold',
+  'G-DAM': 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md ring-2 ring-emerald-300/80 font-extrabold',
+  'DAM': 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md ring-2 ring-cyan-300/80 font-extrabold',
+  'TAM': 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md ring-2 ring-purple-300/80 font-extrabold',
+  'RTM': 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md ring-2 ring-amber-300/80 font-extrabold'
+};
+
+const txnColorMap = {
+  'ALL': 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-md ring-2 ring-slate-300/80 font-extrabold',
+  'SELL': 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md ring-2 ring-emerald-300/80 font-extrabold',
+  'BUY': 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md ring-2 ring-rose-300/80 font-extrabold'
+};
+
+function applySegButtonStyles(activeSeg) {
   document.querySelectorAll(".dash-seg-btn").forEach(b => {
-    const text = b.innerText.trim();
-    if (text === (seg === "ALL" ? "All" : seg)) {
-      b.classList.add("active", "bg-white", "text-blue-900", "shadow-sm");
-      b.classList.remove("text-slate-600");
+    const s = b.getAttribute("data-seg") || (b.innerText.trim().toUpperCase().includes("ALL") ? "ALL" : b.innerText.trim());
+    b.className = "dash-seg-btn px-3 py-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none ";
+    if (s === activeSeg) {
+      const activeCls = segColorMap[s] || segColorMap['ALL'];
+      b.className += activeCls + " active scale-105";
     } else {
-      b.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm");
-      b.classList.add("text-slate-600");
+      b.className += "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold";
     }
   });
+}
+
+function applyTxnButtonStyles(activeTxn) {
+  document.querySelectorAll(".dash-txn-btn").forEach(b => {
+    const t = b.getAttribute("data-txn") || (b.innerText.trim().toUpperCase().includes("ALL") ? "ALL" : b.innerText.trim());
+    b.className = "dash-txn-btn px-3.5 py-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none ";
+    if (t === activeTxn) {
+      const activeCls = txnColorMap[t] || txnColorMap['ALL'];
+      b.className += activeCls + " active scale-105";
+    } else {
+      b.className += "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold";
+    }
+  });
+}
+
+function setDashboardSeg(seg) {
+  window.dashSeg = seg;
+  applySegButtonStyles(seg);
   renderDashboard();
 }
 
 function setDashboardTxn(txn) {
   window.dashTxn = txn;
-  document.querySelectorAll(".dash-txn-btn").forEach(b => {
-    const text = b.innerText.trim();
-    if (text === (txn === "ALL" ? "All" : txn)) {
-      b.classList.add("active", "bg-white", "text-emerald-800", "shadow-sm");
-      b.classList.remove("text-slate-600");
-    } else {
-      b.classList.remove("active", "bg-white", "text-emerald-800", "shadow-sm");
-      b.classList.add("text-slate-600");
-    }
-  });
+  applyTxnButtonStyles(txn);
   renderDashboard();
 }
 
 function renderDashboard() {
+  applySegButtonStyles(window.dashSeg || "ALL");
+  applyTxnButtonStyles(window.dashTxn || "ALL");
   let ts = sortedTrades();
   if (window.dashSeg && window.dashSeg !== "ALL") ts = ts.filter(t => (t.seg || "G-DAM") === window.dashSeg);
   if (window.dashTxn && window.dashTxn !== "ALL") ts = ts.filter(t => (t.txn || "SELL") === window.dashTxn);
@@ -1779,9 +1806,24 @@ function exportTrades() {
 }
 
 // BILLING ENGINE
-function obFor(d) { return state.obligations.find(x=>x.date===d) || {
-  nldcApp:0,nldcSched:0,ctu:0,nldcSchedBuy:0,nldcSchedSell:0,stu:0,distribution:0,other:0,sldc:0
-}; }
+function obFor(d) {
+  const o = state.obligations.find(x=>x.date===d);
+  if (!o) return {
+    nldcApp:0,nldcSched:0,ctu:0,nldcSchedBuy:0,nldcSchedSell:0,stu:0,distribution:0,other:0,sldc:0
+  };
+  return {
+    date: o.date,
+    nldcApp: Math.abs(Number(o.nldcApp)||0),
+    nldcSched: Math.abs(Number(o.nldcSched)||0),
+    ctu: Math.abs(Number(o.ctu)||0),
+    nldcSchedBuy: Math.abs(Number(o.nldcSchedBuy)||0),
+    nldcSchedSell: Math.abs(Number(o.nldcSchedSell)||0),
+    stu: Math.abs(Number(o.stu)||0),
+    distribution: Math.abs(Number(o.distribution)||0),
+    other: Math.abs(Number(o.other)||0),
+    sldc: Math.abs(Number(o.sldc)||0)
+  };
+}
 
 function buildBillingRows() {
   const allDates=[...new Set(sortedTrades().map(x=>x.date))].sort();
@@ -1801,12 +1843,12 @@ function buildBillingRows() {
     const q=roundPrecise(a.reduce((s,x)=>s+qtyMwh(x),0));
     const tradeValue=roundPrecise(a.reduce((s,x)=>s+amount(x),0));
     const o=obFor(d);
-    const corridor=Math.abs(roundPrecise(
-      (Number(o.nldcApp)||0)+(Number(o.ctu)||0)+
-      (Number(o.nldcSchedBuy)||0)+(Number(o.nldcSchedSell)||0)+
-      (Number(o.stu)||0)+(Number(o.distribution)||0)+
-      (Number(o.other)||0)+(Number(o.sldc)||0)
-    ));
+    const corridor=roundPrecise(
+      (Math.abs(Number(o.nldcApp))||0)+(Math.abs(Number(o.ctu))||0)+
+      (Math.abs(Number(o.nldcSchedBuy))||0)+(Math.abs(Number(o.nldcSchedSell))||0)+
+      (Math.abs(Number(o.stu))||0)+(Math.abs(Number(o.distribution))||0)+
+      (Math.abs(Number(o.other))||0)+(Math.abs(Number(o.sldc))||0)
+    );
     const pxFee=roundPrecise(q*1000*pxRate);
     const pxGstAmt=roundPrecise(pxFee*(pxGst/100));
     const powerExchangeNet=roundPrecise(tradeValue-corridor-pxFee-pxGstAmt);
@@ -1867,12 +1909,12 @@ function buildBillingMonthlySummary() {
     const q = roundPrecise(a.reduce((s, x) => s + qtyMwh(x), 0));
     const tradeValue = roundPrecise(a.reduce((s, x) => s + amount(x), 0));
     const o = obFor(d);
-    const corridor = Math.abs(roundPrecise(
-      (Number(o.nldcApp) || 0) + (Number(o.ctu) || 0) +
-      (Number(o.nldcSchedBuy) || 0) + (Number(o.nldcSchedSell) || 0) +
-      (Number(o.stu) || 0) + (Number(o.distribution) || 0) +
-      (Number(o.other) || 0) + (Number(o.sldc) || 0)
-    ));
+    const corridor = roundPrecise(
+      (Math.abs(Number(o.nldcApp)) || 0) + (Math.abs(Number(o.ctu)) || 0) +
+      (Math.abs(Number(o.nldcSchedBuy)) || 0) + (Math.abs(Number(o.nldcSchedSell)) || 0) +
+      (Math.abs(Number(o.stu)) || 0) + (Math.abs(Number(o.distribution)) || 0) +
+      (Math.abs(Number(o.other)) || 0) + (Math.abs(Number(o.sldc)) || 0)
+    );
     const pxFee = roundPrecise(q * 1000 * pxRate);
     const pxGstAmt = roundPrecise(pxFee * (pxGst / 100));
     const powerExchangeNet = roundPrecise(tradeValue - corridor - pxFee - pxGstAmt);
@@ -2080,7 +2122,7 @@ function renderBillingSummary() {
         <div class="flex items-center gap-2 mt-1">
           <span class="px-2.5 py-1 rounded-lg border font-black text-xs flex items-center gap-1.5 ${colorCls}">
             <i class="fa-solid ${iconCls}"></i>
-            ${diffSign}${money(diff)} (${diffSign}${pct.toFixed(1)}%)
+            ${isUp ? '+' : ''}${money(Math.abs(diff))} (${isUp ? '+' : ''}${pct.toFixed(1)}%)
           </span>
         </div>
         <div class="text-[10px] text-slate-500 mt-1.5">vs Preceding ${prevMonth.monthLabel}</div>
@@ -2151,7 +2193,7 @@ function renderBillingSummary() {
         const sign = isUp ? '+' : '';
         const cls = isUp ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold';
         const icon = isUp ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
-        momDisplay = `<span class="${cls}"><i class="fa-solid ${icon} text-[9px] mr-1"></i>${sign}${money(x.momDiff)} <span class="text-[10px] font-semibold">(${sign}${x.momPct.toFixed(1)}%)</span></span>`;
+        momDisplay = `<span class="${cls}"><i class="fa-solid ${icon} text-[9px] mr-1"></i>${sign}${money(Math.abs(x.momDiff))} <span class="text-[10px] font-semibold">(${sign}${x.momPct.toFixed(1)}%)</span></span>`;
       }
 
       let seasonVarDisplay = '';
@@ -2966,14 +3008,14 @@ function renderReports() {
       <td class="p-3 text-center">${getSegBadge(segStr)}</td>
       <td class="p-3 text-center">${getTxnBadge(txnStr)}</td>
       <td class="p-3 text-blue-700 font-bold">${x.q.toFixed(3)}</td>
-      <td class="p-3 text-slate-600">₹${w.toFixed(2)}</td>
-      <td class="p-3 text-slate-900 font-bold">₹${x.r.toFixed(2)}</td>
-      <td class="p-3 text-rose-600 font-semibold">₹${x.grid.toFixed(2)}</td>
-      <td class="p-3 text-amber-700 font-semibold">₹${x.px.toFixed(2)}</td>
-      <td class="p-3 text-blue-700 font-semibold">₹${x.nvvn.toFixed(2)}</td>
-      <td class="p-3 text-rose-700 font-bold">₹${rowDed.toFixed(2)}</td>
-      <td class="p-3 text-emerald-800 font-extrabold bg-emerald-50/60">₹${rowNet.toFixed(2)}</td>
-      <td class="p-3 text-indigo-700 font-bold bg-indigo-50/40">₹${netTariff.toFixed(3)}</td>
+      <td class="p-3 text-slate-600">₹ ${Math.abs(w).toFixed(2)}</td>
+      <td class="p-3 text-slate-900 font-bold">₹ ${Math.abs(x.r).toFixed(2)}</td>
+      <td class="p-3 text-rose-600 font-semibold">₹ ${Math.abs(x.grid).toFixed(2)}</td>
+      <td class="p-3 text-amber-700 font-semibold">₹ ${Math.abs(x.px).toFixed(2)}</td>
+      <td class="p-3 text-blue-700 font-semibold">₹ ${Math.abs(x.nvvn).toFixed(2)}</td>
+      <td class="p-3 text-rose-700 font-bold">₹ ${Math.abs(rowDed).toFixed(2)}</td>
+      <td class="p-3 text-emerald-800 font-extrabold bg-emerald-50/60">₹ ${Math.abs(rowNet).toFixed(2)}</td>
+      <td class="p-3 text-indigo-700 font-bold bg-indigo-50/40">₹ ${Math.abs(netTariff).toFixed(3)}</td>
     </tr>`;
   }).join("");
 
@@ -2991,14 +3033,14 @@ function renderReports() {
         <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedSeg}</td>
         <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedTxn}</td>
         <td class="p-3 font-black text-blue-900">${totQ.toFixed(3)}</td>
-        <td class="p-3 text-slate-700 font-bold">₹${totAvgMcp.toFixed(2)}</td>
-        <td class="p-3 font-black text-slate-950">₹${totR.toFixed(2)}</td>
-        <td class="p-3 font-bold text-rose-700">₹${totGrid.toFixed(2)}</td>
-        <td class="p-3 font-bold text-amber-800">₹${totPx.toFixed(2)}</td>
-        <td class="p-3 font-bold text-blue-800">₹${totNvvn.toFixed(2)}</td>
-        <td class="p-3 font-black text-rose-900">₹${totDed.toFixed(2)}</td>
-        <td class="p-3 font-black text-emerald-900 bg-emerald-100/70">₹${totNet.toFixed(2)}</td>
-        <td class="p-3 font-black text-indigo-900 bg-indigo-100/60">₹${totTariff.toFixed(3)}</td>
+        <td class="p-3 text-slate-700 font-bold">₹ ${Math.abs(totAvgMcp).toFixed(2)}</td>
+        <td class="p-3 font-black text-slate-950">₹ ${Math.abs(totR).toFixed(2)}</td>
+        <td class="p-3 font-bold text-rose-700">₹ ${Math.abs(totGrid).toFixed(2)}</td>
+        <td class="p-3 font-bold text-amber-800">₹ ${Math.abs(totPx).toFixed(2)}</td>
+        <td class="p-3 font-bold text-blue-800">₹ ${Math.abs(totNvvn).toFixed(2)}</td>
+        <td class="p-3 font-black text-rose-900">₹ ${Math.abs(totDed).toFixed(2)}</td>
+        <td class="p-3 font-black text-emerald-900 bg-emerald-100/70">₹ ${Math.abs(totNet).toFixed(2)}</td>
+        <td class="p-3 font-black text-indigo-900 bg-indigo-100/60">₹ ${Math.abs(totTariff).toFixed(3)}</td>
       </tr>`;
     } else {
       foot.innerHTML = '';
@@ -3276,14 +3318,14 @@ function saveObligation() {
   // NLDC Sched is a combined field, exactly as displayed in the table.
   const o={
     date:d,
-    nldcApp:Number($("o_nldcApp")?.value)||0,
-    nldcSched:Number($("o_nldcSched")?.value)||0,
-    ctu:Number($("o_ctu")?.value)||0,
-    stu:Number($("o_stu")?.value)||0,
-    sldc:Number($("o_sldc")?.value)||0,
+    nldcApp:Math.abs(Number($("o_nldcApp")?.value)||0),
+    nldcSched:Math.abs(Number($("o_nldcSched")?.value)||0),
+    ctu:Math.abs(Number($("o_ctu")?.value)||0),
+    stu:Math.abs(Number($("o_stu")?.value)||0),
+    sldc:Math.abs(Number($("o_sldc")?.value)||0),
     // Keep the full eight-component model available; absent components are zero.
     nldcSchedBuy:0,
-    nldcSchedSell:Number($("o_nldcSched")?.value)||0,
+    nldcSchedSell:Math.abs(Number($("o_nldcSched")?.value)||0),
     distribution:0,
     other:0
   };
@@ -3298,7 +3340,7 @@ function saveObligation() {
   renderReports();
 
   const total=o.nldcApp+o.nldcSched+o.ctu+o.stu+o.sldc;
-  alert("Saved for "+d+" • Total Corridor Charges: ₹"+total.toFixed(2));
+  alert("Saved for "+d+" • Total Corridor Charges: ₹ "+total.toFixed(2));
 }
 
 function deleteObligation(date) {
@@ -3360,19 +3402,24 @@ function renderObligations() {
     .filter(x=>(!bp.start||x.date>=bp.start)&&(!bp.end||x.date<=bp.end))
     .sort((x,y)=>x.date.localeCompare(y.date));
   $("obRows").innerHTML=a.map(o=>{
-    const sched=(Number(o.nldcSched)!==0 || o.nldcSched!==undefined)
+    const nldcApp = Math.abs(Number(o.nldcApp||0));
+    const sched = Math.abs((Number(o.nldcSched)!==0 || o.nldcSched!==undefined)
       ? Number(o.nldcSched||0)
-      : Number(o.nldcSchedBuy||0)+Number(o.nldcSchedSell||0);
-    const tot=Math.abs(Number(o.nldcApp||0)+sched+Number(o.ctu||0)+Number(o.stu||0)+Number(o.sldc||0)
-      +Number(o.distribution||0)+Number(o.other||0));
+      : Number(o.nldcSchedBuy||0)+Number(o.nldcSchedSell||0));
+    const ctu = Math.abs(Number(o.ctu||0));
+    const stu = Math.abs(Number(o.stu||0));
+    const sldc = Math.abs(Number(o.sldc||0));
+    const dist = Math.abs(Number(o.distribution||0));
+    const other = Math.abs(Number(o.other||0));
+    const tot = nldcApp + sched + ctu + stu + sldc + dist + other;
     return `<tr class="hover:bg-slate-50 font-medium">
       <td class="p-3 text-left font-bold border-r">${o.date}</td>
-      <td class="p-3">${Number(o.nldcApp||0).toFixed(2)}</td>
+      <td class="p-3">${nldcApp.toFixed(2)}</td>
       <td class="p-3">${sched.toFixed(2)}</td>
-      <td class="p-3">${Number(o.ctu||0).toFixed(2)}</td>
-      <td class="p-3">${Number(o.stu||0).toFixed(2)}</td>
-      <td class="p-3 border-r">${Number(o.sldc||0).toFixed(2)}</td>
-      <td class="p-3 font-bold text-rose-600">₹${tot.toFixed(2)}</td>
+      <td class="p-3">${ctu.toFixed(2)}</td>
+      <td class="p-3">${stu.toFixed(2)}</td>
+      <td class="p-3 border-r">${sldc.toFixed(2)}</td>
+      <td class="p-3 font-bold text-rose-600">₹ ${tot.toFixed(2)}</td>
         <td class="p-3 text-center">
           <button onclick="deleteObligation('${o.date}')"
             class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-1.5 rounded-lg text-[10px]"
@@ -3394,6 +3441,20 @@ if(state.obligations.length){
 // Init — load the multi-month dataset from IndexedDB before rendering.
 async function bootstrapSolarApp(){
   await loadStateFromIndexedDB();
+
+  if (Array.isArray(state.obligations)) {
+    state.obligations.forEach(o => {
+      o.nldcApp = Math.abs(Number(o.nldcApp) || 0);
+      o.nldcSched = Math.abs(Number(o.nldcSched) || 0);
+      o.nldcSchedBuy = Math.abs(Number(o.nldcSchedBuy) || 0);
+      o.nldcSchedSell = Math.abs(Number(o.nldcSchedSell) || 0);
+      o.ctu = Math.abs(Number(o.ctu) || 0);
+      o.stu = Math.abs(Number(o.stu) || 0);
+      o.sldc = Math.abs(Number(o.sldc) || 0);
+      o.distribution = Math.abs(Number(o.distribution) || 0);
+      o.other = Math.abs(Number(o.other) || 0);
+    });
+  }
 
   let all=sortedTrades();
   if(all.length){
