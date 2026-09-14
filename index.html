@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d4ed8">
 <title>THDCIL 11 MW Solar — Commercial Settlement App</title>
-<meta name="description" content="Commercial settlement, billing, and scheduling analysis app for THDCIL 11 MW Solar plant">
+<meta name="description" content="Commercial settlement, billing, and solar generation-weather correlation analysis for THDCIL 11 MW Solar plant">
 <meta property="og:title" content="THDCIL 11 MW Solar — Commercial Settlement App">
-<meta property="og:description" content="Commercial settlement, billing, and scheduling analysis app for THDCIL 11 MW Solar plant">
+<meta property="og:description" content="Commercial settlement, billing, and solar generation-weather correlation analysis for THDCIL 11 MW Solar plant">
 <!-- Tailwind CSS, Chart.js, SheetJS (Excel) & jsPDF / PDF.js -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -114,6 +114,9 @@
     </button>
     <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="obligations">
       <i class="fa-solid fa-scale-balanced"></i><span>Obligations</span>
+    </button>
+    <button id="navWeatherBtn" class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5 font-semibold" data-target="weather">
+      <i class="fa-solid fa-cloud-sun text-amber-300"></i><span>Weather & Generation Correlation</span>
     </button>
   </div>
 </header>
@@ -227,6 +230,27 @@
           </table>
         </div>
       </details>
+    </div>
+
+    <!-- METEOROLOGICAL & GENERATION CORRELATION CALLOUT BANNER -->
+    <div class="bg-gradient-to-r from-amber-500/10 via-sky-500/10 to-indigo-500/10 p-5 rounded-2xl border border-amber-200/80 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+      <div class="space-y-1 max-w-3xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-300 font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-cloud-sun text-amber-600"></i> Meteorological Insights
+          </span>
+          <span class="text-xs text-slate-500 font-semibold">• Plant Site: Khurja STPP Reservoir, UP (28.239° N, 77.873° E)</span>
+        </div>
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          Daily Solar Generation & Weather Correlation Diagnostics
+        </h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Correlate 15-minute dispatched generation with historical Global Horizontal Irradiance (GHI), sunshine duration, cloud cover attenuation, monsoon rainfall, and ambient temperature to automatically identify root causes for generation drops.
+        </p>
+      </div>
+      <button onclick="goToWeatherCorrelation()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-xs shadow-sm hover:shadow transition flex items-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-chart-line"></i> Open Weather Correlation & Diagnostics
+      </button>
     </div>
   </section>
 
@@ -838,6 +862,384 @@
     </div>
   </section>
 
+  <!-- WEATHER & GENERATION CORRELATION -->
+  <section id="weather" class="page-sec hidden space-y-6">
+    <!-- Breadcrumbs and Action Navigation -->
+    <div class="flex items-center justify-between gap-3 mb-1">
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <button onclick="goToHomePage()" class="hover:text-blue-700 font-bold flex items-center gap-1 text-slate-600 transition">
+          <i class="fa-solid fa-house text-blue-700"></i> Home
+        </button>
+        <span>/</span>
+        <span class="text-slate-800 font-bold">Weather & Generation Correlation</span>
+      </div>
+      <button onclick="goToHomePage()" class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl transition shadow-xs cursor-pointer">
+        <i class="fa-solid fa-house"></i> <span>Back to Home</span>
+      </button>
+    </div>
+
+    <!-- Plant Location & Solar Station Information Card -->
+    <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-md border border-blue-800/80">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-solar-panel text-amber-400"></i> Floating Solar PV
+            </span>
+            <span class="text-xs text-blue-200 font-medium">Station Portfolio: N2UP0NVN0289</span>
+            <span id="weatherSourceBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+              <i class="fa-solid fa-satellite text-[10px]"></i> Open-Meteo GHI Archive
+            </span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-black tracking-tight" id="weatherPlantNameDisplay">
+            THDCIL 11 MW Floating Solar PV Plant
+          </h2>
+          <p class="text-xs text-blue-100 flex items-center gap-2 flex-wrap font-medium">
+            <span id="weatherLocationDisplay"><i class="fa-solid fa-location-dot text-rose-400 mr-1"></i>Raw Water Reservoir, Khurja STPP, Bulandshahr, Uttar Pradesh</span>
+            <span>•</span>
+            <span id="weatherCoordsDisplay" class="font-mono text-amber-200">28.239° N, 77.873° E (Elev: 199 m)</span>
+            <span>•</span>
+            <span id="weatherCapacityDisplay" class="font-bold text-emerald-300">11.00 MW AC</span>
+            <span>•</span>
+            <span id="weatherPrBenchmarkDisplay" class="text-blue-200">Benchmark PR: 80.0%</span>
+          </p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button onclick="openWeatherLocationModal()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-sliders text-amber-300"></i> Configure Site & PR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Range & Action Control Toolbar -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-day text-blue-600"></i> Date Range:
+          </span>
+          <div class="flex items-center gap-2">
+            <input type="date" id="weatherStartDate" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-semibold outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 hover:bg-white transition">
+            <span class="text-xs text-slate-400 font-bold">to</span>
+            <input type="date" id="weatherEndDate" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-semibold outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 hover:bg-white transition">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="weatherFetchBtn" onclick="fetchWeatherCorrelationData()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-sm transition flex items-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-rotate text-xs"></i> <span>Fetch & Correlate Weather</span>
+          </button>
+          <button id="weatherDemoBtn" onclick="loadSampleKhurjaSolarTrades()" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer" title="Load sample 14-day 11 MW data with monsoon, cloudy, and clear sky days">
+            <i class="fa-solid fa-bolt text-amber-600"></i> <span>Load 14-Day Sample</span>
+          </button>
+          <button onclick="exportWeatherReportExcel()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center gap-1.5 cursor-pointer" title="Export to Excel">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i> <span>Excel</span>
+          </button>
+          <button onclick="window.print()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition flex items-center gap-1.5 cursor-pointer no-print" title="Print View">
+            <i class="fa-solid fa-print"></i> <span>Print</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 text-xs">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Presets:</span>
+        <button type="button" onclick="setWeatherPreset('trades')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold border border-blue-200 transition cursor-pointer">
+          <i class="fa-solid fa-database text-[10px] mr-1"></i>Loaded Trades Range
+        </button>
+        <button type="button" onclick="setWeatherPreset('14d')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition cursor-pointer">
+          Last 14 Days
+        </button>
+        <button type="button" onclick="setWeatherPreset('30d')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 transition cursor-pointer">
+          Last 30 Days
+        </button>
+        <button type="button" onclick="setWeatherPreset('may2024')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 font-semibold border border-amber-200 transition cursor-pointer">
+          <i class="fa-solid fa-sun text-amber-500 text-[10px] mr-1"></i>Summer Peak (May 2024)
+        </button>
+        <button type="button" onclick="setWeatherPreset('jul2024')" class="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800 hover:bg-sky-100 font-semibold border border-sky-200 transition cursor-pointer">
+          <i class="fa-solid fa-cloud-showers-heavy text-sky-500 text-[10px] mr-1"></i>Monsoon Dip (Jul 2024)
+        </button>
+      </div>
+    </div>
+
+    <!-- Analytical KPI Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="weatherKpis">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Insolation Coupling (r)</span>
+          <div class="text-2xl font-black text-slate-900 mt-0.5" id="weatherKpiPearson">—</div>
+          <div class="text-[11px] font-semibold text-emerald-700 mt-0.5" id="weatherKpiPearsonSub">Awaiting data</div>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 text-lg">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Flagged Generation Drops</span>
+          <div class="text-2xl font-black text-rose-600 mt-0.5" id="weatherKpiDrops">—</div>
+          <div class="text-[11px] font-semibold text-slate-500 mt-0.5" id="weatherKpiDropsSub">Output &gt; 18% below expected</div>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 text-lg">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Operating PR (%)</span>
+          <div class="text-2xl font-black text-indigo-700 mt-0.5" id="weatherKpiPr">—</div>
+          <div class="text-[11px] font-semibold text-slate-500 mt-0.5" id="weatherKpiPrSub">Benchmark: 80.0%</div>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 text-lg">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Leading Drop Cause</span>
+          <div class="text-base font-black text-slate-900 mt-1 truncate max-w-[160px]" id="weatherKpiCause">—</div>
+          <div class="text-[11px] font-semibold text-slate-500 mt-0.5" id="weatherKpiCauseSub">Primary attenuation driver</div>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 text-lg">
+          <i class="fa-solid fa-cloud-bolt"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Root Cause Breakdown & Interactive Filter Taxonomy -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass-chart text-blue-600"></i> Generation Drop Cause Diagnostics & Root Cause Taxonomy
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Click any diagnostic category badge to isolate affected trading days in the chart and ledger below.
+          </p>
+        </div>
+        <span class="text-xs text-slate-500 font-semibold" id="weatherCauseSummaryCount">0 days analyzed</span>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap text-xs" id="weatherCauseFilterPills">
+        <button type="button" data-cause="ALL" onclick="setWeatherCauseFilter('ALL')" class="weather-cause-btn active px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold shadow-sm transition cursor-pointer">
+          All Days (<span id="cntCauseAll">0</span>)
+        </button>
+        <button type="button" data-cause="DROPS" onclick="setWeatherCauseFilter('DROPS')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-circle-exclamation text-rose-500 mr-1"></i>All Generation Drops (<span id="cntCauseDrops">0</span>)
+        </button>
+        <button type="button" data-cause="RAIN" onclick="setWeatherCauseFilter('RAIN')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-cloud-showers-heavy text-blue-600 mr-1"></i>🌧️ Monsoon Rain Obscuration (<span id="cntCauseRain">0</span>)
+        </button>
+        <button type="button" data-cause="CLOUD" onclick="setWeatherCauseFilter('CLOUD')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-cloud text-slate-500 mr-1"></i>☁️ Cloud Cover Attenuation (<span id="cntCauseCloud">0</span>)
+        </button>
+        <button type="button" data-cause="HEAT" onclick="setWeatherCauseFilter('HEAT')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-temperature-high text-amber-600 mr-1"></i>🌡️ Thermal Heat Derating (<span id="cntCauseHeat">0</span>)
+        </button>
+        <button type="button" data-cause="CURTAILMENT" onclick="setWeatherCauseFilter('CURTAILMENT')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-bolt text-purple-600 mr-1"></i>⚡ Grid Curtailment / Backdown (<span id="cntCauseCurtailment">0</span>)
+        </button>
+        <button type="button" data-cause="NORMAL" onclick="setWeatherCauseFilter('NORMAL')" class="weather-cause-btn px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 font-bold transition cursor-pointer">
+          <i class="fa-solid fa-sun text-emerald-600 mr-1"></i>☀️ Clear Sky / Optimal Yield (<span id="cntCauseNormal">0</span>)
+        </button>
+      </div>
+    </div>
+
+    <!-- Dual Chart Visualizers Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Chart 1: Dual-Axis Daily Timeline -->
+      <div class="lg:col-span-7 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-blue-600"></i> Daily Solar Generation vs Solar Insolation & Cloud Cover
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Bars show actual MWh output; lines track solar insolation (kWh/m²) and cloud cover (%).
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> Actual MWh</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-amber-500 inline-block"></span> Insolation (kWh/m²)</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-slate-400 inline-block"></span> Cloud Cover %</span>
+          </div>
+        </div>
+        <div class="relative flex-1 min-h-[300px]">
+          <canvas id="weatherTimelineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Irradiance vs Generation Regression & Scatter -->
+      <div class="lg:col-span-5 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-braille text-indigo-600"></i> Irradiance vs Generation Regression
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Outliers falling below the 80% PR regression line highlight generation drops.
+            </p>
+          </div>
+        </div>
+        <div class="relative flex-1 min-h-[300px]">
+          <canvas id="weatherScatterChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day-by-Day Detailed Solar & Weather Correlation Ledger -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-blue-700"></i> Daily Solar Generation & Meteorological Correlation Ledger
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Complete daily audit of delivered energy, weather variables, performance ratio, and automated root cause diagnosis.
+          </p>
+        </div>
+        <div class="text-xs text-slate-500 font-semibold flex items-center gap-2">
+          <span>Displaying: <strong id="weatherTableCount" class="text-slate-800">0</strong> days</span>
+        </div>
+      </div>
+
+      <div class="table-container overflow-x-auto border border-slate-200/80 rounded-xl">
+        <table class="w-full text-xs text-right whitespace-nowrap">
+          <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 sticky top-0 z-10">
+            <tr>
+              <th class="p-3 text-left">Date & Day</th>
+              <th class="p-3 text-left">Weather & Conditions</th>
+              <th class="p-3 text-center">Solar Insolation</th>
+              <th class="p-3 text-center">Cloud Cover</th>
+              <th class="p-3 text-center">Rain (mm)</th>
+              <th class="p-3 text-blue-700 font-bold">Actual Gen (MWh)</th>
+              <th class="p-3">Specific Yield</th>
+              <th class="p-3 text-slate-500">Expected (MWh)</th>
+              <th class="p-3">Gen Variance</th>
+              <th class="p-3">PR (%)</th>
+              <th class="p-3 text-center">Root Cause / Diagnostic</th>
+              <th class="p-3 text-center no-print">Action</th>
+            </tr>
+          </thead>
+          <tbody id="weatherCorrelationRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          <tfoot id="weatherCorrelationFoot" class="bg-slate-50 border-t-2 border-slate-300 font-bold text-slate-900"></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL: 96-BLOCK DAY DEEP-DIVE & DIAGNOSTIC INSPECTOR -->
+  <div id="weatherDayModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 p-6 space-y-5 animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wider">Intraday Diagnostic Deep-Dive</span>
+          <h3 class="text-base font-black text-slate-900 mt-1 flex items-center gap-2" id="modalDayTitle">
+            Generation & Weather Breakdown: YYYY-MM-DD
+          </h3>
+        </div>
+        <button onclick="closeWeatherDayModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Weather summary badges for the day -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="modalDayWeatherCards"></div>
+
+      <!-- Root cause diagnostic explanation callout -->
+      <div id="modalDayDiagnosticBox" class="p-4 rounded-xl border"></div>
+
+      <!-- 96-Block Generation Profile Chart -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-area text-blue-600"></i> 96-Block Generation Profile (MW Output Across 15-Minute Intervals)
+          </h4>
+          <span class="text-[11px] text-slate-500 font-medium">Solar Dispatch Window: Blocks 25–72 (06:00 – 18:00 hrs)</span>
+        </div>
+        <div class="relative h-60">
+          <canvas id="modalDayBlocksChart"></canvas>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-100">
+        <button onclick="closeWeatherDayModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition cursor-pointer">
+          Close Inspector
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SITE LOCATION & SOLAR BENCHMARK CONFIG -->
+  <div id="weatherLocationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-solar-panel text-amber-500"></i> Plant Site & Solar Parameters
+        </h3>
+        <button onclick="closeWeatherLocationModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Preset Plant Locations:</label>
+          <select id="cfgSitePreset" onchange="applyLocationPreset(this.value)" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="khurja">THDCIL Khurja STPP Floating Solar, UP (28.239° N, 77.873° E)</option>
+            <option value="tehri">THDCIL Tehri Hydro & Solar Complex, Uttarakhand (30.378° N, 78.480° E)</option>
+            <option value="dhukwan">THDCIL Dhukwan Solar Project, UP (25.204° N, 78.567° E)</option>
+            <option value="custom">Custom Coordinates...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Plant Name:</label>
+          <input type="text" id="cfgPlantName" value="THDCIL 11 MW Floating Solar PV Plant" class="w-full p-2 rounded-lg border border-slate-300 font-medium">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Location / Site Description:</label>
+          <input type="text" id="cfgLocationText" value="Raw Water Reservoir, Khurja STPP, Bulandshahr, Uttar Pradesh" class="w-full p-2 rounded-lg border border-slate-300 font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Latitude (°N):</label>
+            <input type="number" id="cfgLat" step="0.001" value="28.239" class="w-full p-2 rounded-lg border border-slate-300 font-mono font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Longitude (°E):</label>
+            <input type="number" id="cfgLon" step="0.001" value="77.873" class="w-full p-2 rounded-lg border border-slate-300 font-mono font-semibold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Installed Capacity (MW AC):</label>
+            <input type="number" id="cfgCapacity" step="0.1" value="11.0" class="w-full p-2 rounded-lg border border-slate-300 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Benchmark PR (%):</label>
+            <input type="number" id="cfgBenchmarkPr" step="0.5" value="80.0" class="w-full p-2 rounded-lg border border-slate-300 font-bold">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+        <button onclick="closeWeatherLocationModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="saveWeatherLocationSettings()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition cursor-pointer">
+          Save & Apply
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -1092,12 +1494,30 @@ function goToHomePage() {
 }
 window.goToHomePage = goToHomePage;
 
+function goToWeatherCorrelation() {
+  document.querySelectorAll(".nav-btn").forEach(x => {
+    x.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm");
+    x.classList.add("text-blue-100");
+    if (x.dataset.target === "weather") {
+      x.classList.add("active", "bg-white", "text-blue-900", "shadow-sm");
+      x.classList.remove("text-blue-100");
+    }
+  });
+  document.querySelectorAll(".page-sec").forEach(x => x.classList.add("hidden"));
+  const sec = $("weather");
+  if (sec) sec.classList.remove("hidden");
+  refreshPage("weather");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.goToWeatherCorrelation = goToWeatherCorrelation;
+
 function refreshPage(p) {
   if(p==="dashboard") renderDashboard();
   if(p==="trades") renderTrades();
   if(p==="reports") renderReports();
   if(p==="billing") renderBilling();
   if(p==="obligations") { loadObligation(); renderObligations(); }
+  if(p==="weather") renderWeatherCorrelation();
 }
 
 // UNIFIED UPLOADER
@@ -3612,6 +4032,1006 @@ function render96BlockStudy(date){
 }
 const _rd=window.renderDashboard;
 window.renderDashboard=function(){try{_rd&&_rd();}finally{render96BlockStudy();}};
+
+/* =========================================================================
+   WEATHER & SOLAR GENERATION CORRELATION ENGINE (THDCIL 11 MW SOLAR)
+   ========================================================================= */
+
+// Site Configuration
+const weatherSiteConfig = {
+  plantName: localStorage.getItem("thdc_weather_plantName") || "THDCIL 11 MW Floating Solar PV Plant",
+  locationText: localStorage.getItem("thdc_weather_location") || "Raw Water Reservoir, Khurja STPP, Bulandshahr, Uttar Pradesh",
+  lat: parseFloat(localStorage.getItem("thdc_weather_lat")) || 28.239,
+  lon: parseFloat(localStorage.getItem("thdc_weather_lon")) || 77.873,
+  capacityMw: parseFloat(localStorage.getItem("thdc_weather_capacity")) || 11.0,
+  benchmarkPr: parseFloat(localStorage.getItem("thdc_weather_pr")) || 80.0
+};
+
+let weatherRawRecords = [];
+let weatherMergedData = [];
+let weatherFilterCause = "ALL";
+let weatherTimelineChartInst = null;
+let weatherScatterChartInst = null;
+let modalDayChartInst = null;
+
+function updateWeatherSiteDisplay() {
+  if ($("weatherPlantNameDisplay")) $("weatherPlantNameDisplay").textContent = weatherSiteConfig.plantName;
+  if ($("weatherLocationDisplay")) $("weatherLocationDisplay").innerHTML = `<i class="fa-solid fa-location-dot text-rose-400 mr-1"></i>${weatherSiteConfig.locationText}`;
+  if ($("weatherCoordsDisplay")) $("weatherCoordsDisplay").textContent = `${weatherSiteConfig.lat.toFixed(3)}° N, ${weatherSiteConfig.lon.toFixed(3)}° E (Elev: ~199 m)`;
+  if ($("weatherCapacityDisplay")) $("weatherCapacityDisplay").textContent = `${weatherSiteConfig.capacityMw.toFixed(2)} MW AC`;
+  if ($("weatherPrBenchmarkDisplay")) $("weatherPrBenchmarkDisplay").textContent = `Benchmark PR: ${weatherSiteConfig.benchmarkPr.toFixed(1)}%`;
+}
+
+function openWeatherLocationModal() {
+  const m = $("weatherLocationModal");
+  if (!m) return;
+  if ($("cfgPlantName")) $("cfgPlantName").value = weatherSiteConfig.plantName;
+  if ($("cfgLocationText")) $("cfgLocationText").value = weatherSiteConfig.locationText;
+  if ($("cfgLat")) $("cfgLat").value = weatherSiteConfig.lat;
+  if ($("cfgLon")) $("cfgLon").value = weatherSiteConfig.lon;
+  if ($("cfgCapacity")) $("cfgCapacity").value = weatherSiteConfig.capacityMw;
+  if ($("cfgBenchmarkPr")) $("cfgBenchmarkPr").value = weatherSiteConfig.benchmarkPr;
+  m.classList.remove("hidden");
+}
+window.openWeatherLocationModal = openWeatherLocationModal;
+
+function closeWeatherLocationModal() {
+  const m = $("weatherLocationModal");
+  if (m) m.classList.add("hidden");
+}
+window.closeWeatherLocationModal = closeWeatherLocationModal;
+
+function applyLocationPreset(val) {
+  if (val === "khurja") {
+    if ($("cfgPlantName")) $("cfgPlantName").value = "THDCIL 11 MW Floating Solar PV Plant";
+    if ($("cfgLocationText")) $("cfgLocationText").value = "Raw Water Reservoir, Khurja STPP, Bulandshahr, Uttar Pradesh";
+    if ($("cfgLat")) $("cfgLat").value = 28.239;
+    if ($("cfgLon")) $("cfgLon").value = 77.873;
+    if ($("cfgCapacity")) $("cfgCapacity").value = 11.0;
+    if ($("cfgBenchmarkPr")) $("cfgBenchmarkPr").value = 80.0;
+  } else if (val === "tehri") {
+    if ($("cfgPlantName")) $("cfgPlantName").value = "THDCIL Tehri Hydro & Solar Complex";
+    if ($("cfgLocationText")) $("cfgLocationText").value = "Tehri Garhwal, Uttarakhand";
+    if ($("cfgLat")) $("cfgLat").value = 30.378;
+    if ($("cfgLon")) $("cfgLon").value = 78.480;
+    if ($("cfgCapacity")) $("cfgCapacity").value = 11.0;
+    if ($("cfgBenchmarkPr")) $("cfgBenchmarkPr").value = 79.0;
+  } else if (val === "dhukwan") {
+    if ($("cfgPlantName")) $("cfgPlantName").value = "THDCIL Dhukwan Solar Project";
+    if ($("cfgLocationText")) $("cfgLocationText").value = "Babina, Jhansi district, Uttar Pradesh";
+    if ($("cfgLat")) $("cfgLat").value = 25.204;
+    if ($("cfgLon")) $("cfgLon").value = 78.567;
+    if ($("cfgCapacity")) $("cfgCapacity").value = 24.0;
+    if ($("cfgBenchmarkPr")) $("cfgBenchmarkPr").value = 80.0;
+  }
+}
+window.applyLocationPreset = applyLocationPreset;
+
+function saveWeatherLocationSettings() {
+  weatherSiteConfig.plantName = $("cfgPlantName")?.value || "THDCIL 11 MW Floating Solar PV Plant";
+  weatherSiteConfig.locationText = $("cfgLocationText")?.value || "Raw Water Reservoir, Khurja STPP, Bulandshahr, Uttar Pradesh";
+  weatherSiteConfig.lat = parseFloat($("cfgLat")?.value) || 28.239;
+  weatherSiteConfig.lon = parseFloat($("cfgLon")?.value) || 77.873;
+  weatherSiteConfig.capacityMw = parseFloat($("cfgCapacity")?.value) || 11.0;
+  weatherSiteConfig.benchmarkPr = parseFloat($("cfgBenchmarkPr")?.value) || 80.0;
+
+  localStorage.setItem("thdc_weather_plantName", weatherSiteConfig.plantName);
+  localStorage.setItem("thdc_weather_location", weatherSiteConfig.locationText);
+  localStorage.setItem("thdc_weather_lat", weatherSiteConfig.lat);
+  localStorage.setItem("thdc_weather_lon", weatherSiteConfig.lon);
+  localStorage.setItem("thdc_weather_capacity", weatherSiteConfig.capacityMw);
+  localStorage.setItem("thdc_weather_pr", weatherSiteConfig.benchmarkPr);
+
+  updateWeatherSiteDisplay();
+  closeWeatherLocationModal();
+  fetchWeatherCorrelationData();
+}
+window.saveWeatherLocationSettings = saveWeatherLocationSettings;
+
+function setWeatherPreset(type) {
+  const trades = sortedTrades();
+  if (type === "trades") {
+    if (trades.length) {
+      if ($("weatherStartDate")) $("weatherStartDate").value = trades[0].date;
+      if ($("weatherEndDate")) $("weatherEndDate").value = trades[trades.length - 1].date;
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      const prev = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+      if ($("weatherStartDate")) $("weatherStartDate").value = prev;
+      if ($("weatherEndDate")) $("weatherEndDate").value = today;
+    }
+  } else if (type === "14d") {
+    const today = new Date().toISOString().slice(0, 10);
+    const prev = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+    if ($("weatherStartDate")) $("weatherStartDate").value = prev;
+    if ($("weatherEndDate")) $("weatherEndDate").value = today;
+  } else if (type === "30d") {
+    const today = new Date().toISOString().slice(0, 10);
+    const prev = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    if ($("weatherStartDate")) $("weatherStartDate").value = prev;
+    if ($("weatherEndDate")) $("weatherEndDate").value = today;
+  } else if (type === "may2024") {
+    if ($("weatherStartDate")) $("weatherStartDate").value = "2024-05-01";
+    if ($("weatherEndDate")) $("weatherEndDate").value = "2024-05-31";
+  } else if (type === "jul2024") {
+    if ($("weatherStartDate")) $("weatherStartDate").value = "2024-07-01";
+    if ($("weatherEndDate")) $("weatherEndDate").value = "2024-07-31";
+  }
+  fetchWeatherCorrelationData();
+}
+window.setWeatherPreset = setWeatherPreset;
+
+function calcPearson(xs, ys) {
+  if (!xs || !ys || xs.length !== ys.length || xs.length < 2) return 0;
+  const n = xs.length;
+  const avgX = xs.reduce((a, b) => a + b, 0) / n;
+  const avgY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, denX = 0, denY = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - avgX;
+    const dy = ys[i] - avgY;
+    num += dx * dy;
+    denX += dx * dx;
+    denY += dy * dy;
+  }
+  const den = Math.sqrt(denX * denY);
+  return den === 0 ? 0 : +(num / den).toFixed(3);
+}
+
+// Diagnose Generation Drop Root Cause
+function diagnoseDrop(actualMwh, insolation, cloudCover, rain, tempMax, weatherCode) {
+  const cap = weatherSiteConfig.capacityMw;
+  const targetPr = weatherSiteConfig.benchmarkPr / 100;
+  const expectedMwh = cap * insolation * targetPr;
+  const varianceMwh = actualMwh - expectedMwh;
+  const pctDrop = expectedMwh > 0 ? ((actualMwh - expectedMwh) / expectedMwh) * 100 : 0;
+  const pr = (cap * insolation > 0) ? (actualMwh / (cap * insolation)) * 100 : 0;
+  const specificYield = (actualMwh * 1000) / (cap * 1000); // kWh/kWp
+
+  // Drop threshold: actual generation > 18% below theoretical or under 26 MWh on sunny day
+  const isDrop = (expectedMwh > 15 && pctDrop < -18.0) || (insolation > 4.5 && actualMwh < 26.0);
+
+  let causeKey = "NORMAL";
+  let causeLabel = "Optimal Clear-Sky Yield";
+  let causeIcon = "fa-sun text-emerald-500";
+  let badgeCls = "bg-emerald-50 text-emerald-700 border-emerald-200";
+  let explanation = "Generation is tracking normally with theoretical solar insolation model and healthy performance ratio.";
+
+  if (isDrop) {
+    if (rain >= 8 || (weatherCode >= 61 && weatherCode <= 99)) {
+      causeKey = "RAIN";
+      causeLabel = "Monsoon Rain Obscuration";
+      causeIcon = "fa-cloud-showers-heavy text-blue-600";
+      badgeCls = "bg-blue-50 text-blue-800 border-blue-200";
+      explanation = `Heavy rainfall (${rain} mm) and dense storm cloud cover severely attenuated Global Horizontal Irradiance (GHI). Generation dropped by ${Math.abs(pctDrop).toFixed(1)}% due to meteorological obstruction.`;
+    } else if (insolation >= 4.5 && cloudCover <= 42 && actualMwh < expectedMwh * 0.68) {
+      causeKey = "CURTAILMENT";
+      causeLabel = "Grid Curtailment / Backdown";
+      causeIcon = "fa-bolt text-purple-600";
+      badgeCls = "bg-purple-50 text-purple-800 border-purple-200";
+      explanation = `Solar insolation was high (${insolation.toFixed(2)} kWh/m²) with low cloud cover (${cloudCover}%), yet dispatched output was curtailed (${actualMwh.toFixed(1)} MWh vs ${expectedMwh.toFixed(1)} MWh expected). Indicates grid backdown, transmission corridor restriction, or commercial bid non-clearance rather than weather.`;
+    } else if (cloudCover >= 50 || insolation < 3.8) {
+      causeKey = "CLOUD";
+      causeLabel = "Cloud Cover Attenuation";
+      causeIcon = "fa-cloud text-slate-500";
+      badgeCls = "bg-slate-100 text-slate-800 border-slate-300";
+      explanation = `High cloud cover (${cloudCover}%) reduced global solar irradiance to ${insolation.toFixed(2)} kWh/m² (${(insolation*3.6).toFixed(1)} MJ/m²). Generation loss is in direct proportion to diffuse solar resource limitation.`;
+    } else if (tempMax >= 39.0 && insolation >= 4.8) {
+      causeKey = "HEAT";
+      causeLabel = "Thermal Heat Derating";
+      causeIcon = "fa-temperature-high text-amber-600";
+      badgeCls = "bg-amber-50 text-amber-800 border-amber-200";
+      explanation = `Extreme ambient temperatures (${tempMax}°C) caused PV cell junction temperatures to exceed 60°C. Standard silicon negative temperature coefficient (-0.38%/°C) reduced efficiency and output despite high solar radiation.`;
+    } else {
+      causeKey = "CLOUD";
+      causeLabel = "Partial Cloud Obscuration";
+      causeIcon = "fa-cloud-sun text-slate-600";
+      badgeCls = "bg-slate-100 text-slate-700 border-slate-200";
+      explanation = `Passing clouds (${cloudCover}% cloud cover) created intermittent solar dips during peak generation trading blocks.`;
+    }
+  } else if (tempMax >= 41.0) {
+    causeKey = "HEAT";
+    causeLabel = "Mild Thermal Derating";
+    causeIcon = "fa-temperature-high text-amber-500";
+    badgeCls = "bg-amber-50 text-amber-700 border-amber-200";
+    explanation = `High ambient temperature (${tempMax}°C) incurred thermal derating, though total energy remained above critical drop threshold.`;
+  }
+
+  return {
+    isDrop,
+    causeKey,
+    causeLabel,
+    causeIcon,
+    badgeCls,
+    explanation,
+    expectedMwh: +expectedMwh.toFixed(3),
+    varianceMwh: +varianceMwh.toFixed(3),
+    pctDrop: +pctDrop.toFixed(1),
+    pr: +pr.toFixed(1),
+    specificYield: +specificYield.toFixed(2)
+  };
+}
+
+// Fetch weather from server and correlate with state.trades
+async function fetchWeatherCorrelationData() {
+  const btn = $("weatherFetchBtn");
+  const origHtml = btn ? btn.innerHTML : "";
+  if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Fetching Weather...</span>`;
+
+  try {
+    let sDate = $("weatherStartDate")?.value;
+    let eDate = $("weatherEndDate")?.value;
+
+    const allTrades = sortedTrades();
+    if (!sDate || !eDate) {
+      if (allTrades.length) {
+        sDate = allTrades[0].date;
+        eDate = allTrades[allTrades.length - 1].date;
+        if ($("weatherStartDate")) $("weatherStartDate").value = sDate;
+        if ($("weatherEndDate")) $("weatherEndDate").value = eDate;
+      } else {
+        sDate = "2024-05-01";
+        eDate = "2024-05-14";
+        if ($("weatherStartDate")) $("weatherStartDate").value = sDate;
+        if ($("weatherEndDate")) $("weatherEndDate").value = eDate;
+      }
+    }
+
+    const lat = weatherSiteConfig.lat;
+    const lon = weatherSiteConfig.lon;
+    const url = `/api/weather?startDate=${sDate}&endDate=${eDate}&lat=${lat}&lon=${lon}`;
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Weather fetch failed: ${resp.statusText}`);
+    const json = await resp.json();
+
+    if (!json.success || !Array.isArray(json.daily)) {
+      throw new Error(json.error || "No weather records received");
+    }
+
+    weatherRawRecords = json.daily;
+    if ($("weatherSourceBadge")) {
+      const src = json.dataSource === "open-meteo" ? "Open-Meteo GHI Archive" : "Khurja Climate Model";
+      $("weatherSourceBadge").innerHTML = `<i class="fa-solid fa-satellite text-[10px]"></i> ${src}`;
+    }
+
+    // Merge each weather day with trade generation data
+    const tradeMap = {};
+    allTrades.forEach(t => {
+      const d = t.date;
+      if (!tradeMap[d]) tradeMap[d] = { mwh: 0, blocks: [], maxMw: 0, revenue: 0 };
+      const mw = Math.abs(t.qty || 0);
+      tradeMap[d].mwh += mw * 0.25;
+      tradeMap[d].revenue += amount(t);
+      if (mw > tradeMap[d].maxMw) tradeMap[d].maxMw = mw;
+      tradeMap[d].blocks.push(t);
+    });
+
+    weatherMergedData = weatherRawRecords.map(w => {
+      const d = w.date;
+      const tInfo = tradeMap[d] || { mwh: 0, blocks: [], maxMw: 0, revenue: 0 };
+      const diag = diagnoseDrop(tInfo.mwh, w.solarInsolationKwh, w.cloudCover, w.precipMm, w.tempMax, w.weatherCode);
+
+      return {
+        ...w,
+        actualMwh: +tInfo.mwh.toFixed(3),
+        actualMu: +(tInfo.mwh / 1000).toFixed(4),
+        actualRevenue: +tInfo.revenue.toFixed(2),
+        maxMw: +tInfo.maxMw.toFixed(3),
+        blocksCount: tInfo.blocks.length,
+        hasTrades: tInfo.blocks.length > 0,
+        ...diag
+      };
+    });
+
+    renderWeatherCorrelationUI();
+  } catch (err) {
+    console.error("Weather correlation error:", err);
+    alert(`Weather Correlation Error: ${err.message}`);
+  } finally {
+    if (btn) btn.innerHTML = origHtml;
+  }
+}
+window.fetchWeatherCorrelationData = fetchWeatherCorrelationData;
+
+function setWeatherCauseFilter(cause) {
+  weatherFilterCause = cause;
+  document.querySelectorAll(".weather-cause-btn").forEach(b => {
+    if (b.dataset.cause === cause) {
+      b.classList.add("active", "bg-slate-900", "text-white");
+      b.classList.remove("bg-white", "bg-rose-50", "bg-blue-50", "bg-slate-100", "bg-amber-50", "bg-purple-50", "bg-emerald-50");
+    } else {
+      b.classList.remove("active", "bg-slate-900", "text-white");
+    }
+  });
+  renderWeatherTable();
+}
+window.setWeatherCauseFilter = setWeatherCauseFilter;
+
+function renderWeatherCorrelationUI() {
+  updateWeatherSiteDisplay();
+
+  // 1. Calculate Analytics and KPIs
+  const daysWithTrades = weatherMergedData.filter(d => d.hasTrades && d.actualMwh > 0);
+  const dataToEval = daysWithTrades.length > 0 ? daysWithTrades : weatherMergedData;
+
+  const insolationArr = dataToEval.map(d => d.solarInsolationKwh);
+  const actualGenArr = dataToEval.map(d => d.actualMwh);
+  const cloudArr = dataToEval.map(d => d.cloudCover);
+
+  const rPearson = calcPearson(insolationArr, actualGenArr);
+  const rCloud = calcPearson(cloudArr, actualGenArr);
+
+  const dropDays = weatherMergedData.filter(d => d.isDrop);
+  const totalDays = weatherMergedData.length;
+
+  const totalActualMwh = weatherMergedData.reduce((s, d) => s + d.actualMwh, 0);
+  const totalExpectedMwh = weatherMergedData.reduce((s, d) => s + d.expectedMwh, 0);
+  const avgPr = totalExpectedMwh > 0 ? (totalActualMwh / (weatherSiteConfig.capacityMw * weatherMergedData.reduce((s, d) => s + d.solarInsolationKwh, 0))) * 100 : 0;
+
+  // Counts by Cause
+  const counts = { ALL: totalDays, DROPS: dropDays.length, RAIN: 0, CLOUD: 0, HEAT: 0, CURTAILMENT: 0, NORMAL: 0 };
+  weatherMergedData.forEach(d => {
+    if (counts[d.causeKey] !== undefined) counts[d.causeKey]++;
+  });
+
+  if ($("cntCauseAll")) $("cntCauseAll").textContent = counts.ALL;
+  if ($("cntCauseDrops")) $("cntCauseDrops").textContent = counts.DROPS;
+  if ($("cntCauseRain")) $("cntCauseRain").textContent = counts.RAIN;
+  if ($("cntCauseCloud")) $("cntCauseCloud").textContent = counts.CLOUD;
+  if ($("cntCauseHeat")) $("cntCauseHeat").textContent = counts.HEAT;
+  if ($("cntCauseCurtailment")) $("cntCauseCurtailment").textContent = counts.CURTAILMENT;
+  if ($("cntCauseNormal")) $("cntCauseNormal").textContent = counts.NORMAL;
+  if ($("weatherCauseSummaryCount")) $("weatherCauseSummaryCount").textContent = `${totalDays} days analyzed (${dropDays.length} drops identified)`;
+
+  // Update KPI displays
+  if ($("weatherKpiPearson")) {
+    $("weatherKpiPearson").textContent = rPearson > 0 ? `+${rPearson.toFixed(2)}` : `${rPearson.toFixed(2)}`;
+    let interp = "Weak Coupling";
+    let interpCls = "text-slate-500";
+    if (rPearson >= 0.85) { interp = "Very Strong Positive Coupling"; interpCls = "text-emerald-700"; }
+    else if (rPearson >= 0.65) { interp = "Moderate Solar Coupling"; interpCls = "text-blue-700"; }
+    else if (rPearson > 0) { interp = "Disrupted Solar Coupling"; interpCls = "text-amber-700"; }
+    if ($("weatherKpiPearsonSub")) $("weatherKpiPearsonSub").innerHTML = `<span class="${interpCls} font-bold">${interp}</span> (Cloud r: ${rCloud.toFixed(2)})`;
+  }
+
+  if ($("weatherKpiDrops")) {
+    const dropPct = totalDays > 0 ? ((dropDays.length / totalDays) * 100).toFixed(1) : 0;
+    $("weatherKpiDrops").textContent = `${dropDays.length} / ${totalDays} Days`;
+    if ($("weatherKpiDropsSub")) $("weatherKpiDropsSub").textContent = `${dropPct}% incident rate (Output < 82% expected)`;
+  }
+
+  if ($("weatherKpiPr")) {
+    $("weatherKpiPr").textContent = `${avgPr.toFixed(1)}%`;
+    if ($("weatherKpiPrSub")) $("weatherKpiPrSub").textContent = `Gen: ${totalActualMwh.toFixed(1)} MWh (Exp: ${totalExpectedMwh.toFixed(1)} MWh)`;
+  }
+
+  if ($("weatherKpiCause")) {
+    let topCause = "None";
+    let topCount = 0;
+    if (counts.CLOUD > topCount) { topCause = "Cloud Attenuation"; topCount = counts.CLOUD; }
+    if (counts.RAIN > topCount) { topCause = "Monsoon Rain"; topCount = counts.RAIN; }
+    if (counts.CURTAILMENT > topCount) { topCause = "Grid Curtailment"; topCount = counts.CURTAILMENT; }
+    if (counts.HEAT > topCount) { topCause = "Heat Derating"; topCount = counts.HEAT; }
+
+    if (topCount === 0) topCause = "Clear-Sky Normal";
+    $("weatherKpiCause").textContent = topCause;
+    if ($("weatherKpiCauseSub")) $("weatherKpiCauseSub").textContent = topCount > 0 ? `${topCount} drop events (${((topCount/Math.max(1, dropDays.length))*100).toFixed(0)}% of drops)` : "No drops detected";
+  }
+
+  // Render Charts and Table
+  renderWeatherCharts();
+  renderWeatherTable();
+}
+
+function renderWeatherCharts() {
+  const labels = weatherMergedData.map(d => d.date.slice(5)); // MM-DD
+  const actualMwh = weatherMergedData.map(d => d.actualMwh);
+  const expectedMwh = weatherMergedData.map(d => d.expectedMwh);
+  const insolation = weatherMergedData.map(d => d.solarInsolationKwh);
+  const cloud = weatherMergedData.map(d => d.cloudCover);
+
+  // 1. Dual-Axis Timeline Chart
+  const ctx1 = $("weatherTimelineChart");
+  if (ctx1) {
+    if (weatherTimelineChartInst) weatherTimelineChartInst.destroy();
+    weatherTimelineChartInst = new Chart(ctx1, {
+      data: {
+        labels,
+        datasets: [
+          {
+            type: "bar",
+            label: "Actual Generation (MWh)",
+            data: actualMwh,
+            backgroundColor: weatherMergedData.map(d => d.isDrop ? "rgba(225, 29, 72, 0.85)" : "rgba(37, 99, 235, 0.85)"),
+            borderColor: weatherMergedData.map(d => d.isDrop ? "#be123c" : "#1d4ed8"),
+            borderWidth: 1,
+            borderRadius: 4,
+            yAxisID: "yGen",
+            order: 2
+          },
+          {
+            type: "line",
+            label: "Expected Generation (MWh @ 80% PR)",
+            data: expectedMwh,
+            borderColor: "#9333ea",
+            borderWidth: 2,
+            borderDash: [4, 4],
+            pointRadius: 0,
+            fill: false,
+            yAxisID: "yGen",
+            order: 1
+          },
+          {
+            type: "line",
+            label: "Solar Insolation (kWh/m²)",
+            data: insolation,
+            borderColor: "#d97706",
+            backgroundColor: "#d97706",
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            fill: false,
+            yAxisID: "yWeather",
+            order: 0
+          },
+          {
+            type: "line",
+            label: "Cloud Cover (%)",
+            data: cloud,
+            borderColor: "#94a3b8",
+            borderWidth: 1.5,
+            borderDash: [2, 2],
+            pointRadius: 2,
+            fill: false,
+            yAxisID: "yWeather",
+            order: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          yGen: {
+            type: "linear",
+            position: "left",
+            title: { display: true, text: "Generation (MWh)", font: { size: 11, weight: "bold" } },
+            ticks: { font: { size: 10 } },
+            grid: { color: "#f1f5f9" },
+            beginAtZero: true
+          },
+          yWeather: {
+            type: "linear",
+            position: "right",
+            title: { display: true, text: "Insolation (kWh/m²) / Cloud (%)", font: { size: 11, weight: "bold" } },
+            ticks: { font: { size: 10 } },
+            grid: { display: false },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: { position: "top", labels: { boxWidth: 12, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              afterBody: function(items) {
+                const idx = items[0].dataIndex;
+                const d = weatherMergedData[idx];
+                return [
+                  `Weather: ${d.weatherDesc} (${d.tempMax}°C max)`,
+                  `Rainfall: ${d.precipMm} mm`,
+                  `Performance Ratio: ${d.pr.toFixed(1)}%`,
+                  `Diagnosis: ${d.causeLabel}`
+                ];
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Scatter & Regression Chart
+  const ctx2 = $("weatherScatterChart");
+  if (ctx2) {
+    if (weatherScatterChartInst) weatherScatterChartInst.destroy();
+
+    const normalPoints = [];
+    const dropPoints = [];
+    weatherMergedData.forEach(d => {
+      const pt = { x: d.solarInsolationKwh, y: d.actualMwh, date: d.date, diag: d.causeLabel, pr: d.pr };
+      if (d.isDrop) dropPoints.push(pt);
+      else normalPoints.push(pt);
+    });
+
+    // Ideal theoretical line (0 to 8 kWh/m2)
+    const cap = weatherSiteConfig.capacityMw;
+    const prTarget = weatherSiteConfig.benchmarkPr / 100;
+    const idealLine = [
+      { x: 0, y: 0 },
+      { x: 3, y: +(cap * 3 * prTarget).toFixed(1) },
+      { x: 5, y: +(cap * 5 * prTarget).toFixed(1) },
+      { x: 7.5, y: +(cap * 7.5 * prTarget).toFixed(1) }
+    ];
+
+    weatherScatterChartInst = new Chart(ctx2, {
+      type: "scatter",
+      data: {
+        datasets: [
+          {
+            label: "Normal Operating Days",
+            data: normalPoints,
+            backgroundColor: "rgba(16, 185, 129, 0.8)",
+            borderColor: "#059669",
+            borderWidth: 1.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          },
+          {
+            label: "Identified Generation Drops",
+            data: dropPoints,
+            backgroundColor: "rgba(225, 29, 72, 0.85)",
+            borderColor: "#be123c",
+            borderWidth: 1.5,
+            pointRadius: 6,
+            pointHoverRadius: 8
+          },
+          {
+            type: "line",
+            label: "Benchmark 80% PR Line",
+            data: idealLine,
+            borderColor: "#2563eb",
+            borderWidth: 2,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: "Solar Insolation (kWh/m² / Peak Sun Hours)", font: { size: 11, weight: "bold" } },
+            ticks: { font: { size: 10 } },
+            grid: { color: "#f1f5f9" },
+            beginAtZero: true
+          },
+          y: {
+            title: { display: true, text: "Delivered Generation (MWh)", font: { size: 11, weight: "bold" } },
+            ticks: { font: { size: 10 } },
+            grid: { color: "#f1f5f9" },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: { position: "top", labels: { boxWidth: 10, font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const pt = ctx.raw;
+                if (!pt.date) return `Ideal Benchmark: ${pt.x} kWh/m² → ${pt.y} MWh`;
+                return [
+                  `Date: ${pt.date}`,
+                  `Insolation: ${pt.x.toFixed(2)} kWh/m²`,
+                  `Actual: ${pt.y.toFixed(2)} MWh`,
+                  `PR: ${pt.pr.toFixed(1)}%`,
+                  `Root Cause: ${pt.diag}`
+                ];
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+function renderWeatherTable() {
+  const tbody = $("weatherCorrelationRows");
+  const tfoot = $("weatherCorrelationFoot");
+  if (!tbody) return;
+
+  let filtered = weatherMergedData;
+  if (weatherFilterCause === "DROPS") {
+    filtered = weatherMergedData.filter(d => d.isDrop);
+  } else if (weatherFilterCause !== "ALL") {
+    filtered = weatherMergedData.filter(d => d.causeKey === weatherFilterCause);
+  }
+
+  if ($("weatherTableCount")) $("weatherTableCount").textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400">No trading days match the selected filter criteria.</td></tr>`;
+    if (tfoot) tfoot.innerHTML = "";
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(d => {
+    const dt = new Date(d.date + "T00:00:00Z");
+    const dayName = dt.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+    const isLoss = d.varianceMwh < 0;
+    const varColor = isLoss ? "text-rose-600 font-bold" : "text-emerald-600 font-bold";
+    const cloudWidth = Math.min(100, Math.max(2, d.cloudCover));
+    const prColor = d.pr >= 75 ? "text-emerald-700 font-bold" : (d.pr >= 60 ? "text-amber-700 font-semibold" : "text-rose-700 font-bold");
+
+    return `<tr class="border-b border-slate-100 hover:bg-blue-50/40 transition">
+      <td class="p-3 text-left font-mono font-bold text-slate-900">
+        ${d.date} <span class="text-[10px] text-slate-400 font-normal ml-1">(${dayName})</span>
+      </td>
+      <td class="p-3 text-left">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid ${d.weatherIcon} text-sm"></i>
+          <div>
+            <div class="font-semibold text-slate-800 leading-tight">${d.weatherDesc}</div>
+            <div class="text-[10px] text-slate-400 font-medium">${d.tempMax}°C max • ${d.tempMin}°C min</div>
+          </div>
+        </div>
+      </td>
+      <td class="p-3 text-center font-bold text-amber-900 bg-amber-50/30">
+        ${d.solarInsolationKwh.toFixed(2)} <span class="text-[10px] font-normal text-slate-400">kWh/m²</span>
+      </td>
+      <td class="p-3 text-center">
+        <div class="flex items-center justify-center gap-1.5">
+          <span class="font-semibold text-slate-700">${d.cloudCover}%</span>
+          <div class="w-10 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-slate-500 h-1.5 rounded-full" style="width: ${cloudWidth}%"></div>
+          </div>
+        </div>
+      </td>
+      <td class="p-3 text-center font-semibold ${d.precipMm > 0 ? 'text-blue-700 font-bold' : 'text-slate-400'}">
+        ${d.precipMm > 0 ? `${d.precipMm} mm` : '—'}
+      </td>
+      <td class="p-3 text-blue-800 font-black text-sm bg-blue-50/20">
+        ${d.actualMwh.toFixed(3)} <span class="text-[10px] text-slate-400 font-normal">MWh</span>
+      </td>
+      <td class="p-3 font-mono font-semibold text-slate-700">
+        ${d.specificYield.toFixed(2)}
+      </td>
+      <td class="p-3 text-slate-500 font-medium">
+        ${d.expectedMwh.toFixed(3)}
+      </td>
+      <td class="p-3 ${varColor}">
+        ${isLoss ? '' : '+'}${d.varianceMwh.toFixed(2)} <span class="text-[10px] font-normal">(${d.pctDrop > 0 ? '+' : ''}${d.pctDrop}%)</span>
+      </td>
+      <td class="p-3 ${prColor}">
+        ${d.pr.toFixed(1)}%
+      </td>
+      <td class="p-3 text-center">
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${d.badgeCls}" title="${d.explanation}">
+          <i class="fa-solid ${d.causeIcon}"></i> ${d.causeLabel}
+        </span>
+      </td>
+      <td class="p-3 text-center no-print">
+        <button onclick="openWeatherDayModal('${d.date}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 transition cursor-pointer">
+          <i class="fa-solid fa-magnifying-glass"></i> Inspect
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // Footer Totals & Weighted Averages
+  const totalActMwh = filtered.reduce((s, d) => s + d.actualMwh, 0);
+  const totalExpMwh = filtered.reduce((s, d) => s + d.expectedMwh, 0);
+  const totalVarMwh = totalActMwh - totalExpMwh;
+  const avgInsolation = filtered.reduce((s, d) => s + d.solarInsolationKwh, 0) / filtered.length;
+  const avgCloud = Math.round(filtered.reduce((s, d) => s + d.cloudCover, 0) / filtered.length);
+  const totalRain = filtered.reduce((s, d) => s + d.precipMm, 0);
+  const weightedPr = totalExpMwh > 0 ? (totalActMwh / (weatherSiteConfig.capacityMw * filtered.reduce((s, d) => s + d.solarInsolationKwh, 0))) * 100 : 0;
+
+  if (tfoot) {
+    tfoot.innerHTML = `<tr>
+      <td class="p-3 text-left font-black">TOTAL / AVERAGE (${filtered.length} Days)</td>
+      <td class="p-3 text-left text-slate-500 font-semibold">—</td>
+      <td class="p-3 text-center text-amber-900 font-black">${avgInsolation.toFixed(2)} kWh/m²</td>
+      <td class="p-3 text-center text-slate-700 font-bold">${avgCloud}% avg</td>
+      <td class="p-3 text-center text-blue-700 font-bold">${totalRain.toFixed(1)} mm total</td>
+      <td class="p-3 text-blue-900 font-black text-sm">${totalActMwh.toFixed(3)} MWh</td>
+      <td class="p-3 font-mono font-bold">${(totalActMwh / weatherSiteConfig.capacityMw).toFixed(2)}</td>
+      <td class="p-3 text-slate-600 font-bold">${totalExpMwh.toFixed(3)} MWh</td>
+      <td class="p-3 ${totalVarMwh < 0 ? 'text-rose-700 font-black' : 'text-emerald-700 font-black'}">
+        ${totalVarMwh < 0 ? '' : '+'}${totalVarMwh.toFixed(2)} MWh
+      </td>
+      <td class="p-3 text-indigo-900 font-black">${weightedPr.toFixed(1)}%</td>
+      <td colspan="2" class="p-3 text-center text-xs font-semibold text-slate-600">
+        ${filtered.filter(d => d.isDrop).length} Drops Detected
+      </td>
+    </tr>`;
+  }
+}
+
+// Day Deep-Dive Modal
+function openWeatherDayModal(dateStr) {
+  const day = weatherMergedData.find(d => d.date === dateStr);
+  if (!day) return;
+
+  const m = $("weatherDayModal");
+  if (!m) return;
+
+  if ($("modalDayTitle")) {
+    $("modalDayTitle").innerHTML = `Generation & Weather Breakdown: <span class="font-mono text-blue-700">${day.date}</span>`;
+  }
+
+  // 4 Cards
+  if ($("modalDayWeatherCards")) {
+    $("modalDayWeatherCards").innerHTML = `
+      <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+        <span class="text-[10px] uppercase font-bold text-amber-800">Solar Insolation (GHI)</span>
+        <div class="text-lg font-black text-amber-950 mt-0.5">${day.solarInsolationKwh.toFixed(2)} <span class="text-xs font-normal">kWh/m²</span></div>
+        <div class="text-[10px] text-amber-700 font-semibold mt-0.5">${day.shortwaveRadiationMj} MJ/m² • ${day.sunshineHours}h sun</div>
+      </div>
+      <div class="bg-slate-100 p-3 rounded-xl border border-slate-200">
+        <span class="text-[10px] uppercase font-bold text-slate-600">Cloud Cover</span>
+        <div class="text-lg font-black text-slate-900 mt-0.5">${day.cloudCover}%</div>
+        <div class="text-[10px] text-slate-500 font-semibold mt-0.5">${day.cloudCover > 60 ? 'Dense Overcast' : (day.cloudCover > 25 ? 'Partly Cloudy' : 'Clear Sky')}</div>
+      </div>
+      <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-200">
+        <span class="text-[10px] uppercase font-bold text-blue-800">Rainfall & Storms</span>
+        <div class="text-lg font-black text-blue-900 mt-0.5">${day.precipMm} <span class="text-xs font-normal">mm</span></div>
+        <div class="text-[10px] text-blue-700 font-semibold mt-0.5">${day.weatherDesc}</div>
+      </div>
+      <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-200">
+        <span class="text-[10px] uppercase font-bold text-indigo-800">Ambient Temperature</span>
+        <div class="text-lg font-black text-indigo-900 mt-0.5">${day.tempMax}°C <span class="text-xs font-normal">max</span></div>
+        <div class="text-[10px] text-indigo-700 font-semibold mt-0.5">Mean: ${day.tempMean}°C • Min: ${day.tempMin}°C</div>
+      </div>
+    `;
+  }
+
+  // Diagnostic Callout Box
+  if ($("modalDayDiagnosticBox")) {
+    const isDrop = day.isDrop;
+    const borderCls = isDrop ? "border-rose-300 bg-rose-50/70" : "border-emerald-300 bg-emerald-50/70";
+    const headingCls = isDrop ? "text-rose-900" : "text-emerald-900";
+    const iconCls = isDrop ? "fa-circle-exclamation text-rose-600" : "fa-circle-check text-emerald-600";
+
+    $("modalDayDiagnosticBox").className = `p-4 rounded-xl border ${borderCls} space-y-1.5`;
+    $("modalDayDiagnosticBox").innerHTML = `
+      <div class="flex items-center gap-2">
+        <i class="fa-solid ${iconCls} text-base"></i>
+        <h4 class="font-extrabold text-sm ${headingCls}">Diagnostic Assessment: ${day.causeLabel}</h4>
+      </div>
+      <p class="text-xs text-slate-700 leading-relaxed font-medium">
+        ${day.explanation}
+      </p>
+      <div class="flex items-center gap-4 text-xs font-semibold pt-1 text-slate-600">
+        <span>Actual: <strong class="text-slate-900">${day.actualMwh.toFixed(3)} MWh</strong></span>
+        <span>Expected: <strong class="text-slate-900">${day.expectedMwh.toFixed(3)} MWh</strong></span>
+        <span>Performance Ratio: <strong class="${day.pr >= 75 ? 'text-emerald-700' : 'text-rose-700'}">${day.pr.toFixed(1)}%</strong></span>
+        <span>Specific Yield: <strong>${day.specificYield.toFixed(2)} kWh/kWp</strong></span>
+      </div>
+    `;
+  }
+
+  // 96-block generation profile chart
+  const dayTrades = sortedTrades().filter(t => t.date === dateStr);
+  const byBlock = {};
+  dayTrades.forEach(t => { byBlock[t.block] = Math.abs(t.qty || 0); });
+
+  const blockLabels = Array.from({ length: 96 }, (_, i) => {
+    const b = i + 1;
+    const sH = Math.floor((b - 1) * 15 / 60);
+    const sM = ((b - 1) * 15) % 60;
+    return `${String(sH).padStart(2, "0")}:${String(sM).padStart(2, "0")}`;
+  });
+  const blockMw = Array.from({ length: 96 }, (_, i) => byBlock[i + 1] || 0);
+
+  // Theoretical clear-sky curve for solar window (blocks 25 to 72, peak at 48)
+  const theoreticalMw = Array.from({ length: 96 }, (_, i) => {
+    const b = i + 1;
+    if (b < 25 || b > 72) return 0;
+    const progress = (b - 25) / (72 - 25); // 0 to 1
+    const shape = Math.sin(progress * Math.PI);
+    const psh = day.solarInsolationKwh || 5.0;
+    const peakEstimate = Math.min(10.8, (psh / 6.0) * 10.5);
+    return +(shape * peakEstimate).toFixed(2);
+  });
+
+  const ctx = $("modalDayBlocksChart");
+  if (ctx) {
+    if (modalDayChartInst) modalDayChartInst.destroy();
+    modalDayChartInst = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: blockLabels,
+        datasets: [
+          {
+            label: "Actual Dispatched MW",
+            data: blockMw,
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37, 99, 235, 0.18)",
+            borderWidth: 2,
+            fill: true,
+            pointRadius: 0,
+            tension: 0.2
+          },
+          {
+            label: "Clear-Sky Benchmark Profile (MW)",
+            data: theoreticalMw,
+            borderColor: "#d97706",
+            borderWidth: 1.5,
+            borderDash: [3, 3],
+            fill: false,
+            pointRadius: 0,
+            tension: 0.2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: {
+            title: { display: true, text: "Time Block (15-min Intervals, 00:00 to 24:00 hrs)", font: { size: 10 } },
+            ticks: { maxTicksLimit: 16, font: { size: 9 } },
+            grid: { display: false }
+          },
+          y: {
+            title: { display: true, text: "Power Output (MW)", font: { size: 10, weight: "bold" } },
+            max: 12.0,
+            beginAtZero: true,
+            ticks: { font: { size: 9 } }
+          }
+        },
+        plugins: {
+          legend: { position: "top", labels: { boxWidth: 10, font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  m.classList.remove("hidden");
+}
+window.openWeatherDayModal = openWeatherDayModal;
+
+function closeWeatherDayModal() {
+  const m = $("weatherDayModal");
+  if (m) m.classList.add("hidden");
+  if (modalDayChartInst) {
+    modalDayChartInst.destroy();
+    modalDayChartInst = null;
+  }
+}
+window.closeWeatherDayModal = closeWeatherDayModal;
+
+// Demonstration Data Generator for 14-Day Solar Operations at Khurja STPP
+async function loadSampleKhurjaSolarTrades() {
+  const dates = [
+    { d: "2024-05-01", type: "optimal", peak: 10.4, mcp: 4200 },
+    { d: "2024-05-02", type: "optimal", peak: 10.6, mcp: 4350 },
+    { d: "2024-05-03", type: "optimal", peak: 10.2, mcp: 4100 },
+    { d: "2024-05-04", type: "optimal", peak: 10.5, mcp: 3950 },
+    { d: "2024-05-05", type: "heatwave", peak: 9.2, mcp: 5200 },
+    { d: "2024-05-06", type: "cloudy", peak: 4.8, mcp: 3600 },
+    { d: "2024-05-07", type: "optimal", peak: 10.3, mcp: 3800 },
+    { d: "2024-05-08", type: "optimal", peak: 10.5, mcp: 4000 },
+    { d: "2024-05-09", type: "optimal", peak: 10.4, mcp: 4150 },
+    { d: "2024-05-10", type: "curtailment", peak: 3.5, mcp: 3100 },
+    { d: "2024-05-11", type: "rain", peak: 2.8, mcp: 3400 },
+    { d: "2024-05-12", type: "optimal", peak: 10.2, mcp: 4050 },
+    { d: "2024-05-13", type: "optimal", peak: 10.6, mcp: 4250 },
+    { d: "2024-05-14", type: "optimal", peak: 10.5, mcp: 4180 }
+  ];
+
+  const generatedTrades = [];
+  dates.forEach(cfg => {
+    for (let b = 1; b <= 96; b++) {
+      let mw = 0;
+      if (b >= 25 && b <= 72) { // 06:00 to 18:00
+        const progress = (b - 25) / (72 - 25);
+        const bell = Math.sin(progress * Math.PI);
+        if (cfg.type === "curtailment") {
+          mw = Math.min(cfg.peak, bell * 10.5); // Capped flat output due to grid backdown
+        } else if (cfg.type === "rain") {
+          // Storm hits at midday
+          mw = b > 44 && b < 64 ? 0.6 : bell * cfg.peak;
+        } else {
+          mw = bell * cfg.peak;
+        }
+        mw = +(mw).toFixed(3);
+      }
+      generatedTrades.push({
+        date: cfg.d,
+        block: b,
+        qty: -mw, // standard sell convention
+        mcp: cfg.mcp + (b % 5) * 50,
+        seg: "G-DAM",
+        txn: "SELL"
+      });
+    }
+  });
+
+  state.trades = generatedTrades;
+  save();
+  await saveStateToIndexedDB();
+
+  if ($("weatherStartDate")) $("weatherStartDate").value = "2024-05-01";
+  if ($("weatherEndDate")) $("weatherEndDate").value = "2024-05-14";
+  if ($("tFrom")) $("tFrom").value = "2024-05-01";
+  if ($("tTo")) $("tTo").value = "2024-05-14";
+  if ($("heatmapDate")) $("heatmapDate").value = "2024-05-01";
+
+  await fetchWeatherCorrelationData();
+  alert("Successfully loaded 14 days of demonstration trading records for THDCIL 11 MW Khurja Solar with clear-sky, cloud attenuation, heatwave derating, monsoon rain, and grid curtailment scenarios!");
+}
+window.loadSampleKhurjaSolarTrades = loadSampleKhurjaSolarTrades;
+
+// Export Weather & Generation Correlation to Excel
+function exportWeatherReportExcel() {
+  if (!weatherMergedData.length) {
+    alert("No correlation records to export. Please fetch weather data first.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Daily Correlation Ledger
+  const headers = [
+    ["THDCIL 11 MW FLOATING SOLAR PV PLANT — KHURJA SUPER THERMAL POWER PLANT"],
+    ["DAILY SOLAR GENERATION & HISTORICAL WEATHER CORRELATION REPORT"],
+    [`Station Location: ${weatherSiteConfig.locationText} (${weatherSiteConfig.lat}° N, ${weatherSiteConfig.lon}° E)`],
+    [`Capacity: ${weatherSiteConfig.capacityMw} MW AC | Benchmark PR: ${weatherSiteConfig.benchmarkPr}% | Generated: ${new Date().toLocaleString()}`],
+    [],
+    [
+      "Date", "Day", "Weather Condition", "Max Temp (°C)", "Min Temp (°C)",
+      "Solar Insolation (kWh/m²)", "Solar Radiation (MJ/m²)", "Cloud Cover (%)", "Rainfall (mm)",
+      "Dispatched Gen (MWh)", "Dispatched Energy (MU)", "Specific Yield (kWh/kWp)",
+      "Expected Gen (MWh)", "Variance (MWh)", "Generation Drop (%)",
+      "Performance Ratio (%)", "Diagnostic Root Cause", "Engineering Explanation"
+    ]
+  ];
+
+  weatherMergedData.forEach(d => {
+    const dt = new Date(d.date + "T00:00:00Z");
+    const dayName = dt.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+    headers.push([
+      d.date, dayName, d.weatherDesc, d.tempMax, d.tempMin,
+      d.solarInsolationKwh, d.shortwaveRadiationMj, d.cloudCover, d.precipMm,
+      d.actualMwh, d.actualMu, d.specificYield,
+      d.expectedMwh, d.varianceMwh, d.pctDrop,
+      d.pr, d.causeLabel, d.explanation
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(headers);
+  XLSX.utils.book_append_sheet(wb, ws, "Weather_Correlation");
+
+  // Sheet 2: Root Cause Diagnostics Summary
+  const drops = weatherMergedData.filter(d => d.isDrop);
+  const diagHeaders = [
+    ["IDENTIFIED GENERATION DROPS & ROOT CAUSE TAXONOMY"],
+    [`Total Days Analyzed: ${weatherMergedData.length} | Drop Incidents: ${drops.length}`],
+    [],
+    ["Date", "Root Cause Category", "Actual MWh", "Expected MWh", "Deficit (MWh)", "% Drop", "Insolation (kWh/m²)", "Cloud (%)", "Rain (mm)", "Explanation"]
+  ];
+
+  drops.forEach(d => {
+    diagHeaders.push([
+      d.date, d.causeLabel, d.actualMwh, d.expectedMwh, d.varianceMwh, d.pctDrop,
+      d.solarInsolationKwh, d.cloudCover, d.precipMm, d.explanation
+    ]);
+  });
+
+  const wsDiag = XLSX.utils.aoa_to_sheet(diagHeaders);
+  XLSX.utils.book_append_sheet(wb, wsDiag, "Drop_Diagnostics");
+
+  XLSX.writeFile(wb, `THDCIL_11MW_Solar_Weather_Correlation_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+window.exportWeatherReportExcel = exportWeatherReportExcel;
+
+function renderWeatherCorrelation() {
+  updateWeatherSiteDisplay();
+  if (weatherMergedData.length === 0) {
+    fetchWeatherCorrelationData();
+  } else {
+    renderWeatherCorrelationUI();
+  }
+}
+window.renderWeatherCorrelation = renderWeatherCorrelation;
 </script>
 </body>
 </html>
