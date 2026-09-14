@@ -183,8 +183,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="kpis"></div>
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2"><i class="fa-solid fa-chart-column text-blue-600"></i> Monthly Energy & Revenue</h2>
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-blue-600"></i> Monthly Energy & Revenue
+            </h2>
+            <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">(Click legend or toggle button to isolate energy)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="toggleMonthlyRevenueBtn" onclick="toggleMonthlyRevenueVisibility()" class="px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border shadow-2xs cursor-pointer bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100" title="Toggle Revenue dataset to isolate energy output or view combined financial metrics">
+              <i id="toggleMonthlyRevenueIcon" class="fa-solid fa-eye text-emerald-600"></i>
+              <span id="toggleMonthlyRevenueText">Revenue Visible</span>
+            </button>
+          </div>
         </div>
         <div class="relative flex-1 min-h-[280px]"><canvas id="monthlyChart"></canvas></div>
       </div>
@@ -2873,6 +2884,47 @@ function uploadOnePeriodExcel(date,input){
 
 // DASHBOARD
 let mChartInstance = null;
+let showMonthlyRevenue = true;
+
+function toggleMonthlyRevenueVisibility() {
+  showMonthlyRevenue = !showMonthlyRevenue;
+  if (mChartInstance) {
+    if (showMonthlyRevenue) {
+      mChartInstance.show(1);
+      if (mChartInstance.options.scales.y1) {
+        mChartInstance.options.scales.y1.display = true;
+      }
+    } else {
+      mChartInstance.hide(1);
+      if (mChartInstance.options.scales.y1) {
+        mChartInstance.options.scales.y1.display = false;
+      }
+    }
+    mChartInstance.update();
+  }
+  updateRevenueToggleUI(showMonthlyRevenue);
+}
+window.toggleMonthlyRevenueVisibility = toggleMonthlyRevenueVisibility;
+
+function updateRevenueToggleUI(visible) {
+  const btn = $("toggleMonthlyRevenueBtn");
+  const icon = $("toggleMonthlyRevenueIcon");
+  const text = $("toggleMonthlyRevenueText");
+  if (!btn) return;
+  if (visible) {
+    btn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border shadow-2xs cursor-pointer bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100";
+    if (icon) icon.className = "fa-solid fa-eye text-emerald-600";
+    if (text) text.innerText = "Revenue Visible";
+    btn.title = "Revenue dataset is shown. Click to hide Revenue and simplify view to energy output only.";
+  } else {
+    btn.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border shadow-2xs cursor-pointer bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200";
+    if (icon) icon.className = "fa-solid fa-eye-slash text-slate-400";
+    if (text) text.innerText = "Revenue Hidden (Energy Only)";
+    btn.title = "Revenue dataset is hidden. Click to show Revenue dataset alongside energy.";
+  }
+}
+window.updateRevenueToggleUI = updateRevenueToggleUI;
+
 window.dashSeg = "ALL";
 window.dashTxn = "ALL";
 
@@ -3015,13 +3067,26 @@ function renderDashboard() {
   }).join("") || '<tr><td colspan="6" class="p-4 text-center text-slate-400">No data found.</td></tr>';
   
   if(mChartInstance) mChartInstance.destroy();
+  const isRevVisible = showMonthlyRevenue !== false;
   mChartInstance = new Chart($("monthlyChart").getContext("2d"), {
     type: 'bar',
     data: {
       labels: a.map(x=>x.m),
       datasets: [
-        { label:'Quantum (MU)', data:a.map(x=>x.q), backgroundColor:'#1d4ed8', borderRadius: 4 },
-        { label:'Revenue (₹)', data:a.map(x=>x.r), backgroundColor:'#059669', borderRadius: 4, yAxisID:'y1' }
+        { 
+          label:'Quantum (MU)', 
+          data:a.map(x=>x.q), 
+          backgroundColor:'#1d4ed8', 
+          borderRadius: 4 
+        },
+        { 
+          label:'Revenue (₹)', 
+          data:a.map(x=>x.r), 
+          backgroundColor:'#059669', 
+          borderRadius: 4, 
+          yAxisID:'y1',
+          hidden: !isRevVisible
+        }
       ]
     },
     options: {
@@ -3034,14 +3099,47 @@ function renderDashboard() {
         },
         y1: {
           position: 'right',
+          display: isRevVisible,
           grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Revenue (₹)', font: { size: 10, weight: 'bold' } },
+          title: { display: isRevVisible, text: 'Revenue (₹)', font: { size: 10, weight: 'bold' } },
           ticks: {
             callback: function(v) { return '₹' + Number(v).toLocaleString('en-IN'); }
           }
         }
       },
       plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            font: { size: 11, weight: 'bold' },
+            padding: 12,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          },
+          onClick: function(e, legendItem, legend) {
+            const index = legendItem.datasetIndex;
+            const ci = legend.chart;
+            if (ci.isDatasetVisible(index)) {
+              ci.hide(index);
+              legendItem.hidden = true;
+            } else {
+              ci.show(index);
+              legendItem.hidden = false;
+            }
+            if (index === 1) {
+              const visible = ci.isDatasetVisible(1);
+              showMonthlyRevenue = visible;
+              if (ci.options.scales.y1) {
+                ci.options.scales.y1.display = visible;
+              }
+              updateRevenueToggleUI(visible);
+            }
+            ci.update();
+          }
+        },
         tooltip: {
           callbacks: {
             label: function(ctx) {
@@ -3055,6 +3153,7 @@ function renderDashboard() {
       }
     }
   });
+  updateRevenueToggleUI(isRevVisible);
 }
 
 // TRADES
@@ -4916,7 +5015,7 @@ function openPrintableMemoTab() {
         window.print();
       }, 400);
     };
-  </script>
+  <\/script>
 </body>
 </html>`;
 
