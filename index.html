@@ -178,6 +178,12 @@
           <button type="button" data-txn="BUY" class="dash-txn-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardTxn('BUY')"><i class="fa-solid fa-arrow-trend-down text-rose-500 mr-1"></i>BUY</button>
         </div>
       </div>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" onclick="downloadColorfulDashboardPDF()" class="bg-gradient-to-r from-blue-700 via-indigo-700 to-emerald-600 hover:from-blue-800 hover:to-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2 shadow-sm hover:shadow-md cursor-pointer shrink-0" title="Export Executive Full-Color Dashboard Report in PDF format">
+          <i class="fa-solid fa-file-pdf text-amber-300"></i>
+          <span>Dashboard Report (PDF)</span>
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="kpis"></div>
@@ -200,15 +206,20 @@
         <div class="relative flex-1 min-h-[280px]"><canvas id="monthlyChart"></canvas></div>
       </div>
       <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
-        <h2 class="font-bold text-slate-800 text-sm sm:text-base mb-3 flex items-center gap-2"><i class="fa-solid fa-table-list text-emerald-600"></i> Monthly Summary</h2>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2"><i class="fa-solid fa-table-list text-emerald-600"></i> Monthly Summary</h2>
+          <button type="button" onclick="downloadColorfulDashboardPDF()" class="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 shadow-2xs cursor-pointer" title="Export colorful dashboard report PDF">
+            <i class="fa-solid fa-file-pdf text-rose-600"></i> Colorful PDF
+          </button>
+        </div>
         <div class="overflow-y-auto flex-1 max-h-[300px]">
           <table class="w-full text-xs text-right">
-            <thead class="text-slate-500 bg-slate-50 sticky top-0 font-semibold border-b border-slate-200">
+            <thead class="text-slate-600 bg-slate-50 sticky top-0 font-bold border-b border-slate-200 uppercase text-[10px]">
               <tr>
                 <th class="p-2 text-left">Month</th>
-                <th class="p-2">Energy (MU)</th>
-                <th class="p-2">Revenue (₹)</th>
-                <th class="p-2">Avg MCP (₹)</th>
+                <th class="p-2 text-right">Energy (MU)</th>
+                <th class="p-2 text-right">Revenue (₹)</th>
+                <th class="p-2 text-right">Avg MCP (₹)</th>
                 <th class="p-2 text-center">YoY Variance</th>
                 <th class="p-2 text-center">Action</th>
               </tr>
@@ -622,12 +633,12 @@
               <th class="p-2.5 border text-center">Timeline Role</th>
               <th class="p-2.5 border text-center">Seasonal Phase</th>
               <th class="p-2.5 border text-center">Active Days</th>
-              <th class="p-2.5 border">Energy Quantum</th>
-              <th class="p-2.5 border">Gross Trade Value (₹)</th>
-              <th class="p-2.5 border">Deductions (₹)</th>
-              <th class="p-2.5 border bg-emerald-50 text-emerald-950 font-black">Net Realized Revenue (₹)</th>
-              <th class="p-2.5 border">Effective Tariff (₹/kWh)</th>
-              <th class="p-2.5 border">Avg Daily Net (₹/day)</th>
+              <th class="p-2.5 border text-right">Energy Quantum</th>
+              <th class="p-2.5 border text-right">Gross Trade Value (₹)</th>
+              <th class="p-2.5 border text-right">Deductions (₹)</th>
+              <th class="p-2.5 border text-right bg-emerald-50 text-emerald-950 font-black">Net Realized Revenue (₹)</th>
+              <th class="p-2.5 border text-right">Effective Tariff (₹/kWh)</th>
+              <th class="p-2.5 border text-right">Avg Daily Net (₹/day)</th>
               <th class="p-2.5 border text-center">MoM Variance (vs Prev Month)</th>
               <th class="p-2.5 border text-center">Seasonal Index (vs Avg)</th>
               <th class="p-2.5 border text-center">Detailed Annexure</th>
@@ -665,19 +676,19 @@
         <table id="billingTable" class="w-full text-right divide-y divide-slate-300" style="font-size:10px; min-width:1500px;">
           <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase">
             <tr>
-              <th class="p-2 border">Sl.No.</th>
+              <th class="p-2 border text-center">Sl.No.</th>
               <th class="p-2 border text-left">Delivery (Schedule) Date</th>
-              <th class="p-2 border">Txn Type<br>(Sale/Buy)</th>
-              <th class="p-2 border">Mkt Seg#</th>
-              <th class="p-2 border">Traded Quantum</th>
-              <th class="p-2 border">Trade Value</th>
-              <th class="p-2 border">Corridor Charges</th>
-              <th class="p-2 border">Power Exchange Fees</th>
-              <th class="p-2 border">GST on Power Exchange Fees</th>
-              <th class="p-2 border">Net receivable (+) / payable (-) Power Exchange</th>
-              <th class="p-2 border">NVVN Margin</th>
-              <th class="p-2 border">GST on NVVN Margin</th>
-              <th class="p-2 border">Net receivable (+) / payable (-) NVVN</th>
+              <th class="p-2 border text-center">Txn Type<br>(Sale/Buy)</th>
+              <th class="p-2 border text-center">Mkt Seg#</th>
+              <th class="p-2 border text-right">Traded Quantum</th>
+              <th class="p-2 border text-right">Trade Value</th>
+              <th class="p-2 border text-right">Corridor Charges</th>
+              <th class="p-2 border text-right">Power Exchange Fees</th>
+              <th class="p-2 border text-right">GST on Power Exchange Fees</th>
+              <th class="p-2 border text-right">Net receivable (+) / payable (-) Power Exchange</th>
+              <th class="p-2 border text-right">NVVN Margin</th>
+              <th class="p-2 border text-right">GST on NVVN Margin</th>
+              <th class="p-2 border text-right">Net receivable (+) / payable (-) NVVN</th>
             </tr>
           </thead>
           <tbody id="billRows"></tbody>
@@ -734,12 +745,15 @@
           <button onclick="setReportPreset('fy')" class="report-preset-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Financial Year</button>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button onclick="exportReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="exportReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
             <i class="fa-solid fa-file-excel"></i> <span>Export Excel</span>
           </button>
-          <button onclick="exportReportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
-            <i class="fa-solid fa-file-pdf"></i> <span>Export Official PDF</span>
+          <button onclick="exportReportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-file-pdf"></i> <span>Export Settlement PDF</span>
+          </button>
+          <button onclick="downloadColorfulDashboardPDF()" class="bg-gradient-to-r from-blue-700 via-indigo-700 to-emerald-600 hover:from-blue-800 hover:to-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="Download Executive Colorful Dashboard Report (PDF)">
+            <i class="fa-solid fa-chart-pie text-amber-300"></i> <span>Dashboard Report (PDF)</span>
           </button>
         </div>
       </div>
@@ -825,15 +839,15 @@
               <th class="p-3 text-left">Period / Date</th>
               <th class="p-3 text-center">Segment</th>
               <th class="p-3 text-center">Type</th>
-              <th class="p-3">Qty (MWh)</th>
-              <th class="p-3">Avg MCP (₹/MWh)</th>
-              <th class="p-3 text-slate-900">Gross Value (₹)</th>
-              <th class="p-3 text-rose-600">Grid Charges (₹)</th>
-              <th class="p-3 text-amber-700">PX (Fee+GST) (₹)</th>
-              <th class="p-3 text-blue-700">NVVN (Mar+GST) (₹)</th>
-              <th class="p-3 text-rose-700 font-bold">Total Ded. (₹)</th>
-              <th class="p-3 text-emerald-800 font-extrabold">Net Recv. (₹)</th>
-              <th class="p-3 text-indigo-700 font-bold">Net Tariff (₹/u)</th>
+              <th class="p-3 text-right">Qty (MWh)</th>
+              <th class="p-3 text-right">Avg MCP (₹/MWh)</th>
+              <th class="p-3 text-right text-slate-900">Gross Value (₹)</th>
+              <th class="p-3 text-right text-rose-600">Grid Charges (₹)</th>
+              <th class="p-3 text-right text-amber-700">PX (Fee+GST) (₹)</th>
+              <th class="p-3 text-right text-blue-700">NVVN (Mar+GST) (₹)</th>
+              <th class="p-3 text-right text-rose-700 font-bold">Total Ded. (₹)</th>
+              <th class="p-3 text-right text-emerald-800 font-extrabold bg-emerald-50/80">Net Recv. (₹)</th>
+              <th class="p-3 text-right text-indigo-700 font-bold bg-indigo-50/70">Net Tariff (₹/u)</th>
             </tr>
           </thead>
           <tbody id="reportRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
@@ -3082,9 +3096,9 @@ function renderDashboard() {
     return `
       <tr class="hover:bg-slate-50 transition">
         <td class="p-2.5 font-bold text-slate-800 text-left">${mNames[x.m] || x.m}</td>
-        <td class="p-2.5 font-semibold text-blue-700">${x.q.toFixed(3)}</td>
-        <td class="p-2.5 font-bold text-emerald-700">${money(x.r)}</td>
-        <td class="p-2.5 text-slate-600">₹${x.w.toFixed(2)}</td>
+        <td class="p-2.5 font-semibold text-blue-700 text-right tabular-nums">${x.q.toFixed(3)}</td>
+        <td class="p-2.5 font-bold text-emerald-700 text-right tabular-nums">${money(x.r)}</td>
+        <td class="p-2.5 text-slate-600 text-right tabular-nums">₹ ${x.w.toFixed(2)}</td>
         <td class="p-2.5 text-center">${yoyPill}</td>
         <td class="p-2.5 text-center">
           <button onclick="openYoyForMonth('${x.m}')" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-[10px] border border-teal-200 transition cursor-pointer flex items-center gap-1 mx-auto" title="Open detailed YoY seasonal analysis for this month">
@@ -4451,18 +4465,18 @@ function renderReports() {
     const txnStr = selectedTxn !== "ALL" ? selectedTxn : (x.txns.size ? [...x.txns].join(",") : "SELL");
 
     return `<tr class="hover:bg-blue-50/40 transition font-medium border-b border-slate-100">
-      <td class="p-3 text-left font-bold text-slate-800">${k}</td>
+      <td class="p-3 text-left font-bold text-slate-800 whitespace-nowrap">${k}</td>
       <td class="p-3 text-center">${getSegBadge(segStr)}</td>
       <td class="p-3 text-center">${getTxnBadge(txnStr)}</td>
-      <td class="p-3 text-blue-700 font-bold">${x.q.toFixed(3)}</td>
-      <td class="p-3 text-slate-600">₹ ${Math.abs(w).toFixed(2)}</td>
-      <td class="p-3 text-slate-900 font-bold">₹ ${Math.abs(x.r).toFixed(2)}</td>
-      <td class="p-3 text-rose-600 font-semibold">₹ ${Math.abs(x.grid).toFixed(2)}</td>
-      <td class="p-3 text-amber-700 font-semibold">₹ ${Math.abs(x.px).toFixed(2)}</td>
-      <td class="p-3 text-blue-700 font-semibold">₹ ${Math.abs(x.nvvn).toFixed(2)}</td>
-      <td class="p-3 text-rose-700 font-bold">₹ ${Math.abs(rowDed).toFixed(2)}</td>
-      <td class="p-3 text-emerald-800 font-extrabold bg-emerald-50/60">₹ ${Math.abs(rowNet).toFixed(2)}</td>
-      <td class="p-3 text-indigo-700 font-bold bg-indigo-50/40">₹ ${Math.abs(netTariff).toFixed(3)}</td>
+      <td class="p-3 text-right text-blue-700 font-bold tabular-nums">${x.q.toFixed(3)}</td>
+      <td class="p-3 text-right text-slate-600 tabular-nums">₹ ${Math.abs(w).toFixed(2)}</td>
+      <td class="p-3 text-right text-slate-900 font-bold tabular-nums">₹ ${formatIndianCurrency(Math.abs(x.r))}</td>
+      <td class="p-3 text-right text-rose-600 font-semibold tabular-nums">₹ ${formatIndianCurrency(Math.abs(x.grid))}</td>
+      <td class="p-3 text-right text-amber-700 font-semibold tabular-nums">₹ ${formatIndianCurrency(Math.abs(x.px))}</td>
+      <td class="p-3 text-right text-blue-700 font-semibold tabular-nums">₹ ${formatIndianCurrency(Math.abs(x.nvvn))}</td>
+      <td class="p-3 text-right text-rose-700 font-bold tabular-nums">₹ ${formatIndianCurrency(Math.abs(rowDed))}</td>
+      <td class="p-3 text-right text-emerald-800 font-extrabold bg-emerald-50/80 tabular-nums">₹ ${formatIndianCurrency(Math.abs(rowNet))}</td>
+      <td class="p-3 text-right text-indigo-700 font-bold bg-indigo-50/70 tabular-nums">₹ ${Math.abs(netTariff).toFixed(3)}</td>
     </tr>`;
   }).join("");
 
@@ -4476,18 +4490,18 @@ function renderReports() {
   if (foot) {
     if (rowKeys.length > 0) {
       foot.innerHTML = `<tr>
-        <td class="p-3 text-left font-black text-slate-900 uppercase">Grand Total (${rowKeys.length} Lines)</td>
+        <td class="p-3 text-left font-black text-slate-900 uppercase whitespace-nowrap">Grand Total (${rowKeys.length} Lines)</td>
         <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedSeg}</td>
         <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedTxn}</td>
-        <td class="p-3 font-black text-blue-900">${totQ.toFixed(3)}</td>
-        <td class="p-3 text-slate-700 font-bold">₹ ${Math.abs(totAvgMcp).toFixed(2)}</td>
-        <td class="p-3 font-black text-slate-950">₹ ${Math.abs(totR).toFixed(2)}</td>
-        <td class="p-3 font-bold text-rose-700">₹ ${Math.abs(totGrid).toFixed(2)}</td>
-        <td class="p-3 font-bold text-amber-800">₹ ${Math.abs(totPx).toFixed(2)}</td>
-        <td class="p-3 font-bold text-blue-800">₹ ${Math.abs(totNvvn).toFixed(2)}</td>
-        <td class="p-3 font-black text-rose-900">₹ ${Math.abs(totDed).toFixed(2)}</td>
-        <td class="p-3 font-black text-emerald-900 bg-emerald-100/70">₹ ${Math.abs(totNet).toFixed(2)}</td>
-        <td class="p-3 font-black text-indigo-900 bg-indigo-100/60">₹ ${Math.abs(totTariff).toFixed(3)}</td>
+        <td class="p-3 text-right font-black text-blue-900 tabular-nums">${totQ.toFixed(3)}</td>
+        <td class="p-3 text-right text-slate-700 font-bold tabular-nums">₹ ${Math.abs(totAvgMcp).toFixed(2)}</td>
+        <td class="p-3 text-right font-black text-slate-950 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totR))}</td>
+        <td class="p-3 text-right font-bold text-rose-700 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totGrid))}</td>
+        <td class="p-3 text-right font-bold text-amber-800 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totPx))}</td>
+        <td class="p-3 text-right font-bold text-blue-800 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totNvvn))}</td>
+        <td class="p-3 text-right font-black text-rose-900 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totDed))}</td>
+        <td class="p-3 text-right font-black text-emerald-900 bg-emerald-100/80 tabular-nums">₹ ${formatIndianCurrency(Math.abs(totNet))}</td>
+        <td class="p-3 text-right font-black text-indigo-900 bg-indigo-100/70 tabular-nums">₹ ${Math.abs(totTariff).toFixed(3)}</td>
       </tr>`;
     } else {
       foot.innerHTML = '';
@@ -4687,14 +4701,85 @@ function exportReportPDF() {
     }
   }
 
+  // Extract clean structured table data for precision justification
+  const head = [
+    [
+      { content: 'Period / Date', styles: { halign: 'left' } },
+      { content: 'Segment', styles: { halign: 'center' } },
+      { content: 'Type', styles: { halign: 'center' } },
+      { content: 'Qty (MWh)', styles: { halign: 'right' } },
+      { content: 'Avg MCP (₹/MWh)', styles: { halign: 'right' } },
+      { content: 'Gross Value (₹)', styles: { halign: 'right' } },
+      { content: 'Grid Charges (₹)', styles: { halign: 'right' } },
+      { content: 'PX (Fee+GST) (₹)', styles: { halign: 'right' } },
+      { content: 'NVVN (Mar+GST) (₹)', styles: { halign: 'right' } },
+      { content: 'Total Ded. (₹)', styles: { halign: 'right' } },
+      { content: 'Net Recv. (₹)', styles: { halign: 'right' } },
+      { content: 'Net Tariff (₹/u)', styles: { halign: 'right' } }
+    ]
+  ];
+
+  const bodyRows = [];
+  document.querySelectorAll("#reportRows tr").forEach(tr => {
+    const tds = Array.from(tr.querySelectorAll("td")).map(td => td.innerText.trim());
+    if (tds.length >= 12) {
+      bodyRows.push(tds);
+    }
+  });
+
+  const footRows = [];
+  document.querySelectorAll("#reportFoot tr").forEach(tr => {
+    const tds = Array.from(tr.querySelectorAll("td")).map(td => td.innerText.trim());
+    if (tds.length >= 12) {
+      footRows.push(tds);
+    }
+  });
+
   doc.autoTable({ 
-    html: '#reportsTable', 
+    head: head,
+    body: bodyRows,
+    foot: footRows.length ? footRows : undefined,
     startY: 39.5, 
     theme: 'grid', 
-    headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.8, fontStyle: 'bold', halign: 'right' }, 
-    styles: { fontSize: 6.2, cellPadding: 1.8, halign: 'right', textColor: [30, 41, 59] },
-    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' } },
-    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.8 },
+    headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.6, fontStyle: 'bold' }, 
+    styles: { fontSize: 6.0, cellPadding: 1.6, textColor: [30, 41, 59] },
+    columnStyles: { 
+      0: { halign: 'left', fontStyle: 'bold', cellWidth: 26 }, 
+      1: { halign: 'center', cellWidth: 15 }, 
+      2: { halign: 'center', cellWidth: 13 },
+      3: { halign: 'right', cellWidth: 20 },
+      4: { halign: 'right', cellWidth: 22 },
+      5: { halign: 'right', cellWidth: 24 },
+      6: { halign: 'right', cellWidth: 22 },
+      7: { halign: 'right', cellWidth: 22 },
+      8: { halign: 'right', cellWidth: 24 },
+      9: { halign: 'right', cellWidth: 24 },
+      10: { halign: 'right', fontStyle: 'bold', cellWidth: 26, textColor: [5, 120, 85] },
+      11: { halign: 'right', fontStyle: 'bold', cellWidth: 19, textColor: [91, 33, 182] }
+    },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.5 },
+    didParseCell: function(data) {
+      const c = data.column.index;
+      if (c === 0) data.cell.styles.halign = 'left';
+      else if (c === 1 || c === 2) data.cell.styles.halign = 'center';
+      else data.cell.styles.halign = 'right';
+
+      if (data.section === 'body') {
+        if (c === 10) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = [5, 120, 85];
+          data.cell.styles.fillColor = [240, 253, 244];
+        } else if (c === 6 || c === 9) {
+          data.cell.styles.textColor = [225, 29, 72];
+        } else if (c === 3) {
+          data.cell.styles.textColor = [29, 78, 216];
+        }
+      }
+      if (data.section === 'foot') {
+        data.cell.styles.fontStyle = 'bold';
+        if (c === 10) data.cell.styles.textColor = [5, 120, 85];
+      }
+    },
     didDrawPage: function(data) {
       const pageCount = doc.internal.getNumberOfPages();
       doc.setFontSize(7);
@@ -4897,9 +4982,28 @@ function autoDownloadDailySettlementPDF(targetDate) {
         ]
       ],
       theme: 'grid',
-      headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.8, fontStyle: 'bold', halign: 'right' },
-      styles: { fontSize: 6.5, cellPadding: 2, halign: 'right', textColor: [30, 41, 59] },
-      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' } }
+      headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.6, fontStyle: 'bold' },
+      styles: { fontSize: 6.2, cellPadding: 1.8, textColor: [30, 41, 59] },
+      columnStyles: { 
+        0: { halign: 'left', fontStyle: 'bold' }, 
+        1: { halign: 'center' }, 
+        2: { halign: 'center' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+        6: { halign: 'right' },
+        7: { halign: 'right' },
+        8: { halign: 'right' },
+        9: { halign: 'right' },
+        10: { halign: 'right', fontStyle: 'bold', textColor: [5, 120, 85] },
+        11: { halign: 'right', fontStyle: 'bold', textColor: [91, 33, 182] }
+      },
+      didParseCell: function(data) {
+        const c = data.column.index;
+        if (c === 0) data.cell.styles.halign = 'left';
+        else if (c === 1 || c === 2) data.cell.styles.halign = 'center';
+        else data.cell.styles.halign = 'right';
+      }
     });
 
     // Corridor charges itemized breakdown mini-table
@@ -4928,8 +5032,11 @@ function autoDownloadDailySettlementPDF(targetDate) {
         ]
       ],
       theme: 'grid',
-      headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 6.2, fontStyle: 'bold', halign: 'right' },
-      styles: { fontSize: 6.2, cellPadding: 1.6, halign: 'right', textColor: [30, 41, 59] }
+      headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 6.2, fontStyle: 'bold' },
+      styles: { fontSize: 6.2, cellPadding: 1.6, halign: 'right', textColor: [30, 41, 59] },
+      didParseCell: function(data) {
+        data.cell.styles.halign = 'right';
+      }
     });
 
     // Table 2: 96 Time-Block Generation & Settlement Schedule
@@ -4965,13 +5072,27 @@ function autoDownloadDailySettlementPDF(targetDate) {
       ],
       body: blockRows,
       theme: 'grid',
-      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontSize: 6.2, fontStyle: 'bold', halign: 'right' },
-      styles: { fontSize: 5.8, cellPadding: 1.2, halign: 'right', textColor: [30, 41, 59] },
-      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } },
+      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontSize: 6.2, fontStyle: 'bold' },
+      styles: { fontSize: 5.8, cellPadding: 1.3, textColor: [30, 41, 59] },
+      columnStyles: { 
+        0: { halign: 'left', fontStyle: 'bold', cellWidth: 28 }, 
+        1: { halign: 'center', cellWidth: 36 }, 
+        2: { halign: 'center', cellWidth: 24 }, 
+        3: { halign: 'center', cellWidth: 20 },
+        4: { halign: 'right', cellWidth: 40 },
+        5: { halign: 'right', cellWidth: 40 },
+        6: { halign: 'right', fontStyle: 'bold', cellWidth: 48, textColor: [5, 120, 85] }
+      },
       foot: [
         ['Total (Day)', `${dayTrades.length} Blocks`, segStr, txnStr, totalQ.toFixed(3), 'Avg ₹ ' + avgMcp.toFixed(2), '₹ ' + formatIndianCurrency(grossVal)]
       ],
-      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.2, halign: 'right' },
+      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.2 },
+      didParseCell: function(data) {
+        const c = data.column.index;
+        if (c === 0) data.cell.styles.halign = 'left';
+        else if (c === 1 || c === 2 || c === 3) data.cell.styles.halign = 'center';
+        else data.cell.styles.halign = 'right';
+      },
       didDrawPage: function(data) {
         const pageCount = doc.internal.getNumberOfPages();
         doc.setFontSize(6.5);
@@ -5035,6 +5156,410 @@ function autoDownloadDailySettlementPDF(targetDate) {
 }
 window.autoDownloadDailySettlementPDF = autoDownloadDailySettlementPDF;
 window.downloadDailySettlementReport = autoDownloadDailySettlementPDF;
+
+// ==========================================
+// EXECUTIVE COLORFUL DASHBOARD PDF EXPORT ENGINE
+// ==========================================
+function downloadColorfulDashboardPDF() {
+  try {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert("PDF generation engine is initializing. Please try again in a moment.");
+      return null;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+
+    // Retrieve active filters
+    const segVal = window.dashboardSegFilter || $('dashSegPills')?.querySelector('.active')?.getAttribute('data-seg') || 'ALL';
+    const txnVal = window.dashboardTxnFilter || $('dashTxnPills')?.querySelector('.active')?.getAttribute('data-txn') || 'ALL';
+
+    let trades = sortedTrades();
+    if (segVal !== 'ALL') trades = trades.filter(t => (t.seg || 'G-DAM') === segVal);
+    if (txnVal !== 'ALL') trades = trades.filter(t => (t.txn || 'SELL') === txnVal);
+
+    if (!trades.length) {
+      alert("No trade records available for the current dashboard filters.");
+      return null;
+    }
+
+    const availableDates = [...new Set(trades.map(t => t.date))].sort();
+    const startDate = availableDates[0] || 'N/A';
+    const endDate = availableDates[availableDates.length - 1] || 'N/A';
+
+    // Calculate executive KPIs
+    const totalQ_MWh = roundPrecise(trades.reduce((s, x) => s + qtyMwh(x), 0));
+    const totalQ_MU = totalQ_MWh / 1000;
+    const totalGross = roundPrecise(trades.reduce((s, x) => s + amount(x), 0));
+    const avgMcp = totalQ_MWh > 0 ? (totalGross / totalQ_MWh) : 0;
+
+    // Deductions across active dates
+    let totalGrid = 0;
+    availableDates.forEach(d => {
+      const o = obFor(d);
+      totalGrid += (o.nldcApp || 0) + (o.nldcSched || 0) + (o.ctu || 0) + (o.stu || 0) + (o.sldc || 0) + (o.distribution || 0) + (o.other || 0);
+    });
+    totalGrid = roundPrecise(totalGrid);
+
+    const pxFee = roundPrecise(totalQ_MWh * 1000 * pxRate);
+    const pxGstAmt = roundPrecise(pxFee * (pxGst / 100));
+    const totalPx = roundPrecise(pxFee + pxGstAmt);
+
+    const nvvnMargin = roundPrecise(totalQ_MWh * 1000 * nvvnRate);
+    const nvvnGstAmt = roundPrecise(nvvnMargin * (nvvnGst / 100));
+    const totalNvvn = roundPrecise(nvvnMargin + nvvnGstAmt);
+
+    const totalDeds = roundPrecise(totalGrid + totalPx + totalNvvn);
+    const netRevenue = roundPrecise(totalGross - totalDeds);
+    const effectiveTariff = totalQ_MWh > 0 ? (netRevenue / (totalQ_MWh * 1000)) : 0;
+
+    // 1. Corporate Header with official emblem
+    const logo = (typeof window !== "undefined" && window.THDC_LOGO_BASE64) || thdcilLogoDataUrl;
+    if (logo) {
+      try {
+        doc.addImage(logo, 'PNG', 12, 7, 53.9, 13);
+      } catch (e) {
+        console.warn("Logo render error in dashboard PDF:", e);
+      }
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(15, 43, 92); // Corporate Navy
+    doc.setFont('helvetica', 'bold');
+    doc.text("THDC INDIA LIMITED", 70, 12);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    doc.text("A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise | Portfolio: N2UP0NVN0289", 70, 16);
+    doc.text("11 MW Solar PV Power Project Khurja • Executive Commercial Dashboard & Generation Statement", 70, 19.5);
+
+    doc.setFontSize(7.2);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Ref: THDC/11MW/COMM/DASH/${new Date().getFullYear()}`, 285, 11, { align: 'right' });
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, 285, 15, { align: 'right' });
+    doc.text(`Market: ${segVal} | Txn: ${txnVal}`, 285, 19, { align: 'right' });
+    doc.text(`Period: ${startDate} to ${endDate}`, 285, 23, { align: 'right' });
+
+    // Decorative Top Divider Bands (Corporate Navy & Emerald)
+    doc.setFillColor(15, 43, 92);
+    doc.rect(12, 24.5, 273, 1, 'F');
+    doc.setFillColor(5, 150, 105);
+    doc.rect(12, 25.5, 273, 0.4, 'F');
+
+    // 2. Four Vibrant Colorful KPI Summary Cards
+    const cardY = 28;
+    const cardH = 17;
+    const cardW = 66;
+    const gap = 3;
+
+    // Card 1: Blue - Energy Output
+    doc.setFillColor(239, 246, 255);
+    doc.roundedRect(12, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setDrawColor(191, 219, 254);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(12, cardY, cardW, cardH, 2, 2, 'S');
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text("TOTAL DISPATCHED ENERGY", 15, cardY + 4.5);
+    doc.setFontSize(11);
+    doc.setTextColor(29, 78, 216);
+    doc.text(`${totalQ_MU.toFixed(3)} MU`, 15, cardY + 10.5);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${formatIndianCurrency(totalQ_MWh)} MWh Injected (11 MW Solar)`, 15, cardY + 14.5);
+
+    // Card 2: Emerald - Gross Traded Proceeds
+    const card2X = 12 + cardW + gap;
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(card2X, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setDrawColor(167, 243, 208);
+    doc.roundedRect(card2X, cardY, cardW, cardH, 2, 2, 'S');
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(6, 95, 70);
+    doc.text("GROSS TRADE VALUE", card2X + 3, cardY + 4.5);
+    doc.setFontSize(11);
+    doc.setTextColor(5, 120, 85);
+    doc.text(`₹ ${formatIndianCurrency(totalGross)}`, card2X + 3, cardY + 10.5);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`IEX Spot Clearing Realization`, card2X + 3, cardY + 14.5);
+
+    // Card 3: Amber - Weighted MCP
+    const card3X = card2X + cardW + gap;
+    doc.setFillColor(254, 243, 199);
+    doc.roundedRect(card3X, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setDrawColor(253, 230, 138);
+    doc.roundedRect(card3X, cardY, cardW, cardH, 2, 2, 'S');
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(146, 64, 14);
+    doc.text("WEIGHTED AVERAGE MCP", card3X + 3, cardY + 4.5);
+    doc.setFontSize(11);
+    doc.setTextColor(180, 83, 9);
+    doc.text(`₹ ${avgMcp.toFixed(2)} / MWh`, card3X + 3, cardY + 10.5);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`₹ ${(avgMcp / 1000).toFixed(2)} / kWh Average Clearing Price`, card3X + 3, cardY + 14.5);
+
+    // Card 4: Violet - Net Settlement & Tariff
+    const card4X = card3X + cardW + gap;
+    doc.setFillColor(245, 243, 255);
+    doc.roundedRect(card4X, cardY, cardW, cardH, 2, 2, 'F');
+    doc.setDrawColor(221, 214, 254);
+    doc.roundedRect(card4X, cardY, cardW, cardH, 2, 2, 'S');
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(91, 33, 182);
+    doc.text("NET REALIZED REVENUE", card4X + 3, cardY + 4.5);
+    doc.setFontSize(11);
+    doc.setTextColor(109, 40, 217);
+    doc.text(`₹ ${formatIndianCurrency(netRevenue)}`, card4X + 3, cardY + 10.5);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Net Tariff: ₹ ${effectiveTariff.toFixed(3)} / unit (Post-Deds)`, card4X + 3, cardY + 14.5);
+
+    // 3. Middle Section: Visual Chart (Left) + Monthly Summary Table (Right)
+    const midY = 48;
+    const chartW = 126;
+    const chartH = 82;
+
+    // Outer card for chart
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(12, midY, chartW, chartH, 2, 2, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(12, midY, chartW, chartH, 2, 2, 'S');
+
+    // Chart header title banner
+    doc.setFillColor(248, 250, 252);
+    doc.rect(12, midY, chartW, 7, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.line(12, midY + 7, 12 + chartW, midY + 7);
+
+    doc.setFontSize(6.8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 43, 92);
+    doc.text("MONTHLY ENERGY & REVENUE PERFORMANCE TREND", 16, midY + 4.8);
+
+    // Capture live Chart canvas
+    const chartCanvas = document.getElementById("monthlyChart");
+    let chartImg = null;
+    if (chartCanvas) {
+      try {
+        chartImg = chartCanvas.toDataURL("image/png");
+      } catch (err) {
+        console.warn("Could not capture monthlyChart canvas data URL:", err);
+      }
+    }
+    if (chartImg) {
+      try {
+        doc.addImage(chartImg, 'PNG', 13.5, midY + 8, chartW - 3, chartH - 9.5);
+      } catch (e) {
+        console.warn("Error drawing chart image in PDF:", e);
+      }
+    }
+
+    // Monthly Data Aggregation for Table on the Right
+    const monthlySummaryData = [];
+    months.forEach(m => {
+      const monthTrades = trades.filter(t => monthKey(t.date) === m);
+      if (!monthTrades.length) return;
+      const qMwh = roundPrecise(monthTrades.reduce((s, t) => s + qtyMwh(t), 0));
+      const qMu = qMwh / 1000;
+      const grossVal = roundPrecise(monthTrades.reduce((s, t) => s + amount(t), 0));
+      const mMcp = qMwh > 0 ? (grossVal / qMwh) : 0;
+      
+      const mDates = [...new Set(monthTrades.map(t => t.date))];
+      let mGrid = 0;
+      mDates.forEach(d => {
+        const o = obFor(d);
+        mGrid += (o.nldcApp || 0) + (o.nldcSched || 0) + (o.ctu || 0) + (o.stu || 0) + (o.sldc || 0) + (o.distribution || 0) + (o.other || 0);
+      });
+      const mPx = roundPrecise(qMwh * 1000 * pxRate * (1 + pxGst / 100));
+      const mNvvn = roundPrecise(qMwh * 1000 * nvvnRate * (1 + nvvnGst / 100));
+      const mDed = roundPrecise(mGrid + mPx + mNvvn);
+      const mNet = roundPrecise(grossVal - mDed);
+      const mTariff = qMwh > 0 ? (mNet / (qMwh * 1000)) : 0;
+
+      monthlySummaryData.push({
+        label: mNames[m] || m,
+        mu: qMu,
+        mwh: qMwh,
+        gross: grossVal,
+        mcp: mMcp,
+        ded: mDed,
+        net: mNet,
+        tariff: mTariff
+      });
+    });
+
+    const tableX = 142;
+
+    const mHead = [
+      [
+        { content: 'Month', styles: { halign: 'left' } },
+        { content: 'Energy (MU)', styles: { halign: 'right' } },
+        { content: 'Gross Value (₹)', styles: { halign: 'right' } },
+        { content: 'Avg MCP (₹)', styles: { halign: 'right' } },
+        { content: 'Deductions (₹)', styles: { halign: 'right' } },
+        { content: 'Net Realized (₹)', styles: { halign: 'right' } },
+        { content: 'Tariff (₹/u)', styles: { halign: 'right' } }
+      ]
+    ];
+
+    const mBody = monthlySummaryData.map(x => [
+      x.label,
+      x.mu.toFixed(3),
+      formatIndianCurrency(x.gross),
+      x.mcp.toFixed(2),
+      formatIndianCurrency(x.ded),
+      formatIndianCurrency(x.net),
+      x.tariff.toFixed(3)
+    ]);
+
+    const mFoot = [
+      [
+        'Total',
+        totalQ_MU.toFixed(3),
+        formatIndianCurrency(totalGross),
+        avgMcp.toFixed(2),
+        formatIndianCurrency(totalDeds),
+        formatIndianCurrency(netRevenue),
+        effectiveTariff.toFixed(3)
+      ]
+    ];
+
+    doc.autoTable({
+      head: mHead,
+      body: mBody,
+      foot: mFoot,
+      startY: midY,
+      margin: { left: tableX, right: 12 },
+      theme: 'grid',
+      headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.4, fontStyle: 'bold' },
+      styles: { fontSize: 6.0, cellPadding: 1.6, halign: 'right', textColor: [30, 41, 59] },
+      columnStyles: {
+        0: { halign: 'left', fontStyle: 'bold', cellWidth: 20 },
+        1: { halign: 'right', fontStyle: 'bold', textColor: [29, 78, 216], cellWidth: 19 },
+        2: { halign: 'right', cellWidth: 23 },
+        3: { halign: 'right', cellWidth: 18 },
+        4: { halign: 'right', textColor: [225, 29, 72], cellWidth: 21 },
+        5: { halign: 'right', fontStyle: 'bold', textColor: [5, 120, 85], cellWidth: 25 },
+        6: { halign: 'right', fontStyle: 'bold', textColor: [91, 33, 182], cellWidth: 17 }
+      },
+      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.4 },
+      didParseCell: function(data) {
+        if (data.section === 'head') {
+          if (data.column.index === 0) data.cell.styles.halign = 'left';
+          else data.cell.styles.halign = 'right';
+        }
+        if (data.section === 'body') {
+          if (data.column.index === 0) data.cell.styles.halign = 'left';
+          else data.cell.styles.halign = 'right';
+          if (data.column.index === 5) {
+            data.cell.styles.fillColor = [240, 253, 244]; // Soft green tint
+          }
+        }
+        if (data.section === 'foot') {
+          if (data.column.index === 0) data.cell.styles.halign = 'left';
+          else data.cell.styles.halign = 'right';
+          if (data.column.index === 5) {
+            data.cell.styles.textColor = [5, 120, 85];
+          }
+        }
+      }
+    });
+
+    // 4. Operational Callout & Diurnal Dispatch Strip
+    let nextY = Math.max(midY + chartH + 3.5, doc.lastAutoTable ? doc.lastAutoTable.finalY + 3.5 : 135);
+    if (nextY > 162) {
+      doc.addPage();
+      nextY = 15;
+    }
+
+    // Callout box with colorful fill
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(12, nextY, 273, 14, 2, 2, 'F');
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(12, nextY, 273, 14, 2, 2, 'S');
+
+    doc.setFontSize(6.8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 43, 92);
+    doc.text("COMMERCIAL DEDUCTIONS & DISPATCH RECONCILIATION SUMMARY", 16, nextY + 4.5);
+
+    const dedPct = totalGross > 0 ? ((totalDeds / totalGross) * 100).toFixed(1) : "0.0";
+    doc.setFontSize(6.2);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    doc.text(`• Grid Corridor Transmission: ₹ ${formatIndianCurrency(totalGrid)} (STU/CTU/NLDC/SLDC charges applied as per CERC OA Regulations)`, 16, nextY + 8.5);
+    doc.text(`• Power Exchange Fees (incl. 18% GST): ₹ ${formatIndianCurrency(totalPx)} (@ ₹ ${(pxRate * 1000).toFixed(2)}/MWh)  |  • NVVN Trader Margin (incl. 18% GST): ₹ ${formatIndianCurrency(totalNvvn)} (@ ₹ ${(nvvnRate * 1000).toFixed(2)}/MWh)`, 16, nextY + 12);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(225, 29, 72);
+    doc.text(`Total Statutory Deductions: ₹ ${formatIndianCurrency(totalDeds)} (${dedPct}% of Gross)`, 281, nextY + 8.5, { align: 'right' });
+    doc.setTextColor(5, 120, 85);
+    doc.text(`Realized Settlement: ₹ ${formatIndianCurrency(netRevenue)} (Tariff: ₹ ${effectiveTariff.toFixed(3)}/u)`, 281, nextY + 12, { align: 'right' });
+
+    // 5. Corporate 3-Tier Sign-off Block
+    const sigY = nextY + 16.5;
+    const boxW = 82;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineDashPattern([1, 1], 0);
+    [12, 107, 203].forEach(bx => {
+      doc.rect(bx, sigY, boxW, 15, 'S');
+    });
+    doc.setLineDashPattern([], 0);
+
+    doc.setFontSize(6.2);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(148, 163, 184);
+    doc.text("PREPARED BY", 15, sigY + 4);
+    doc.text("CHECKED & RECONCILED BY", 110, sigY + 4);
+    doc.text("APPROVED BY", 206, sigY + 4);
+
+    doc.setFontSize(6.8);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Executive (Commercial Settlement)", 15, sigY + 9);
+    doc.text("Sr. Manager (Power Trading & Billing)", 110, sigY + 9);
+    doc.text("Addl. General Manager / Project Head", 206, sigY + 9);
+
+    doc.setFontSize(5.8);
+    doc.setTextColor(100, 116, 139);
+    doc.text("THDCIL Khurja / Tehri Solar", 15, sigY + 12.8);
+    doc.text("Commercial Directorate, THDCIL", 110, sigY + 12.8);
+    doc.text("11 MW Solar Project, THDCIL", 206, sigY + 12.8);
+
+    // Page footer
+    doc.setFontSize(6.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text("THDC India Limited • 11 MW Khurja Solar Power Station • Executive Commercial Dashboard & Dispatch Statement", 12, 203);
+    doc.text("Page 1 of 1", 285, 203, { align: 'right' });
+
+    // Save and trigger browser download
+    const filename = `THDC_11MW_Dashboard_Report_${segVal}_${txnVal}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+    showUndoToast(`✓ Downloaded Colorful Dashboard Report (${filename})`, false);
+
+    return filename;
+  } catch (err) {
+    console.error("Error generating colorful dashboard PDF:", err);
+    alert("Error generating Dashboard PDF. Please check console logs.");
+    return null;
+  }
+}
+window.downloadColorfulDashboardPDF = downloadColorfulDashboardPDF;
+window.exportDashboardToPDF = downloadColorfulDashboardPDF;
 
 // OFFICIAL MEMORANDUM PRINT & EXPORT ENGINE
 function printOfficialMemo() {
