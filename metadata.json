@@ -1,6 +1,6 @@
 {
   "name": "THDCIL 11 MW Solar",
-  "description": "Commercial settlement, billing, solar generation-weather correlation, and Year-over-Year (YoY) seasonal variance comparison for THDCIL 11 MW Solar plant",
+  "description": "Commercial analysis, settlement, billing, solar generation-weather correlation, and Year-over-Year (YoY) seasonal variance comparison for 11 MW Khurja Floating Solar Power Plant by Mukul Singh, Assistant Manager (Commercial-Power Trading), THDCIL Rishikesh",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
