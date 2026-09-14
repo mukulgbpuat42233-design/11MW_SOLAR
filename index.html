@@ -416,7 +416,10 @@
         </p>
       </div>
 
-      <div class="border-2 border-dashed border-emerald-200 bg-emerald-50/50 rounded-2xl p-10 text-center mt-6">
+      <div id="uploadDropzone" class="border-2 border-dashed border-emerald-200 bg-emerald-50/50 rounded-2xl p-10 text-center mt-6 transition hover:border-emerald-400"
+           ondragover="event.preventDefault(); this.classList.add('border-emerald-500', 'bg-emerald-100/60')"
+           ondragleave="this.classList.remove('border-emerald-500', 'bg-emerald-100/60')"
+           ondrop="event.preventDefault(); this.classList.remove('border-emerald-500', 'bg-emerald-100/60'); if(event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) { $('uploadFile').files = event.dataTransfer.files; handleFileUpload({target: $('uploadFile')}); }">
         <div class="flex justify-center gap-4 mb-4 text-emerald-400 text-5xl">
           <i class="fa-solid fa-file-excel"></i>
           <i class="fa-solid fa-file-pdf"></i>
@@ -432,10 +435,19 @@
             <i class="fa-solid fa-download mr-2"></i> Download Template
           </button>
         </div>
+
+        <div class="mt-4 flex items-center justify-center gap-2">
+          <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white/90 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs cursor-pointer select-none">
+            <input type="checkbox" id="autoDownloadDailyPdfToggle" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+            <i class="fa-solid fa-file-pdf text-rose-600"></i>
+            <span>Auto-download Daily Settlement PDF for latest date on upload</span>
+          </label>
+        </div>
+
         <input id="uploadFile" type="file" accept=".xlsx, .xls, .csv, .pdf" class="hidden" onchange="handleFileUpload(event)">
       </div>
 
-      <div id="uploadStatus" class="hidden mt-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300">
+      <div id="uploadStatus" class="hidden mt-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl flex items-center justify-between shadow-sm transition-all duration-300 flex-wrap gap-3">
         <div class="flex items-center gap-3">
           <i class="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
           <div>
@@ -443,9 +455,12 @@
             <p class="text-xs font-medium text-emerald-600" id="uploadStatusMsg"></p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
           <div class="text-right text-[11px] sm:text-xs font-bold bg-white px-3 py-2 rounded-lg border border-emerald-100 shadow-sm" id="uploadStats">
           </div>
+          <button id="uploadDailyPdfBtn" onclick="autoDownloadDailySettlementPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer" title="Download official Daily Settlement PDF report for latest available date">
+            <i class="fa-solid fa-file-pdf"></i> <span>Download Daily PDF</span>
+          </button>
           <button id="uploadUndoBtn" onclick="undoAction()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer" title="Undo this upload (Ctrl+Z)">
             <i class="fa-solid fa-rotate-left"></i> <span>Undo Upload</span>
           </button>
@@ -2677,10 +2692,20 @@ function handleFileUpload(evt) {
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
       const forced=$("manualTradeDate")?.value||"";
       const r=importStrictSheet1(wb,forced);
+      const uploadedDate = (r.dates && r.dates[0]) || forced;
       $("uploadStatusMsg").innerText=`Sheet1 only • ${r.dates.join(", ")}`;
       $("uploadStats").innerHTML=`New: ${r.newN} | Updated: ${r.updN} | Skipped duplicate: ${r.skipN}`;
-      if($("uploadStatusMsg")) $("uploadStatusMsg").innerHTML += `<br><span class="text-[10px] text-slate-500">Sheet1 parsed using header-based detection.</span>`;$("uploadStatus").classList.remove("hidden");
+      if($("uploadStatusMsg")) $("uploadStatusMsg").innerHTML += `<br><span class="text-[10px] text-slate-500">Sheet1 parsed using header-based detection.</span>`;
+      $("uploadStatus").classList.remove("hidden");
       $("uploadFile").value="";
+
+      // Automatically generate and download the daily settlement PDF report for the latest available date
+      const shouldAuto = $("autoDownloadDailyPdfToggle") ? $("autoDownloadDailyPdfToggle").checked : true;
+      if (shouldAuto) {
+        setTimeout(() => {
+          autoDownloadDailySettlementPDF(uploadedDate);
+        }, 120);
+      }
     }catch(err){
       alert("Sheet1 validation failed: "+err.message);
       $("uploadFile").value="";
@@ -2789,6 +2814,10 @@ async function uploadPeriodDateFile(date,fileInput){
 
     status.innerText="✓ Uploaded";
     status.className="ml-auto text-[10px] font-bold text-emerald-600";
+    const shouldAuto = $("autoDownloadDailyPdfToggle") ? $("autoDownloadDailyPdfToggle").checked : true;
+    if (shouldAuto && typeof autoDownloadDailySettlementPDF === "function") {
+      setTimeout(() => { autoDownloadDailySettlementPDF(date); }, 120);
+    }
   }catch(err){
     console.error(err);
     status.innerText="✕ Failed";
@@ -4713,6 +4742,299 @@ function exportReportPDF() {
 
   doc.save(`THDC_11MW_Settlement_${groupBy}_${rs}_TO_${re}.pdf`);
 }
+
+// AUTOMATIC DAILY SETTLEMENT PDF GENERATION & DOWNLOAD ENGINE
+function autoDownloadDailySettlementPDF(targetDate) {
+  try {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      console.warn("jsPDF library is not loaded.");
+      return null;
+    }
+    const { jsPDF } = window.jspdf;
+
+    const allTrades = sortedTrades();
+    if (!allTrades || !allTrades.length) {
+      console.warn("No trade records available to generate Daily Settlement PDF.");
+      return null;
+    }
+
+    // Determine target date: passed targetDate or latest date in trade records
+    const availableDates = [...new Set(allTrades.map(t => t.date))].sort();
+    let dateToUse = targetDate;
+    if (!dateToUse || !availableDates.includes(dateToUse)) {
+      dateToUse = availableDates[availableDates.length - 1];
+    }
+    if (!dateToUse) {
+      console.warn("No valid trade date found for Daily Settlement PDF.");
+      return null;
+    }
+
+    // Pre-sync filters in the Export Reports tab to save user from manual navigation
+    if ($("reportStartDate")) $("reportStartDate").value = dateToUse;
+    if ($("reportEndDate")) $("reportEndDate").value = dateToUse;
+    if ($("reportGroup")) $("reportGroup").value = "day";
+    if (typeof renderReports === "function") renderReports();
+
+    // Filter and sort trades for this specific date
+    const dayTrades = allTrades.filter(t => t.date === dateToUse);
+    if (!dayTrades.length) {
+      console.warn(`No trades found for date: ${dateToUse}`);
+      return null;
+    }
+    dayTrades.sort((a, b) => (Number(a.block) || 0) - (Number(b.block) || 0));
+
+    // Calculate energy, gross revenue, and MCP
+    const totalQ = roundPrecise(dayTrades.reduce((s, x) => s + qtyMwh(x), 0));
+    const grossVal = roundPrecise(dayTrades.reduce((s, x) => s + amount(x), 0));
+    const avgMcp = totalQ > 0 ? (grossVal / totalQ) : 0;
+
+    // Corridor & Transmission obligations for this specific day
+    const o = obFor(dateToUse);
+    const nldcApp = Math.abs(Number(o.nldcApp) || 0);
+    const ctu = Math.abs(Number(o.ctu) || 0);
+    const nldcSchedBuy = Math.abs(Number(o.nldcSchedBuy) || 0);
+    const nldcSchedSell = Math.abs(Number(o.nldcSchedSell) || 0);
+    const stu = Math.abs(Number(o.stu) || 0);
+    const dist = Math.abs(Number(o.distribution) || 0);
+    const other = Math.abs(Number(o.other) || 0);
+    const sldc = Math.abs(Number(o.sldc) || 0);
+    const gridCharges = roundPrecise(nldcApp + ctu + nldcSchedBuy + nldcSchedSell + stu + dist + other + sldc);
+
+    // PX Fees & NVVN Margins with statutory GST
+    const pxFee = roundPrecise(totalQ * 1000 * pxRate);
+    const pxGstAmt = roundPrecise(pxFee * (pxGst / 100));
+    const pxTotal = roundPrecise(pxFee + pxGstAmt);
+
+    const nvvnMargin = roundPrecise(totalQ * 1000 * nvvnRate);
+    const nvvnGstAmt = roundPrecise(nvvnMargin * (nvvnGst / 100));
+    const nvvnTotal = roundPrecise(nvvnMargin + nvvnGstAmt);
+
+    const totalDed = roundPrecise(gridCharges + pxTotal + nvvnTotal);
+    const netSettlement = roundPrecise(grossVal - totalDed);
+    const netTariff = totalQ > 0 ? (netSettlement / (totalQ * 1000)) : 0;
+
+    const segSet = new Set(dayTrades.map(t => t.seg || "G-DAM"));
+    const txnSet = new Set(dayTrades.map(t => t.txn || "SELL"));
+    const segStr = [...segSet].join(", ");
+    const txnStr = [...txnSet].join(", ");
+
+    // Initialize Landscape A4 PDF document
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+
+    // Corporate Header with THDCIL emblem
+    const logo = (typeof window !== "undefined" && window.THDC_LOGO_BASE64) || thdcilLogoDataUrl;
+    if (logo) {
+      try { 
+        doc.addImage(logo, 'PNG', 12, 8, 53.9, 13); 
+      } catch(e) {
+        console.warn("Logo render error in daily PDF:", e);
+      }
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(15, 43, 92); // Corporate Navy
+    doc.setFont('helvetica', 'bold');
+    doc.text("THDC INDIA LIMITED", 70, 13);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    doc.text("A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise | Portfolio: N2UP0NVN0289", 70, 17);
+    doc.text("11 MW Solar Power Project • Daily Commercial Settlement & Power Trading Reconciliation Report", 70, 20.5);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Ref: THDC/11MW/COMM/DAILY/${dateToUse}`, 285, 12, { align: 'right' });
+    doc.text(`Settlement Date: ${dateToUse}`, 285, 16, { align: 'right' });
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN')}`, 285, 20, { align: 'right' });
+    doc.text(`Market: ${segStr} | Txn: ${txnStr} | Trader: NVVN`, 285, 24, { align: 'right' });
+
+    // Divider Line
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.4);
+    doc.line(12, 26, 285, 26);
+
+    // Executive Daily Highlights Box
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(12, 28, 273, 14, 1.5, 1.5, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(12, 28, 273, 14, 1.5, 1.5, 'S');
+
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Dispatched Energy: ${totalQ.toFixed(3)} MWh (${(totalQ/1000).toFixed(4)} MU)`, 16, 33.5);
+    doc.text(`Avg Clearing Price: ₹ ${avgMcp.toFixed(2)}/MWh`, 95, 33.5);
+    doc.text(`Gross Trade: ₹ ${formatIndianCurrency(grossVal)}`, 180, 33.5);
+
+    doc.setTextColor(225, 29, 72);
+    doc.text(`Corridor Charges: ₹ ${formatIndianCurrency(gridCharges)}`, 16, 39);
+    doc.setTextColor(217, 119, 6);
+    doc.text(`PX & Trading Fees: ₹ ${formatIndianCurrency(pxTotal + nvvnTotal)}`, 95, 39);
+    doc.setTextColor(5, 120, 85);
+    doc.text(`Net Realized: ₹ ${formatIndianCurrency(netSettlement)} (Tariff: ₹ ${netTariff.toFixed(3)}/kWh)`, 180, 39);
+
+    // Table 1: Daily Commercial Settlement Breakdown
+    doc.autoTable({
+      startY: 45,
+      head: [
+        ['Date', 'Segment', 'Txn', 'Quantum (MWh)', 'Avg MCP (₹/MWh)', 'Gross Value (₹)', 'Grid Charges (₹)', 'PX Fee (₹)', 'NVVN Margin (₹)', 'Total Ded (₹)', 'Net Settlement (₹)', 'Net Tariff (₹/u)']
+      ],
+      body: [
+        [
+          dateToUse,
+          segStr,
+          txnStr,
+          totalQ.toFixed(3),
+          '₹ ' + avgMcp.toFixed(2),
+          '₹ ' + formatIndianCurrency(grossVal),
+          '₹ ' + formatIndianCurrency(gridCharges),
+          '₹ ' + formatIndianCurrency(pxTotal),
+          '₹ ' + formatIndianCurrency(nvvnTotal),
+          '₹ ' + formatIndianCurrency(totalDed),
+          '₹ ' + formatIndianCurrency(netSettlement),
+          '₹ ' + netTariff.toFixed(3)
+        ]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.8, fontStyle: 'bold', halign: 'right' },
+      styles: { fontSize: 6.5, cellPadding: 2, halign: 'right', textColor: [30, 41, 59] },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' } }
+    });
+
+    // Corridor charges itemized breakdown mini-table
+    let nextY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 3.5 : 62;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(71, 85, 105);
+    doc.text("ITEMIZED OPEN ACCESS & CORRIDOR TRANSMISSION CHARGES", 12, nextY);
+
+    doc.autoTable({
+      startY: nextY + 1.5,
+      head: [
+        ['NLDC App (₹)', 'CTU Trans (₹)', 'NLDC Sched Buy (₹)', 'NLDC Sched Sell (₹)', 'STU Trans (₹)', 'Distribution (₹)', 'SLDC Sched/Op (₹)', 'Other Charges (₹)', 'Total Corridor Deductions (₹)']
+      ],
+      body: [
+        [
+          '₹ ' + formatIndianCurrency(nldcApp),
+          '₹ ' + formatIndianCurrency(ctu),
+          '₹ ' + formatIndianCurrency(nldcSchedBuy),
+          '₹ ' + formatIndianCurrency(nldcSchedSell),
+          '₹ ' + formatIndianCurrency(stu),
+          '₹ ' + formatIndianCurrency(dist),
+          '₹ ' + formatIndianCurrency(sldc),
+          '₹ ' + formatIndianCurrency(other),
+          '₹ ' + formatIndianCurrency(gridCharges)
+        ]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 6.2, fontStyle: 'bold', halign: 'right' },
+      styles: { fontSize: 6.2, cellPadding: 1.6, halign: 'right', textColor: [30, 41, 59] }
+    });
+
+    // Table 2: 96 Time-Block Generation & Settlement Schedule
+    nextY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 4 : 80;
+    if (nextY > 155) {
+      doc.addPage();
+      nextY = 15;
+    }
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 43, 92);
+    doc.text(`96 TIME-BLOCK GENERATION, SCHEDULE & CLEARING BREAKDOWN (${dateToUse} • ${dayTrades.length} Blocks)`, 12, nextY);
+
+    const blockRows = dayTrades.map(t => {
+      const q = qtyMwh(t);
+      const mcp = Number(t.mcp) || 0;
+      const amt = amount(t);
+      return [
+        `Block ${t.block}`,
+        t.period || '',
+        t.seg || segStr,
+        t.txn || txnStr,
+        q.toFixed(3),
+        '₹ ' + mcp.toFixed(2),
+        '₹ ' + formatIndianCurrency(amt)
+      ];
+    });
+
+    doc.autoTable({
+      startY: nextY + 1.5,
+      head: [
+        ['Block', 'Time Period', 'Segment', 'Txn', 'Quantum (MWh)', 'MCP (₹/MWh)', 'Trade Value (₹)']
+      ],
+      body: blockRows,
+      theme: 'grid',
+      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontSize: 6.2, fontStyle: 'bold', halign: 'right' },
+      styles: { fontSize: 5.8, cellPadding: 1.2, halign: 'right', textColor: [30, 41, 59] },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } },
+      foot: [
+        ['Total (Day)', `${dayTrades.length} Blocks`, segStr, txnStr, totalQ.toFixed(3), 'Avg ₹ ' + avgMcp.toFixed(2), '₹ ' + formatIndianCurrency(grossVal)]
+      ],
+      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.2, halign: 'right' },
+      didDrawPage: function(data) {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(6.5);
+        doc.setTextColor(148, 163, 184);
+        doc.text("THDC India Limited • 11 MW Khurja Solar • Daily Settlement Certificate & Block Dispatch Extract", 12, 203);
+        doc.text("Page " + data.pageNumber + " of " + pageCount, 285, 203, { align: 'right' });
+      }
+    });
+
+    // 3-Tier Corporate Sign-off Block on the final page
+    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 160;
+    if (finalY > 165) {
+      doc.addPage();
+      finalY = 20;
+    }
+    const sigY = finalY + 7;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineDashPattern([1, 1], 0);
+    
+    // 3 Sign-off Boxes
+    const boxW = 82;
+    [12, 107, 203].forEach(bx => {
+      doc.rect(bx, sigY, boxW, 16, 'S');
+    });
+    doc.setLineDashPattern([], 0);
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(148, 163, 184);
+    doc.text("PREPARED BY", 15, sigY + 4.5);
+    doc.text("CHECKED & RECONCILED BY", 110, sigY + 4.5);
+    doc.text("APPROVED BY", 206, sigY + 4.5);
+
+    doc.setFontSize(7);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Executive (Commercial Settlement)", 15, sigY + 10);
+    doc.text("Sr. Manager (Power Trading & Billing)", 110, sigY + 10);
+    doc.text("Addl. General Manager / Project Head", 206, sigY + 10);
+
+    doc.setFontSize(6);
+    doc.setTextColor(100, 116, 139);
+    doc.text("THDCIL Khurja / Tehri Solar", 15, sigY + 13.5);
+    doc.text("Commercial Directorate, THDCIL", 110, sigY + 13.5);
+    doc.text("11 MW Solar Project, THDCIL", 206, sigY + 13.5);
+
+    // Save and download the file directly
+    const filename = `THDC_11MW_Daily_Settlement_${dateToUse}.pdf`;
+    doc.save(filename);
+
+    // Provide user feedback
+    showUndoToast(`✓ Auto-downloaded Daily Settlement PDF (${dateToUse})`, false);
+    if ($("uploadStatusMsg")) {
+      $("uploadStatusMsg").innerHTML += `<br><span class="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-xs"><i class="fa-solid fa-file-pdf text-rose-600"></i> Daily Settlement PDF auto-downloaded (${filename})</span>`;
+    }
+
+    return filename;
+  } catch (err) {
+    console.error("Error generating daily settlement PDF:", err);
+    return null;
+  }
+}
+window.autoDownloadDailySettlementPDF = autoDownloadDailySettlementPDF;
+window.downloadDailySettlementReport = autoDownloadDailySettlementPDF;
 
 // OFFICIAL MEMORANDUM PRINT & EXPORT ENGINE
 function printOfficialMemo() {
