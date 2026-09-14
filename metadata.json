@@ -1,0 +1,8 @@
+{
+  "name": "THDCIL 11 MW Solar",
+  "description": "Commercial settlement, billing, and scheduling analysis app for THDCIL 11 MW Solar plant",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
