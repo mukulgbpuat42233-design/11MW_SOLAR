@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "tradeRecord": {
+      "title": "Trade Record",
+      "description": "15-minute time-block scheduled solar dispatch trade record for THDCIL 11 MW Solar Plant",
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "Trading date in YYYY-MM-DD format",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "block": {
+          "type": "number",
+          "description": "15-minute block index from 1 to 96"
+        },
+        "qty": {
+          "type": "number",
+          "description": "Scheduled generation quantity in MW"
+        },
+        "mcp": {
+          "type": "number",
+          "description": "Market Clearing Price in INR per MWh"
+        },
+        "seg": {
+          "type": "string",
+          "description": "Exchange trading segment",
+          "enum": ["G-DAM", "DAM", "TAM", "RTM"]
+        },
+        "txn": {
+          "type": "string",
+          "description": "Transaction nature",
+          "enum": ["SELL", "BUY"]
+        },
+        "userId": {
+          "type": "string",
+          "description": "User UID who created or uploaded the trade record",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["date", "block", "qty", "mcp", "seg", "txn", "userId"]
+    },
+    "monthlySettlement": {
+      "title": "Monthly Settlement",
+      "description": "Aggregated monthly reconciliation and settlement snapshot for THDCIL 11 MW Solar Plant",
+      "type": "object",
+      "properties": {
+        "monthKey": {
+          "type": "string",
+          "description": "Billing month key in YYYY-MM format",
+          "pattern": "^[0-9]{4}-[0-9]{2}$"
+        },
+        "totalMwh": {
+          "type": "number",
+          "description": "Total generation in MWh for the billing period"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "description": "Gross energy traded revenue in INR"
+        },
+        "netReceivable": {
+          "type": "number",
+          "description": "Net receivable after NVVN trading margin and exchange fees"
+        },
+        "cuf": {
+          "type": "number",
+          "description": "Capacity Utilization Factor percentage"
+        },
+        "status": {
+          "type": "string",
+          "description": "Settlement verification status",
+          "enum": ["draft", "reconciled", "approved"]
+        },
+        "userId": {
+          "type": "string",
+          "description": "User UID who authorized or created the settlement",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["monthKey", "totalMwh", "totalRevenue", "netReceivable", "status", "userId"]
+    },
+    "plantConfig": {
+      "title": "Plant Configuration",
+      "description": "Commercial tariff rates, statutory GST percentages, and plant configuration parameters",
+      "type": "object",
+      "properties": {
+        "plantName": {
+          "type": "string",
+          "description": "Official name of the solar generating plant",
+          "maxLength": 100
+        },
+        "capacityMw": {
+          "type": "number",
+          "description": "Installed AC capacity in MW"
+        },
+        "nvvnRate": {
+          "type": "number",
+          "description": "NVVN trading margin in INR/kWh"
+        },
+        "nvvnGst": {
+          "type": "number",
+          "description": "GST rate applicable on NVVN margin"
+        },
+        "pxRate": {
+          "type": "number",
+          "description": "Power exchange trading transaction fee in INR/kWh"
+        },
+        "pxGst": {
+          "type": "number",
+          "description": "GST rate applicable on exchange fee"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User UID who updated the configuration",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of configuration change"
+        }
+      },
+      "required": ["plantName", "capacityMw", "nvvnRate", "nvvnGst", "pxRate", "pxGst", "userId"]
+    }
+  },
+  "firestore": {
+    "/trades/{tradeId}": {
+      "schema": "tradeRecord",
+      "description": "15-minute interval dispatch trade blocks"
+    },
+    "/settlements/{settlementId}": {
+      "schema": "monthlySettlement",
+      "description": "Commercial settlement statements and audit sign-offs"
+    },
+    "/configs/{configId}": {
+      "schema": "plantConfig",
+      "description": "Plant commercial parameters and contractual tariffs"
+    }
+  }
+}

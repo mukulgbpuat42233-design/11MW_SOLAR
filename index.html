@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d4ed8">
 <title>THDCIL 11 MW Solar — Commercial Settlement App</title>
-<meta name="description" content="Commercial settlement, billing, and solar generation-weather correlation analysis for THDCIL 11 MW Solar plant">
+<meta name="description" content="Commercial settlement, billing, solar generation-weather correlation, and Year-over-Year (YoY) seasonal variance comparison for THDCIL 11 MW Solar plant">
 <meta property="og:title" content="THDCIL 11 MW Solar — Commercial Settlement App">
-<meta property="og:description" content="Commercial settlement, billing, and solar generation-weather correlation analysis for THDCIL 11 MW Solar plant">
+<meta property="og:description" content="Commercial settlement, billing, solar generation-weather correlation, and Year-over-Year (YoY) seasonal variance comparison for THDCIL 11 MW Solar plant">
 <!-- Tailwind CSS, Chart.js, SheetJS (Excel) & jsPDF / PDF.js -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,6 +19,7 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
 <script src="thdc_assets.js"></script>
+<script type="module" src="firebase_client.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -77,19 +78,44 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
+      <!-- Firebase Cloud Firestore Status & Auth Controls -->
+      <div id="firebaseCloudHeader" class="flex items-center gap-1.5 bg-slate-900/70 border border-slate-700/80 rounded-xl px-2.5 py-1 backdrop-blur-xs shadow-xs">
+        <div id="firebaseStatusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          <span>Connecting...</span>
+        </div>
+        <div id="firebaseAuthControls" class="flex items-center">
+          <button onclick="window.firebaseClient?.signInWithGoogle()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-2.5 py-0.5 rounded-lg text-xs transition flex items-center gap-1 cursor-pointer shadow-2xs" title="Sign in with Google to sync with Firebase Firestore Cloud">
+            <i class="fa-brands fa-google text-amber-300"></i> <span class="hidden md:inline">Sign In Cloud</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Direct Home Button in Header -->
-      <button onclick="goToHomePage()" title="Go directly to Front Page / Dashboard" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition flex items-center gap-1.5 border border-white/20 shadow-xs hover:border-amber-300/60">
+      <button onclick="goToHomePage()" title="Go directly to Front Page / Dashboard" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition flex items-center gap-1.5 border border-white/20 shadow-xs hover:border-amber-300/60 cursor-pointer">
         <i class="fa-solid fa-house text-amber-300"></i> <span class="hidden sm:inline">Home</span>
       </button>
+
+      <!-- UNDO & REDO BUTTON GROUP -->
+      <div class="flex items-center bg-slate-900/70 border border-slate-700/80 rounded-xl overflow-hidden shadow-xs backdrop-blur-xs">
+        <button id="btnUndoAction" onclick="undoAction()" disabled title="Undo last action (Ctrl+Z)" class="px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/20 disabled:opacity-35 disabled:hover:bg-transparent disabled:text-slate-400 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-rotate-left text-amber-400"></i>
+          <span>Undo</span>
+          <span id="undoCountBadge" class="hidden px-1.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded-full text-[10px] leading-none shadow-xs">0</span>
+        </button>
+        <button id="btnRedoAction" onclick="redoAction()" disabled title="Redo (Ctrl+Y / Shift+Ctrl+Z)" class="px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/10 disabled:opacity-25 disabled:hover:bg-transparent disabled:text-slate-500 disabled:cursor-not-allowed font-semibold transition flex items-center border-l border-slate-700/60 cursor-pointer">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
 
       <!-- DATE-SPECIFIC CLEAR DATA -->
       <div class="flex items-center bg-rose-950/50 border border-rose-500/40 rounded-xl overflow-hidden shadow-sm">
         <input type="date" id="clearDateInput" class="bg-transparent px-2.5 py-1.5 text-xs text-rose-100 font-semibold outline-none border-r border-rose-500/40 [color-scheme:dark]" title="Select date to clear">
-        <button onclick="clearDateData()" title="Clear Data for Selected Date" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-500 text-white font-bold transition flex items-center gap-1.5">
+        <button onclick="clearDateData()" title="Clear Data for Selected Date" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-500 text-white font-bold transition flex items-center gap-1.5 cursor-pointer">
           <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Clear Day</span>
         </button>
       </div>
-      <button onclick="clearAllData()" title="Wipe All Data" class="px-3 py-1.5 text-xs bg-rose-800/80 hover:bg-rose-700 text-white rounded-xl font-medium transition flex items-center gap-1 border border-rose-700">
+      <button onclick="clearAllData()" title="Wipe All Data" class="px-3 py-1.5 text-xs bg-rose-800/80 hover:bg-rose-700 text-white rounded-xl font-medium transition flex items-center gap-1 border border-rose-700 cursor-pointer">
         <i class="fa-solid fa-burst"></i> Wipe
       </button>
     </div>
@@ -117,6 +143,9 @@
     </button>
     <button id="navWeatherBtn" class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5 font-semibold" data-target="weather">
       <i class="fa-solid fa-cloud-sun text-amber-300"></i><span>Weather & Generation Correlation</span>
+    </button>
+    <button id="navYoyBtn" class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5 font-semibold" data-target="yoy">
+      <i class="fa-solid fa-code-compare text-emerald-300"></i><span>YoY Seasonal Comparison</span>
     </button>
   </div>
 </header>
@@ -164,7 +193,14 @@
         <div class="overflow-y-auto flex-1 max-h-[300px]">
           <table class="w-full text-xs text-right">
             <thead class="text-slate-500 bg-slate-50 sticky top-0 font-semibold border-b border-slate-200">
-              <tr><th class="p-2 text-left">Month</th><th class="p-2">Energy (MU)</th><th class="p-2">Revenue (₹)</th><th class="p-2">Avg MCP (₹)</th></tr>
+              <tr>
+                <th class="p-2 text-left">Month</th>
+                <th class="p-2">Energy (MU)</th>
+                <th class="p-2">Revenue (₹)</th>
+                <th class="p-2">Avg MCP (₹)</th>
+                <th class="p-2 text-center">YoY Variance</th>
+                <th class="p-2 text-center">Action</th>
+              </tr>
             </thead>
             <tbody id="monthRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
           </table>
@@ -250,6 +286,27 @@
       </div>
       <button onclick="goToWeatherCorrelation()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-xs shadow-sm hover:shadow transition flex items-center gap-2 cursor-pointer">
         <i class="fa-solid fa-chart-line"></i> Open Weather Correlation & Diagnostics
+      </button>
+    </div>
+
+    <!-- YEAR-OVER-YEAR (YoY) SEASONAL VARIANCE CALLOUT BANNER -->
+    <div class="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 p-5 rounded-2xl border border-emerald-200/80 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+      <div class="space-y-1 max-w-3xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-900 border border-emerald-300 font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-code-compare text-emerald-600"></i> Year-over-Year (YoY) Benchmark
+          </span>
+          <span class="text-xs text-slate-500 font-semibold">• 11 MW Plant Multi-Year Seasonal Analysis</span>
+        </div>
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          Compare Current Month with Same Month from Previous Year
+        </h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Benchmark monthly solar generation (MWh & MU), Capacity Utilization Factor (CUF %), peak scheduled output, and commercial revenue against the prior year's corresponding month, highlighting seasonal variances like heat derating, monsoon cloud attenuation, and irradiance shifts.
+        </p>
+      </div>
+      <button onclick="goToYoyComparison()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-extrabold text-xs shadow-sm hover:shadow transition flex items-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-scale-balanced"></i> Open YoY Seasonal Comparison
       </button>
     </div>
   </section>
@@ -375,7 +432,12 @@
             <p class="text-xs font-medium text-emerald-600" id="uploadStatusMsg"></p>
           </div>
         </div>
-        <div class="text-right text-[11px] sm:text-xs font-bold bg-white px-3 py-2 rounded-lg border border-emerald-100 shadow-sm" id="uploadStats">
+        <div class="flex items-center gap-3">
+          <div class="text-right text-[11px] sm:text-xs font-bold bg-white px-3 py-2 rounded-lg border border-emerald-100 shadow-sm" id="uploadStats">
+          </div>
+          <button id="uploadUndoBtn" onclick="undoAction()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer" title="Undo this upload (Ctrl+Z)">
+            <i class="fa-solid fa-rotate-left"></i> <span>Undo Upload</span>
+          </button>
         </div>
       </div>
     </div>
@@ -408,6 +470,9 @@
         <button onclick="renderTrades()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition self-end">Filter</button>
       </div>
       <div class="flex items-center gap-2">
+        <button id="tradesUndoBtn" onclick="undoAction()" title="Undo last action (Ctrl+Z)" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-rotate-left text-amber-600"></i> <span>Undo</span>
+        </button>
         <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs"><i class="fa-solid fa-house"></i> Home</button>
         <button onclick="exportTrades()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Export Excel</button>
       </div>
@@ -625,8 +690,8 @@
         <button onclick="goToHomePage()" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs backdrop-blur-sm transition border border-white/20 flex items-center gap-1.5 shadow-xs">
           <i class="fa-solid fa-house text-amber-300"></i> <span>Home</span>
         </button>
-        <button onclick="window.print()" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs backdrop-blur-sm transition border border-white/20 flex items-center gap-1.5 shadow-xs">
-          <i class="fa-solid fa-print"></i> <span>Print Official Memo</span>
+        <button onclick="printOfficialMemo()" title="Open official corporate memorandum print & export dialog" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs backdrop-blur-sm transition border border-white/20 flex items-center gap-1.5 shadow-xs cursor-pointer">
+          <i class="fa-solid fa-print text-amber-300"></i> <span>Print Official Memo</span>
         </button>
       </div>
     </div>
@@ -806,8 +871,9 @@
         </div>
 <label class="text-xs font-bold text-slate-600">Date:</label><input id="oDate" type="date" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-semibold outline-none" onchange="loadObligation()"></div>
         <div class="flex items-center gap-2">
-          <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-xs flex items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</button>
-          <button onclick="saveObligation()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm">Save Manual Override</button>
+          <button id="obUndoBtn" onclick="undoAction()" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left text-amber-600"></i> <span>Undo</span></button>
+          <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-xs flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-house"></i> Home</button>
+          <button onclick="saveObligation()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm cursor-pointer">Save Manual Override</button>
         </div>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
@@ -1132,6 +1198,314 @@
     </div>
   </section>
 
+  <!-- YEAR-OVER-YEAR (YoY) SOLAR GENERATION & SEASONAL VARIANCE COMPARISON -->
+  <section id="yoy" class="page-sec hidden space-y-6">
+    <!-- Breadcrumbs and Action Navigation -->
+    <div class="flex items-center justify-between gap-3 mb-1">
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <button onclick="goToHomePage()" class="hover:text-blue-700 font-bold flex items-center gap-1 text-slate-600 transition">
+          <i class="fa-solid fa-house text-blue-700"></i> Home
+        </button>
+        <span>/</span>
+        <span class="text-slate-800 font-bold">YoY Seasonal Comparison</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="goToWeatherCorrelation()" class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition shadow-xs cursor-pointer">
+          <i class="fa-solid fa-cloud-sun text-amber-500"></i> <span>Weather Correlation</span>
+        </button>
+        <button onclick="goToHomePage()" class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl transition shadow-xs cursor-pointer">
+          <i class="fa-solid fa-house"></i> <span>Back to Home</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Header Hero Card: Plant & Season Context -->
+    <div class="bg-gradient-to-r from-teal-950 via-slate-900 to-blue-950 text-white p-5 sm:p-6 rounded-2xl shadow-md border border-teal-800/80">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 font-extrabold text-[11px] uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-code-compare text-emerald-400"></i> Multi-Year Benchmarking
+            </span>
+            <span class="text-xs text-teal-200 font-medium">THDCIL Khurja Floating Solar (11.0 MW AC)</span>
+            <span id="yoySeasonBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-1">
+              <i class="fa-solid fa-sun text-amber-400"></i> Pre-Monsoon Peak Summer
+            </span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-black tracking-tight" id="yoyHeaderTitle">
+            Current Month vs Previous Year Solar Generation Comparison
+          </h2>
+          <p class="text-xs text-teal-100/90 leading-relaxed max-w-4xl" id="yoySeasonDescription">
+            Benchmarking monthly solar generation quantum (MWh & MU), Capacity Utilization Factor (CUF %), 96-block peak solar output, and commercial market realization against the prior year's corresponding month to identify seasonal variances.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportYoyReportExcel()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-file-excel"></i> Export Excel
+          </button>
+          <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-print"></i> Print
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Toolbar: Month, Current Year, Comparison Year & Filters -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Select Month:</label>
+            <select id="yoyMonthSelect" onchange="renderYoyComparison()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-bold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="1">01 - January</option>
+              <option value="2">02 - February</option>
+              <option value="3">03 - March</option>
+              <option value="4">04 - April</option>
+              <option value="5" selected>05 - May</option>
+              <option value="6">06 - June</option>
+              <option value="7">07 - July</option>
+              <option value="8">08 - August</option>
+              <option value="9">09 - September</option>
+              <option value="10">10 - October</option>
+              <option value="11">11 - November</option>
+              <option value="12">12 - December</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Current Year:</label>
+            <select id="yoyCurYearSelect" onchange="onYoyCurYearChange()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-bold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="2024" selected>2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Comparison Year (Prior Year):</label>
+            <select id="yoyCompYearSelect" onchange="renderYoyComparison()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-bold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="2023" selected>2023 (Previous Year)</option>
+              <option value="2022">2022</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Market Segment:</label>
+            <select id="yoySegSelect" onchange="renderYoyComparison()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+              <option value="ALL">All Segments</option>
+              <option value="G-DAM" selected>G-DAM</option>
+              <option value="DAM">DAM</option>
+              <option value="TAM">TAM</option>
+              <option value="RTM">RTM</option>
+            </select>
+          </div>
+
+          <div class="flex items-end">
+            <button onclick="renderYoyComparison()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer mt-4 sm:mt-0">
+              <i class="fa-solid fa-arrows-rotate"></i> Compare
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="yoyLoadPriorYearBtn" onclick="loadSamplePriorYearTrades()" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer" title="Generates authentic prior-year baseline trade records for the selected month to test and compare">
+            <i class="fa-solid fa-database text-amber-600"></i> Load Prior Year Historical Baseline
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Missing Data / Quick Setup Alert (Visible only when prior year data is absent) -->
+    <div id="yoyMissingDataBanner" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-900 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 text-lg shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h4 class="font-black text-sm" id="yoyMissingDataTitle">Prior Year Trades Not Found</h4>
+          <p class="text-xs text-amber-800 mt-0.5" id="yoyMissingDataText">
+            No trade records found for the comparison period. You can load sample historical baseline trades for Khurja 11 MW Solar or upload your historical IEX Sheet1 Excel files.
+          </p>
+        </div>
+      </div>
+      <button onclick="loadSamplePriorYearTrades()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition shadow-sm cursor-pointer flex items-center gap-1.5">
+        <i class="fa-solid fa-cloud-arrow-down"></i> Load Sample Prior Year Baseline
+      </button>
+    </div>
+
+    <!-- Executive Seasonal Variance Narrative & Diagnostics Card -->
+    <div id="yoyExecutiveSummaryCard" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200/90 space-y-4">
+      <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Executive Seasonal Synthesis</span>
+          <h3 class="text-base sm:text-lg font-black text-slate-900 mt-0.5" id="yoyHeadlineSummary">
+            May 2024 vs May 2023 Generation Variance Analysis
+          </h3>
+          <p class="text-xs text-slate-500 font-medium mt-1" id="yoyPeriodSubtitle">
+            Comparing identical calendar days with weather and commercial settlement alignment
+          </p>
+        </div>
+        <div id="yoyDiagnosticPills" class="flex flex-wrap items-center gap-1.5">
+          <!-- Dynamic variance badges -->
+        </div>
+      </div>
+
+      <!-- 4 Key Seasonal Variance Drivers -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs" id="yoySeasonalDriversGrid">
+        <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
+          <div class="flex items-center justify-between text-amber-900 font-bold">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-sun text-amber-500"></i> Solar Irradiance (GHI)</span>
+            <span id="yoyDriverGhiBadge" class="font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-amber-200/70">+6.3%</span>
+          </div>
+          <p class="text-slate-700 text-[11px] leading-relaxed" id="yoyDriverGhiText">
+            Insolation shifted by +0.40 kWh/m²/day YoY.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200/70 space-y-1">
+          <div class="flex items-center justify-between text-sky-900 font-bold">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-cloud text-sky-500"></i> Cloud & Rain Impact</span>
+            <span id="yoyDriverCloudBadge" class="font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-sky-200/70">-5.2%</span>
+          </div>
+          <p class="text-slate-700 text-[11px] leading-relaxed" id="yoyDriverCloudText">
+            Overcast attenuation and rainy days comparison.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200/70 space-y-1">
+          <div class="flex items-center justify-between text-rose-900 font-bold">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-temperature-high text-rose-500"></i> Thermal Derating</span>
+            <span id="yoyDriverTempBadge" class="font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-rose-200/70">+1.4°C</span>
+          </div>
+          <p class="text-slate-700 text-[11px] leading-relaxed" id="yoyDriverTempText">
+            Ambient temperature derating effect on PV cell voltage.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/70 space-y-1">
+          <div class="flex items-center justify-between text-emerald-900 font-bold">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-indian-rupee-sign text-emerald-600"></i> Commercial Tariff</span>
+            <span id="yoyDriverPriceBadge" class="font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-200/70">+₹0.38/kWh</span>
+          </div>
+          <p class="text-slate-700 text-[11px] leading-relaxed" id="yoyDriverPriceText">
+            Volume-weighted IEX clearing price variance.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparative KPI Metric Grid (9 KPI Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="yoyKpiGrid">
+      <!-- Dynamically filled with side-by-side YoY metrics -->
+    </div>
+
+    <!-- Interactive Charts (3 Visualizations) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Chart 1: Day-by-Day Generation Comparison -->
+      <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-blue-600"></i> Day-by-Day Solar Generation Comparison (Day 1 to 31)
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">
+              Side-by-side daily MWh generation for Current Year vs Prior Year, with insolation benchmark
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span class="flex items-center gap-1 text-blue-700"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> Current Year</span>
+            <span class="flex items-center gap-1 text-emerald-700"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Prior Year</span>
+          </div>
+        </div>
+        <div class="relative flex-1 min-h-[300px]">
+          <canvas id="yoyDailyGenChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Cumulative Generation Trajectory -->
+      <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col space-y-3">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-emerald-600"></i> Cumulative Generation Trajectory
+          </h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            Progressive month-to-date energy accumulation (MWh)
+          </p>
+        </div>
+        <div class="relative flex-1 min-h-[300px]">
+          <canvas id="yoyCumulativeGenChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Diurnal 96-Block Generation Profile Comparison -->
+      <div class="lg:col-span-12 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+              <i class="fa-solid fa-sun text-amber-500"></i> Diurnal 96-Block Average Generation Profile (Solar Noon Curve)
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">
+              Average 15-minute power curve (MW) from 00:00 to 24:00. Compares morning solar ramp-up, peak solar noon (blocks 44-54), and evening taper.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-semibold">
+            <span class="flex items-center gap-1 text-blue-700"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> Current Year Avg Profile</span>
+            <span class="flex items-center gap-1 text-emerald-700"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Prior Year Avg Profile</span>
+          </div>
+        </div>
+        <div class="relative min-h-[260px]">
+          <canvas id="yoyDiurnalProfileChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Day-by-Day Breakdown Table -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-blue-600"></i> Day-by-Day Comparative Breakdown & Variance Notes
+          </h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            Side-by-side reconciliation of daily dispatched generation, peak capacity, delta, and meteorological observations
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="yoyTableSearch" placeholder="Search by day or observation..." oninput="filterYoyTable(this.value)"
+                 class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+        </div>
+      </div>
+
+      <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-[460px] overflow-y-auto">
+        <table class="w-full text-xs text-right divide-y divide-slate-200">
+          <thead class="bg-slate-50 text-slate-700 sticky top-0 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="p-3 text-left">Day</th>
+              <th class="p-3" id="yoyThCurDate">Current Year Date</th>
+              <th class="p-3 text-blue-700">Gen (MWh)</th>
+              <th class="p-3 text-slate-600">Peak (MW)</th>
+              <th class="p-3" id="yoyThCompDate">Prior Year Date</th>
+              <th class="p-3 text-emerald-700">Gen (MWh)</th>
+              <th class="p-3 text-slate-600">Peak (MW)</th>
+              <th class="p-3">Variance Δ (MWh)</th>
+              <th class="p-3 text-center">Variance %</th>
+              <th class="p-3 text-center">Solar / GHI</th>
+              <th class="p-3 text-left">Seasonal Variance Observation</th>
+            </tr>
+          </thead>
+          <tbody id="yoyTableRows" class="divide-y divide-slate-100 text-slate-700">
+            <!-- Dynamically populated -->
+          </tbody>
+          <tfoot id="yoyTableFoot" class="bg-slate-50 font-black text-slate-900 border-t-2 border-slate-300 sticky bottom-0">
+            <!-- Dynamically populated -->
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <!-- MODAL: 96-BLOCK DAY DEEP-DIVE & DIAGNOSTIC INSPECTOR -->
   <div id="weatherDayModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 p-6 space-y-5 animate-in fade-in zoom-in duration-200">
@@ -1240,6 +1614,201 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL: OFFICIAL COMMERCIAL SETTLEMENT MEMORANDUM PRINT & EXPORT -->
+  <div id="officialMemoPrintModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col border border-slate-300 overflow-hidden animate-in fade-in zoom-in duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-[#07172e] via-[#0f2b5c] to-[#1e3a8a] text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white p-1 shadow flex items-center justify-center shrink-0">
+            <img src="thdc_emblem.png?v=3" onerror="this.src='thdcil_emblem.svg'" alt="THDCIL" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold flex items-center gap-2">
+              <span>Official Commercial Settlement Memorandum</span>
+              <span class="text-[9px] uppercase font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded shadow-2xs">Print-Ready</span>
+            </h3>
+            <p class="text-xs text-blue-200">THDC India Limited • Khurja STPP 11 MW Floating Solar Plant</p>
+          </div>
+        </div>
+        <button onclick="closeOfficialMemoPrintModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Memorandum Paper Body Preview -->
+      <div class="p-6 overflow-y-auto flex-1 bg-slate-100/70 space-y-4 text-slate-800">
+        <div id="memoPrintableSheet" class="bg-white p-6 sm:p-8 rounded-xl shadow-xs border border-slate-200 space-y-5">
+          <!-- Corporate Letterhead -->
+          <div class="border-b-2 border-[#0f2b5c] pb-4 flex items-start justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-lg bg-white p-1 border border-slate-200 flex items-center justify-center shrink-0">
+                <img src="thdc_emblem.png?v=3" onerror="this.src='thdcil_emblem.svg'" alt="THDCIL Emblem" class="w-full h-full object-contain">
+              </div>
+              <div>
+                <h2 class="text-lg font-black tracking-tight text-[#0f2b5c]">टीएचडीसी इंडिया लिमिटेड • THDC INDIA LIMITED</h2>
+                <p class="text-[11px] font-bold text-slate-600">A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise</p>
+                <p class="text-[11px] text-blue-800 font-semibold">Commercial Directorate • 11 MW Floating Solar PV Project, Khurja STPP (UP)</p>
+              </div>
+            </div>
+            <div class="text-right text-xs space-y-1 font-mono">
+              <div class="font-bold text-slate-900" id="memoDocRef">Ref: THDC/11MW/COMM/MEMO/2024/09</div>
+              <div class="text-slate-600 font-sans text-[11px]" id="memoDocDate">Date: 14 Sep 2024</div>
+              <div class="text-[10px] text-blue-700 font-sans font-bold">Portfolio ID: N2UP0NVN0289</div>
+              <div class="text-[10px] text-slate-500 font-sans">Facilitator / Trader: NVVN Limited</div>
+            </div>
+          </div>
+
+          <!-- Document Subject & Period Scope -->
+          <div class="bg-blue-50/70 border border-blue-100 rounded-lg p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase text-blue-900 tracking-wider">Subject:</span>
+              <p class="font-bold text-slate-900 text-sm mt-0.5">Commercial Settlement & Energy Traded Realization Statement</p>
+              <p class="text-slate-600 text-[11px] mt-0.5" id="memoScopeText">Period: Full Reconciliation Period | Market: All Segments (DAM / G-DAM / RTM)</p>
+            </div>
+            <div class="text-right">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <i class="fa-solid fa-circle-check"></i> Reconciled Extract
+              </span>
+            </div>
+          </div>
+
+          <!-- Settlement Summary Metric Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-500">Delivered Energy</span>
+              <div class="text-base font-black text-blue-700 mt-1" id="memoDeliveredEnergy">0.00 MWh</div>
+              <span class="text-[10px] text-slate-400" id="memoDeliveredMu">(0.000 MU)</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-500">Gross Traded Value</span>
+              <div class="text-base font-black text-slate-900 mt-1" id="memoGrossValue">₹0.00</div>
+              <span class="text-[10px] text-slate-500 font-medium" id="memoAvgMcp">Avg: ₹0/MWh</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-rose-600">Total Statutory Deductions</span>
+              <div class="text-base font-black text-rose-700 mt-1" id="memoTotalDeductions">₹0.00</div>
+              <span class="text-[10px] text-slate-500 font-medium">Grid + PX + NVVN</span>
+            </div>
+            <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+              <span class="text-[10px] uppercase font-bold text-emerald-800">Net Amount Receivable</span>
+              <div class="text-base font-black text-emerald-800 mt-1" id="memoNetReceivable">₹0.00</div>
+              <span class="text-[10px] font-bold text-indigo-700" id="memoNetTariff">Net: ₹0.00/kWh</span>
+            </div>
+          </div>
+
+          <!-- Deductions Breakdown Mini Table -->
+          <div class="border border-slate-200 rounded-lg overflow-hidden text-xs">
+            <table class="w-full text-right">
+              <thead class="bg-slate-100 text-slate-700 font-bold text-[11px] border-b border-slate-200">
+                <tr>
+                  <th class="p-2.5 text-left">Commercial Reconciliation Component</th>
+                  <th class="p-2.5">Applicable Tariff / Rate</th>
+                  <th class="p-2.5">Statutory Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="memoBreakdownBody">
+                <tr>
+                  <td class="p-2 text-left font-medium text-slate-800">Gross Energy Obligation (IEX Traded Value)</td>
+                  <td class="p-2 font-mono text-slate-600">Market Clearing Price</td>
+                  <td class="p-2 font-mono font-bold text-slate-900" id="memoRowGross">₹0.00</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-medium text-slate-800">Open Access / Grid Operational Charges</td>
+                  <td class="p-2 font-mono text-slate-600">NLDC / CTU / STU Schedules</td>
+                  <td class="p-2 font-mono text-rose-600" id="memoRowGrid">₹0.00</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-medium text-slate-800">Power Exchange Transaction Fee + 18% GST</td>
+                  <td class="p-2 font-mono text-slate-600">₹0.0200 / kWh + GST</td>
+                  <td class="p-2 font-mono text-amber-700" id="memoRowPx">₹0.00</td>
+                </tr>
+                <tr>
+                  <td class="p-2 text-left font-medium text-slate-800">NVVN Trading Margin + 18% GST</td>
+                  <td class="p-2 font-mono text-slate-600">₹0.0099 / kWh + GST</td>
+                  <td class="p-2 font-mono text-blue-700" id="memoRowNvvn">₹0.00</td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-slate-50 font-bold border-t border-slate-200">
+                <tr>
+                  <td class="p-2 text-left text-slate-900">Net Settlement Amount Realized to THDCIL</td>
+                  <td class="p-2 font-mono text-indigo-700" id="memoFootTariff">Effective Realized Tariff</td>
+                  <td class="p-2 font-mono text-emerald-700 text-sm font-black" id="memoFootNet">₹0.00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Official Sign-off Boxes -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div class="border border-dashed border-slate-300 rounded-xl p-3 bg-slate-50/70 flex flex-col justify-between h-24">
+              <span class="text-[9px] font-bold uppercase text-slate-400">PREPARED BY</span>
+              <div>
+                <p class="text-[11px] font-bold text-slate-800">Executive (Commercial Settlement)</p>
+                <p class="text-[10px] text-slate-500">11 MW Solar • THDCIL Khurja</p>
+              </div>
+            </div>
+            <div class="border border-dashed border-slate-300 rounded-xl p-3 bg-slate-50/70 flex flex-col justify-between h-24">
+              <span class="text-[9px] font-bold uppercase text-slate-400">CHECKED & RECONCILED BY</span>
+              <div>
+                <p class="text-[11px] font-bold text-slate-800">Sr. Manager (Trading & Billing)</p>
+                <p class="text-[10px] text-slate-500">Commercial Directorate, THDCIL</p>
+              </div>
+            </div>
+            <div class="border border-dashed border-slate-300 rounded-xl p-3 bg-slate-50/70 flex flex-col justify-between h-24">
+              <span class="text-[9px] font-bold uppercase text-slate-400">APPROVED BY</span>
+              <div>
+                <p class="text-[11px] font-bold text-slate-800">Addl. General Manager / Project Head</p>
+                <p class="text-[10px] text-slate-500">THDC India Limited</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Action Bar -->
+      <div class="p-4 bg-white border-t border-slate-200 flex items-center justify-between flex-wrap gap-3 shrink-0">
+        <div class="text-xs text-slate-500 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-blue-600"></i>
+          <span>Official Memorandum ready for signing, filing, and audit submission.</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="exportReportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-file-pdf"></i> <span>Download Official PDF</span>
+          </button>
+          <button onclick="openPrintableMemoTab()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="Open clean print layout in new tab (bypasses iframe print locks)">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>Open Printable Tab</span>
+          </button>
+          <button onclick="triggerBrowserPrint()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-print"></i> <span>Print Now</span>
+          </button>
+          <button onclick="closeOfficialMemoPrintModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING UNDO TOAST NOTIFICATION -->
+  <div id="undoToast" class="fixed bottom-6 right-6 z-50 transform translate-y-28 opacity-0 pointer-events-none transition-all duration-300 ease-out flex items-center gap-3 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md max-w-md">
+    <div class="flex items-center gap-3 flex-1 min-w-0">
+      <span id="undoToastIcon" class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold text-sm shrink-0 border border-amber-400/30">
+        <i class="fa-solid fa-rotate-left"></i>
+      </span>
+      <div class="min-w-0">
+        <div id="undoToastTitle" class="text-xs font-black text-slate-100 truncate">Action Completed</div>
+        <div id="undoToastMsg" class="text-[11px] text-slate-400 truncate">Press Undo or Ctrl+Z to revert</div>
+      </div>
+    </div>
+    <button id="undoToastBtn" onclick="undoAction()" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer">
+      <i class="fa-solid fa-rotate-left"></i> <span>Undo</span>
+    </button>
+    <button onclick="hideUndoToast()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition text-xs shrink-0 cursor-pointer" title="Dismiss">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
 </main>
 
 <script>
@@ -1335,7 +1904,6 @@ async function saveStateToIndexedDB(){
     return true;
   }catch(e){console.error("IndexedDB save failed",e);return false;}
 }
-function save(){ saveStateToIndexedDB(); }
 
 /* Clear only old oversized application caches. */
 try{
@@ -1353,7 +1921,9 @@ const months = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb
 const mNames = {Apr:"Apr",May:"May",Jun:"Jun",Jul:"Jul",Aug:"Aug",Sep:"Sep",Oct:"Oct",Nov:"Nov",Dec:"Dec",Jan:"Jan",Feb:"Feb",Mar:"Mar"};
 
 const $ = id => document.getElementById(id);
+
 function save() {
+  saveStateToIndexedDB();
   const payload=JSON.stringify(compactState(state));
   try{
     localStorage.setItem(KEY,payload);
@@ -1367,11 +1937,233 @@ function save() {
       localStorage.setItem(KEY,payload);
       return true;
     }catch(e2){
-      alert("Data is too large for browser storage. The analysis is still active, but old cached report data should be cleared once.");
       return false;
     }
   }
 }
+
+// ==========================================
+// UNDO & REDO STATE MANAGEMENT ENGINE
+// ==========================================
+let undoStack = [];
+let redoStack = [];
+const MAX_UNDO_DEPTH = 35;
+
+function cloneCompactState(s) {
+  if (!s) return { trades: [], obligations: [] };
+  return {
+    trades: Array.isArray(s.trades) ? s.trades.map(t => ({...t})) : [],
+    obligations: Array.isArray(s.obligations) ? s.obligations.map(o => ({...o})) : []
+  };
+}
+
+function pushUndoSnapshot(actionName = "Action") {
+  try {
+    const snap = {
+      action: actionName,
+      state: cloneCompactState(state),
+      timestamp: Date.now()
+    };
+    undoStack.push(snap);
+    if (undoStack.length > MAX_UNDO_DEPTH) undoStack.shift();
+    redoStack = []; // Standard behavior: clear redo on new action
+    updateUndoUI();
+    try {
+      sessionStorage.setItem("thdc_last_undo", JSON.stringify({
+        action: actionName,
+        state: snap.state,
+        timestamp: snap.timestamp
+      }));
+    } catch(e){}
+  } catch(err) {
+    console.warn("Unable to capture undo snapshot:", err);
+  }
+}
+
+function undoAction() {
+  if (undoStack.length === 0) {
+    try {
+      const cached = sessionStorage.getItem("thdc_last_undo");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.state) {
+          redoStack.push({
+            action: parsed.action || "Current State",
+            state: cloneCompactState(state),
+            timestamp: Date.now()
+          });
+          state = cloneCompactState(parsed.state);
+          save();
+          sessionStorage.removeItem("thdc_last_undo");
+          refreshAllPages();
+          updateUndoUI();
+          showUndoToast(`Restored: ${parsed.action}`, false);
+          return;
+        }
+      }
+    } catch(e){}
+    showUndoToast("Nothing to undo.", false);
+    return;
+  }
+
+  const snap = undoStack.pop();
+  redoStack.push({
+    action: snap.action,
+    state: cloneCompactState(state),
+    timestamp: Date.now()
+  });
+
+  state = cloneCompactState(snap.state);
+  save();
+  refreshAllPages();
+  updateUndoUI();
+  showUndoToast(`↩️ Undone: ${snap.action}`, false);
+}
+
+function redoAction() {
+  if (redoStack.length === 0) {
+    showUndoToast("Nothing to redo.", false);
+    return;
+  }
+  const snap = redoStack.pop();
+  undoStack.push({
+    action: snap.action,
+    state: cloneCompactState(state),
+    timestamp: Date.now()
+  });
+
+  state = cloneCompactState(snap.state);
+  save();
+  refreshAllPages();
+  updateUndoUI();
+  showUndoToast(`↪️ Redone: ${snap.action}`, false);
+}
+
+function updateUndoUI() {
+  const btnUndo = $("btnUndoAction");
+  const btnRedo = $("btnRedoAction");
+  const badge = $("undoCountBadge");
+  const tradesUndo = $("tradesUndoBtn");
+  const obUndo = $("obUndoBtn");
+  const uploadUndo = $("uploadUndoBtn");
+
+  const hasUndo = undoStack.length > 0;
+  const hasRedo = redoStack.length > 0;
+  const lastUndoAction = hasUndo ? undoStack[undoStack.length - 1].action : "";
+  const lastRedoAction = hasRedo ? redoStack[redoStack.length - 1].action : "";
+
+  if (btnUndo) {
+    btnUndo.disabled = !hasUndo;
+    btnUndo.title = hasUndo ? `Undo: ${lastUndoAction} (Ctrl+Z)` : "No actions to undo (Ctrl+Z)";
+    if (hasUndo) {
+      btnUndo.classList.remove("opacity-35", "cursor-not-allowed");
+      btnUndo.classList.add("cursor-pointer", "text-amber-300");
+    } else {
+      btnUndo.classList.add("opacity-35", "cursor-not-allowed");
+      btnUndo.classList.remove("cursor-pointer");
+    }
+  }
+
+  if (badge) {
+    if (hasUndo) {
+      badge.textContent = undoStack.length;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+
+  if (btnRedo) {
+    btnRedo.disabled = !hasRedo;
+    btnRedo.title = hasRedo ? `Redo: ${lastRedoAction} (Ctrl+Y)` : "No actions to redo (Ctrl+Y)";
+    if (hasRedo) {
+      btnRedo.classList.remove("opacity-25", "cursor-not-allowed");
+      btnRedo.classList.add("cursor-pointer", "text-white");
+    } else {
+      btnRedo.classList.add("opacity-25", "cursor-not-allowed");
+      btnRedo.classList.remove("cursor-pointer");
+    }
+  }
+
+  [tradesUndo, obUndo, uploadUndo].forEach(btn => {
+    if (!btn) return;
+    btn.disabled = !hasUndo;
+    if (hasUndo) {
+      btn.classList.remove("opacity-40", "cursor-not-allowed");
+      btn.title = `Undo: ${lastUndoAction} (Ctrl+Z)`;
+    } else {
+      btn.classList.add("opacity-40", "cursor-not-allowed");
+      btn.title = "No actions to undo";
+    }
+  });
+}
+
+let undoToastTimeout = null;
+function showUndoToast(msg, showUndoBtn = true) {
+  const toast = $("undoToast");
+  if (!toast) return;
+  const title = $("undoToastTitle");
+  const sub = $("undoToastMsg");
+  const btn = $("undoToastBtn");
+
+  if (title) title.innerText = msg;
+  if (sub) {
+    if (showUndoBtn && undoStack.length > 0) {
+      const last = undoStack[undoStack.length - 1];
+      sub.innerText = `Revert "${last.action}"? (or press Ctrl+Z)`;
+    } else {
+      sub.innerText = "State updated in portal.";
+    }
+  }
+  if (btn) {
+    if (showUndoBtn && undoStack.length > 0) {
+      btn.classList.remove("hidden");
+    } else {
+      btn.classList.add("hidden");
+    }
+  }
+
+  toast.classList.remove("translate-y-28", "opacity-0", "pointer-events-none");
+  toast.classList.add("translate-y-0", "opacity-100", "pointer-events-auto");
+
+  if (undoToastTimeout) clearTimeout(undoToastTimeout);
+  undoToastTimeout = setTimeout(() => {
+    hideUndoToast();
+  }, 7000);
+}
+
+function hideUndoToast() {
+  const toast = $("undoToast");
+  if (!toast) return;
+  toast.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+  toast.classList.add("translate-y-28", "opacity-0", "pointer-events-none");
+}
+
+window.addEventListener("keydown", (e) => {
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : "";
+  if (tag === "INPUT" || tag === "TEXTAREA") {
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+    if (e.shiftKey) {
+      e.preventDefault();
+      redoAction();
+    } else {
+      e.preventDefault();
+      undoAction();
+    }
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+    e.preventDefault();
+    redoAction();
+  }
+});
+
+window.pushUndoSnapshot = pushUndoSnapshot;
+window.undoAction = undoAction;
+window.redoAction = redoAction;
+window.updateUndoUI = updateUndoUI;
+window.showUndoToast = showUndoToast;
+window.hideUndoToast = hideUndoToast;
 function money(n) { return "₹ " + Math.abs(Number(n||0)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function formatIndianCurrency(n) { return Math.abs(Number(n||0)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function qtyMwh(t) { return Math.abs(t.qty) * 0.25; }
@@ -1400,16 +2192,15 @@ function applyMarketConfigToTrades() {
     alert("No trade records currently loaded in the database.");
     return;
   }
+  pushUndoSnapshot(`Market Config (${seg}/${txn})`);
   state.trades.forEach(t => {
     t.seg = seg;
     t.txn = txn;
   });
   save();
   alert(`✅ Successfully updated ${state.trades.length} trade blocks with:\nMarket Segment: ${seg}\nTransaction Type: ${txn}`);
-  renderDashboard();
-  renderTrades();
-  renderBilling();
-  renderReports();
+  refreshAllPages();
+  showUndoToast(`Updated ${state.trades.length} trades to ${seg}/${txn}`);
 }
 
 function updateMarginRates() {
@@ -1432,28 +2223,35 @@ function clearDateData() {
     alert("Please select a date from the calendar icon to clear its data.");
     return;
   }
-  if (confirm(`⚠️ Are you sure you want to delete ALL trades and obligations for ${d}?`)) {
-    let trCount = state.trades.length;
-    let obCount = state.obligations.length;
+  let matchingTrades = state.trades.filter(x => x.date === d).length;
+  let matchingObs = state.obligations.filter(x => x.date === d).length;
+  if (matchingTrades === 0 && matchingObs === 0) {
+    alert(`No data found in the system for ${d}.`);
+    return;
+  }
+  if (confirm(`⚠️ Are you sure you want to delete ALL trades and obligations for ${d}?\n(${matchingTrades} blocks, ${matchingObs} obligations)\n\nYou can click Undo (Ctrl+Z) anytime to restore.`)) {
+    pushUndoSnapshot(`Clear Day ${d}`);
     state.trades = state.trades.filter(x => x.date !== d);
     state.obligations = state.obligations.filter(x => x.date !== d);
-    
-    let trDeleted = trCount - state.trades.length;
-    let obDeleted = obCount - state.obligations.length;
-    
-    if (trDeleted === 0 && obDeleted === 0) alert(`No data found in the system for ${d}.`);
-    else {
-        save();
-        alert(`✅ Data cleared successfully for ${d}.\nDeleted ${trDeleted} trade blocks and ${obDeleted} obligation records.`);
-        location.reload();
-    }
+    save();
+    refreshAllPages();
+    showUndoToast(`Cleared ${matchingTrades} blocks & ${matchingObs} obligations for ${d}.`, true);
   }
 }
 
 function clearAllData() {
-  if(confirm("⚠️ Are you sure you want to permanently delete ALL trades and obligations data?")) {
+  let trCount = state.trades.length;
+  let obCount = state.obligations.length;
+  if (trCount === 0 && obCount === 0) {
+    alert("System has no trade or obligation data to wipe.");
+    return;
+  }
+  if(confirm(`⚠️ Are you sure you want to permanently delete ALL trades and obligations data?\nTotal: ${trCount} trade blocks and ${obCount} daily obligations.\n\nYou can restore everything using the Undo button or Ctrl+Z.`)) {
+    pushUndoSnapshot(`Wipe All Data (${trCount} blocks)`);
     state = { trades: [], obligations: [] };
-    save(); location.reload();
+    save();
+    refreshAllPages();
+    showUndoToast(`Wiped ${trCount} trade blocks & ${obCount} obligations.`, true);
   }
 }
 
@@ -1511,6 +2309,40 @@ function goToWeatherCorrelation() {
 }
 window.goToWeatherCorrelation = goToWeatherCorrelation;
 
+function goToYoyComparison() {
+  document.querySelectorAll(".nav-btn").forEach(x => {
+    x.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm");
+    x.classList.add("text-blue-100");
+    if (x.dataset.target === "yoy") {
+      x.classList.add("active", "bg-white", "text-blue-900", "shadow-sm");
+      x.classList.remove("text-blue-100");
+    }
+  });
+  document.querySelectorAll(".page-sec").forEach(x => x.classList.add("hidden"));
+  const sec = $("yoy");
+  if (sec) sec.classList.remove("hidden");
+  refreshPage("yoy");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.goToYoyComparison = goToYoyComparison;
+
+function openYoyForMonth(mKey) {
+  if (!mKey) return;
+  const parts = mKey.split("-");
+  if (parts.length === 2) {
+    const yr = parts[0];
+    const mo = parseInt(parts[1], 10);
+    const mSelect = $("yoyMonthSelect");
+    const yrSelect = $("yoyCurYearSelect");
+    const compSelect = $("yoyCompYearSelect");
+    if (mSelect) mSelect.value = String(mo);
+    if (yrSelect) yrSelect.value = yr;
+    if (compSelect) compSelect.value = String(parseInt(yr, 10) - 1);
+  }
+  goToYoyComparison();
+}
+window.openYoyForMonth = openYoyForMonth;
+
 function refreshPage(p) {
   if(p==="dashboard") renderDashboard();
   if(p==="trades") renderTrades();
@@ -1518,7 +2350,33 @@ function refreshPage(p) {
   if(p==="billing") renderBilling();
   if(p==="obligations") { loadObligation(); renderObligations(); }
   if(p==="weather") renderWeatherCorrelation();
+  if(p==="yoy") renderYoyComparison();
 }
+
+function refreshAllPages() {
+  const activeBtn = document.querySelector(".nav-btn.active");
+  const target = activeBtn ? activeBtn.dataset.target : "dashboard";
+  renderDashboard();
+  renderTrades();
+  renderBilling();
+  renderReports();
+  if (typeof renderObligations === "function") renderObligations();
+  if (typeof renderWeatherCorrelation === "function") {
+    try {
+      if (typeof weatherMergedData !== "undefined" && weatherMergedData.length > 0) {
+        renderWeatherCorrelationUI();
+      }
+    } catch(e){}
+  }
+  if (typeof renderYoyComparison === "function") {
+    try {
+      if (target === "yoy") renderYoyComparison();
+    } catch(e){}
+  }
+  refreshPage(target);
+  updateUndoUI();
+}
+window.refreshAllPages = refreshAllPages;
 
 // UNIFIED UPLOADER
 
@@ -1738,6 +2596,8 @@ function importStrictSheet1(workbook, forcedDate=""){
 
   if(!records.length) throw new Error("Sheet1 trade table found, but no valid block rows were found.");
 
+  pushUndoSnapshot(`Upload Sheet1 (${tradeDate})`);
+
   let newN=0,updN=0,skipN=0;
   records.forEach(t=>{
     const idx=state.trades.findIndex(x=>x.date===t.date&&x.block===t.block);
@@ -1755,6 +2615,8 @@ function importStrictSheet1(workbook, forcedDate=""){
   if(oi>=0) state.obligations[oi]=obligation; else state.obligations.push(obligation);
 
   save();
+  updateUndoUI();
+  showUndoToast(`Uploaded Sheet1: ${tradeDate} (${records.length} blocks)`, true);
   const v=validateDaily11MW(tradeDate);
   showUploadValidation(tradeDate,`New ${newN} • Updated ${updN} • Duplicate unchanged ${skipN}`);
   if($("uploadStatusMsg")) {
@@ -2112,8 +2974,45 @@ function renderDashboard() {
     </div>
   `).join("");
   
-  let a = months.map(m => { let x=ts.filter(t=>monthKey(t.date)===m), q=x.reduce((s,t)=>s+qtyMwh(t),0), r=x.reduce((s,t)=>s+amount(t),0); return {m, q:q/1000, r:r, w:q?x.reduce((s,t)=>s+qtyMwh(t)*t.mcp,0)/q:0}; });
-  $("monthRows").innerHTML = a.filter(x=>x.q>0).map(x=>`<tr><td class="p-2.5 font-bold text-slate-800">${mNames[x.m]}</td><td class="p-2.5 font-semibold text-blue-700">${x.q.toFixed(3)}</td><td class="p-2.5 font-bold text-emerald-700">${money(x.r)}</td><td class="p-2.5 text-slate-600">₹${x.w.toFixed(2)}</td></tr>`).join("") || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No data found.</td></tr>';
+  let a = months.map(m => {
+    let x = ts.filter(t => monthKey(t.date) === m);
+    let q = x.reduce((s, t) => s + qtyMwh(t), 0);
+    let r = x.reduce((s, t) => s + amount(t), 0);
+    return { m, q: q / 1000, r: r, w: q ? x.reduce((s, t) => s + qtyMwh(t) * t.mcp, 0) / q : 0 };
+  });
+
+  $("monthRows").innerHTML = a.filter(x => x.q > 0).map(x => {
+    // Determine prior year corresponding month
+    let yoyPill = `<span class="text-[10px] text-slate-400">-</span>`;
+    const parts = x.m.split("-");
+    if (parts.length === 2) {
+      const priorMonthKey = `${parseInt(parts[0], 10) - 1}-${parts[1]}`;
+      const priorMonthData = a.find(item => item.m === priorMonthKey);
+      if (priorMonthData && priorMonthData.q > 0) {
+        const delta = x.q - priorMonthData.q;
+        const pct = ((delta / priorMonthData.q) * 100);
+        const sign = delta >= 0 ? "+" : "";
+        yoyPill = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black ${delta >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+          ${sign}${delta.toFixed(3)} MU (${sign}${pct.toFixed(1)}%)
+        </span>`;
+      }
+    }
+
+    return `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="p-2.5 font-bold text-slate-800 text-left">${mNames[x.m] || x.m}</td>
+        <td class="p-2.5 font-semibold text-blue-700">${x.q.toFixed(3)}</td>
+        <td class="p-2.5 font-bold text-emerald-700">${money(x.r)}</td>
+        <td class="p-2.5 text-slate-600">₹${x.w.toFixed(2)}</td>
+        <td class="p-2.5 text-center">${yoyPill}</td>
+        <td class="p-2.5 text-center">
+          <button onclick="openYoyForMonth('${x.m}')" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-[10px] border border-teal-200 transition cursor-pointer flex items-center gap-1 mx-auto" title="Open detailed YoY seasonal analysis for this month">
+            <i class="fa-solid fa-code-compare text-teal-600"></i> Compare YoY
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("") || '<tr><td colspan="6" class="p-4 text-center text-slate-400">No data found.</td></tr>';
   
   if(mChartInstance) mChartInstance.destroy();
   mChartInstance = new Chart($("monthlyChart").getContext("2d"), {
@@ -3716,6 +4615,327 @@ function exportReportPDF() {
   doc.save(`THDC_11MW_Settlement_${groupBy}_${rs}_TO_${re}.pdf`);
 }
 
+// OFFICIAL MEMORANDUM PRINT & EXPORT ENGINE
+function printOfficialMemo() {
+  if (typeof renderReports === "function") {
+    renderReports();
+  }
+  openOfficialMemoPrintModal();
+}
+
+function openOfficialMemoPrintModal() {
+  const modal = document.getElementById("officialMemoPrintModal");
+  if (!modal) return;
+
+  // Retrieve filtered parameters
+  const rs = $("reportStartDate")?.value || "ALL";
+  const re = $("reportEndDate")?.value || "ALL";
+  const segVal = $("reportSeg")?.value || "ALL";
+  const txnVal = $("reportTxn")?.value || "ALL";
+  const groupBy = ($("reportGroup")?.value || "day").toUpperCase();
+
+  // Populate reference & dates
+  const now = new Date();
+  const year = now.getFullYear();
+  const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const refElem = document.getElementById("memoDocRef");
+  if (refElem) refElem.innerText = `Ref: THDC/11MW/COMM/MEMO/${year}/${monthStr}`;
+
+  const dateElem = document.getElementById("memoDocDate");
+  if (dateElem) dateElem.innerText = `Date: ${dateStr}`;
+
+  const scopeElem = document.getElementById("memoScopeText");
+  if (scopeElem) {
+    scopeElem.innerText = `Reconciliation Period: ${rs} to ${re} | Market: ${segVal} | Txn: ${txnVal} | Grouping: ${groupBy}`;
+  }
+
+  // Extract aggregated financial figures from report footer
+  let totMwh = 0, avgMcp = 0, totGross = 0, totGrid = 0, totPx = 0, totNvvn = 0, totDed = 0, totNet = 0, netTariff = 0;
+  const footRow = document.querySelector("#reportFoot tr");
+  if (footRow) {
+    const cols = Array.from(footRow.querySelectorAll("td")).map(td => td.innerText.replace(/[₹,]/g, '').trim());
+    if (cols.length >= 11) {
+      totMwh = parseFloat(cols[3]) || 0;
+      avgMcp = parseFloat(cols[4]) || 0;
+      totGross = parseFloat(cols[5]) || 0;
+      totGrid = parseFloat(cols[6]) || 0;
+      totPx = parseFloat(cols[7]) || 0;
+      totNvvn = parseFloat(cols[8]) || 0;
+      totDed = parseFloat(cols[9]) || 0;
+      totNet = parseFloat(cols[10]) || 0;
+      netTariff = parseFloat(cols[11]) || 0;
+    }
+  }
+
+  // Helper formatting
+  const fmt = (v) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if (document.getElementById("memoDeliveredEnergy")) {
+    document.getElementById("memoDeliveredEnergy").innerText = `${totMwh.toFixed(3)} MWh`;
+  }
+  if (document.getElementById("memoDeliveredMu")) {
+    document.getElementById("memoDeliveredMu").innerText = `(${(totMwh / 1000).toFixed(4)} MU)`;
+  }
+  if (document.getElementById("memoGrossValue")) {
+    document.getElementById("memoGrossValue").innerText = `₹ ${fmt(totGross)}`;
+  }
+  if (document.getElementById("memoAvgMcp")) {
+    document.getElementById("memoAvgMcp").innerText = `Avg MCP: ₹ ${fmt(avgMcp)}/MWh`;
+  }
+  if (document.getElementById("memoTotalDeductions")) {
+    document.getElementById("memoTotalDeductions").innerText = `₹ ${fmt(totDed)}`;
+  }
+  if (document.getElementById("memoNetReceivable")) {
+    document.getElementById("memoNetReceivable").innerText = `₹ ${fmt(totNet)}`;
+  }
+  if (document.getElementById("memoNetTariff")) {
+    document.getElementById("memoNetTariff").innerText = `Net Realized: ₹ ${netTariff.toFixed(4)}/kWh`;
+  }
+  if (document.getElementById("memoRowGross")) {
+    document.getElementById("memoRowGross").innerText = `₹ ${fmt(totGross)}`;
+  }
+  if (document.getElementById("memoRowGrid")) {
+    document.getElementById("memoRowGrid").innerText = `₹ ${fmt(totGrid)}`;
+  }
+  if (document.getElementById("memoRowPx")) {
+    document.getElementById("memoRowPx").innerText = `₹ ${fmt(totPx)}`;
+  }
+  if (document.getElementById("memoRowNvvn")) {
+    document.getElementById("memoRowNvvn").innerText = `₹ ${fmt(totNvvn)}`;
+  }
+  if (document.getElementById("memoFootTariff")) {
+    document.getElementById("memoFootTariff").innerText = `Effective Net Tariff: ₹ ${netTariff.toFixed(4)}/kWh`;
+  }
+  if (document.getElementById("memoFootNet")) {
+    document.getElementById("memoFootNet").innerText = `₹ ${fmt(totNet)}`;
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function closeOfficialMemoPrintModal() {
+  const modal = document.getElementById("officialMemoPrintModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function triggerBrowserPrint() {
+  try {
+    window.print();
+  } catch (err) {
+    console.warn("Direct window.print() failed, opening printable tab:", err);
+    openPrintableMemoTab();
+  }
+}
+
+function openPrintableMemoTab() {
+  const rs = $("reportStartDate")?.value || "ALL";
+  const re = $("reportEndDate")?.value || "ALL";
+  const segVal = $("reportSeg")?.value || "ALL";
+  const txnVal = $("reportTxn")?.value || "ALL";
+  const groupBy = ($("reportGroup")?.value || "day").toUpperCase();
+
+  let totMwh = 0, avgMcp = 0, totGross = 0, totGrid = 0, totPx = 0, totNvvn = 0, totDed = 0, totNet = 0, netTariff = 0;
+  const footRow = document.querySelector("#reportFoot tr");
+  if (footRow) {
+    const cols = Array.from(footRow.querySelectorAll("td")).map(td => td.innerText.replace(/[₹,]/g, '').trim());
+    if (cols.length >= 11) {
+      totMwh = parseFloat(cols[3]) || 0;
+      avgMcp = parseFloat(cols[4]) || 0;
+      totGross = parseFloat(cols[5]) || 0;
+      totGrid = parseFloat(cols[6]) || 0;
+      totPx = parseFloat(cols[7]) || 0;
+      totNvvn = parseFloat(cols[8]) || 0;
+      totDed = parseFloat(cols[9]) || 0;
+      totNet = parseFloat(cols[10]) || 0;
+      netTariff = parseFloat(cols[11]) || 0;
+    }
+  }
+
+  const fmt = (v) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const refStr = `THDC/11MW/COMM/MEMO/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const printableHtml = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THDCIL 11 MW Solar - Official Commercial Settlement Memorandum</title>
+<style>
+  @page { size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.4; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #0f2b5c; padding-bottom: 12px; margin-bottom: 15px; }
+  .title-block h1 { font-size: 18px; color: #0f2b5c; margin: 0 0 3px 0; font-weight: 800; }
+  .title-block p { font-size: 11px; color: #475569; margin: 2px 0; }
+  .ref-block { text-align: right; font-size: 11px; font-family: monospace; }
+  .ref-block strong { color: #0f172a; }
+  .subject-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
+  .subject-box strong { color: #166534; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: left; }
+  .kpi-card .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+  .kpi-card .val { font-size: 16px; font-weight: 800; color: #0f172a; }
+  .kpi-card.highlight { background: #ecfdf5; border-color: #a7f3d0; }
+  .kpi-card.highlight .val { color: #065f46; }
+  .kpi-card.deduct .val { color: #b91c1c; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+  th { background: #0f2b5c; color: #ffffff; font-weight: 700; text-align: right; padding: 8px 10px; }
+  th:first-child { text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-family: monospace; }
+  td:first-child { text-align: left; font-family: inherit; font-weight: 500; }
+  tfoot td { background: #f1f5f9; font-weight: 800; border-top: 2px solid #cbd5e1; }
+  .sigs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
+  .sig-box { border: 1px dashed #94a3b8; border-radius: 6px; padding: 12px; min-height: 80px; display: flex; flex-direction: column; justify-content: space-between; }
+  .sig-box .role-lbl { font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+  .sig-box .desig { font-size: 11px; font-weight: 700; color: #0f172a; }
+  .sig-box .dept { font-size: 10px; color: #64748b; }
+  .footer-note { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+  @media print {
+    body { padding: 0; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-block">
+      <h1>टीएचडीसी इंडिया लिमिटेड • THDC INDIA LIMITED</h1>
+      <p><strong>A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise</strong></p>
+      <p>Commercial Directorate • 11 MW Floating Solar PV Project, Khurja STPP (UP)</p>
+    </div>
+    <div class="ref-block">
+      <div><strong>${refStr}</strong></div>
+      <div>Date: ${dateStr}</div>
+      <div style="color: #1d4ed8; font-weight: bold;">Portfolio: N2UP0NVN0289</div>
+      <div>Trader: NVVN Limited</div>
+    </div>
+  </div>
+
+  <div class="subject-box">
+    <div><strong>SUBJECT: COMMERCIAL SETTLEMENT & REALIZATION MEMORANDUM</strong></div>
+    <div style="font-size: 11px; color: #334155; margin-top: 2px;">
+      Reconciliation Period: ${rs} to ${re} | Market: ${segVal} | Txn: ${txnVal} | Aggregation: ${groupBy}
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="lbl">Delivered Energy</div>
+      <div class="val">${totMwh.toFixed(3)} MWh</div>
+      <div style="font-size: 10px; color: #64748b;">${(totMwh / 1000).toFixed(4)} MU</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Gross Trade Value</div>
+      <div class="val">₹ ${fmt(totGross)}</div>
+      <div style="font-size: 10px; color: #64748b;">Avg MCP: ₹ ${fmt(avgMcp)}/MWh</div>
+    </div>
+    <div class="kpi-card deduct">
+      <div class="lbl">Total Deductions</div>
+      <div class="val">₹ ${fmt(totDed)}</div>
+      <div style="font-size: 10px; color: #64748b;">Grid + PX + NVVN</div>
+    </div>
+    <div class="kpi-card highlight">
+      <div class="lbl">Net Realized to THDCIL</div>
+      <div class="val">₹ ${fmt(totNet)}</div>
+      <div style="font-size: 10px; font-weight: bold; color: #047857;">Tariff: ₹ ${netTariff.toFixed(4)}/kWh</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Commercial Reconciliation Item</th>
+        <th>Applicable Tariff / Rate</th>
+        <th>Statutory Amount (₹)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Gross Energy Traded Obligation (IEX)</td>
+        <td>Market Clearing Price (MCP)</td>
+        <td>₹ ${fmt(totGross)}</td>
+      </tr>
+      <tr>
+        <td>Open Access & Grid Operational Charges</td>
+        <td>NLDC / CTU / STU / SLDC</td>
+        <td>₹ ${fmt(totGrid)}</td>
+      </tr>
+      <tr>
+        <td>Power Exchange Transaction Fee + 18% GST</td>
+        <td>₹ 0.0200 / kWh + GST</td>
+        <td>₹ ${fmt(totPx)}</td>
+      </tr>
+      <tr>
+        <td>NVVN Trading Margin + 18% GST</td>
+        <td>₹ 0.0099 / kWh + GST</td>
+        <td>₹ ${fmt(totNvvn)}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Net Settlement Amount Realized to THDCIL</td>
+        <td>Effective Net Tariff: ₹ ${netTariff.toFixed(4)}/kWh</td>
+        <td style="color: #065f46; font-size: 14px;">₹ ${fmt(totNet)}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="sigs">
+    <div class="sig-box">
+      <span class="role-lbl">PREPARED BY</span>
+      <div>
+        <div class="desig">Executive (Commercial Settlement)</div>
+        <div class="dept">11 MW Solar Project, THDCIL Khurja</div>
+      </div>
+    </div>
+    <div class="sig-box">
+      <span class="role-lbl">CHECKED & RECONCILED BY</span>
+      <div>
+        <div class="desig">Sr. Manager (Power Trading & Billing)</div>
+        <div class="dept">Commercial Directorate, THDCIL</div>
+      </div>
+    </div>
+    <div class="sig-box">
+      <span class="role-lbl">APPROVED BY</span>
+      <div>
+        <div class="desig">Addl. General Manager / Project Head</div>
+        <div class="dept">THDC India Limited</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Certified true and verified extract of energy trading and commercial settlement records • Generated from THDCIL 11 MW Solar Portal
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 400);
+    };
+  </script>
+</body>
+</html>`;
+
+  const blob = new Blob([printableHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    // Popup was blocked, trigger in-page print
+    triggerBrowserPrint();
+  }
+}
+
+window.printOfficialMemo = printOfficialMemo;
+window.openOfficialMemoPrintModal = openOfficialMemoPrintModal;
+window.closeOfficialMemoPrintModal = closeOfficialMemoPrintModal;
+window.triggerBrowserPrint = triggerBrowserPrint;
+window.openPrintableMemoTab = openPrintableMemoTab;
+
+
 // OBLIGATIONS TAB
 function loadObligation() {
   const d=$("oDate")?.value||"";
@@ -3750,6 +4970,8 @@ function saveObligation() {
     other:0
   };
 
+  pushUndoSnapshot(`Override Charges (${d})`);
+
   const i=state.obligations.findIndex(x=>x.date===d);
   if(i>=0) state.obligations[i]=o;
   else state.obligations.push(o);
@@ -3758,8 +4980,10 @@ function saveObligation() {
   renderObligations();
   renderBilling();
   renderReports();
+  updateUndoUI();
 
   const total=o.nldcApp+o.nldcSched+o.ctu+o.stu+o.sldc;
+  showUndoToast(`Saved Charges for ${d} (₹${total.toFixed(2)})`, true);
   alert("Saved for "+d+" • Total Corridor Charges: ₹ "+total.toFixed(2));
 }
 
@@ -3772,11 +4996,14 @@ function deleteObligation(date) {
 
   if(!confirm(`Delete corridor charges for ${date}?\nTotal: ₹${total.toFixed(2)}\n\nThis will remove only the corridor-charge record, not the 96-block trade data.`)) return;
 
+  pushUndoSnapshot(`Delete Charges (${date})`);
   state.obligations=state.obligations.filter(x=>x.date!==date);
   save();
   renderObligations();
   renderBilling();
   renderReports();
+  updateUndoUI();
+  showUndoToast(`Deleted Charges for ${date} (₹${total.toFixed(2)})`, true);
 
   if($("oDate")?.value===date) loadObligation();
 }
@@ -3892,6 +5119,7 @@ async function bootstrapSolarApp(){
   }
   renderReports();
   if(typeof renderObligations==="function")renderObligations();
+  updateUndoUI();
 }
 bootstrapSolarApp();
 </script>
@@ -4945,9 +6173,12 @@ async function loadSampleKhurjaSolarTrades() {
     }
   });
 
+  pushUndoSnapshot("Load Demo Solar Records");
   state.trades = generatedTrades;
   save();
   await saveStateToIndexedDB();
+  updateUndoUI();
+  showUndoToast("Loaded 14-day Demo Trades (1,344 blocks)", true);
 
   if ($("weatherStartDate")) $("weatherStartDate").value = "2024-05-01";
   if ($("weatherEndDate")) $("weatherEndDate").value = "2024-05-14";
@@ -5032,6 +6263,1220 @@ function renderWeatherCorrelation() {
   }
 }
 window.renderWeatherCorrelation = renderWeatherCorrelation;
+
+// ============================================================================
+// YEAR-OVER-YEAR (YoY) SOLAR GENERATION & SEASONAL VARIANCE COMPARISON ENGINE
+// ============================================================================
+
+let yoyDailyChartInst = null;
+let yoyDiurnalChartInst = null;
+let yoyCumulativeChartInst = null;
+const yoyWeatherCache = new Map();
+let yoyCurrentComparisonData = null;
+
+// Khurja STPP Floating Solar Regional Climate & Seasonal Taxonomy
+const SOLAR_SEASONS = [
+  {
+    month: 1, name: "January", seasonName: "Winter Radiation Fog & Low Sun Angle",
+    icon: "fa-smog text-sky-500", badgeClass: "bg-sky-500/20 text-sky-300 border-sky-400/30",
+    ghiBenchmark: 4.0, cloudBenchmark: 40, tempBenchmark: 21,
+    desc: "Short daylight hours (~10.2 hrs) and low sun zenith angle. Dense morning radiation fog in western UP delays generation ramp up to 09:30-10:00 AM (blocks 38-40). Cold ambient temperatures (8-18°C) maximize PV module open-circuit voltage and inverter efficiency during clear midday windows.",
+    deratingRisk: "Low (cold air prevents thermal derating; primary variance driver is morning fog duration and aerosol haze)."
+  },
+  {
+    month: 2, name: "February", seasonName: "Late Winter / Early Spring Transition",
+    icon: "fa-cloud-sun text-indigo-400", badgeClass: "bg-indigo-500/20 text-indigo-300 border-indigo-400/30",
+    ghiBenchmark: 5.3, cloudBenchmark: 25, tempBenchmark: 24,
+    desc: "Radiation fog rapidly clears. Daylight expands to ~11.0 hours with ascending solar elevation. Clear blue skies and moderate temperatures provide exceptional specific yield (kWh/kWp) with minimal thermal degradation.",
+    deratingRisk: "Very Low (optimal PV conversion operating temperature window)."
+  },
+  {
+    month: 3, name: "March", seasonName: "Spring High-Efficiency Solar Ramp",
+    icon: "fa-sun text-emerald-400", badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30",
+    ghiBenchmark: 6.0, cloudBenchmark: 20, tempBenchmark: 31,
+    desc: "Strong solar insolation ascent (~6.0 kWh/m²/day) with ~12.0 hours daylight. Clear atmospheric conditions result in dependable high daily generation (~55-62 MWh/day for 11 MW plant).",
+    deratingRisk: "Moderate (afternoon temperatures climb above 30°C, initiating minor cell temperature derating)."
+  },
+  {
+    month: 4, name: "April", seasonName: "Pre-Monsoon Peak Solar Summer",
+    icon: "fa-sun text-amber-400", badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/30",
+    ghiBenchmark: 6.7, cloudBenchmark: 15, tempBenchmark: 37,
+    desc: "Near-peak annual solar irradiance and high sun elevation angle (~75° at solar noon). Daylight extends to ~12.8 hours. North-western dust storms (Andhi) and module temperature rise are the chief operational risks.",
+    deratingRisk: "High (ambient temperatures reach 36-39°C; PV cells exceed 55°C, causing ~0.38%/°C voltage derating)."
+  },
+  {
+    month: 5, name: "May", seasonName: "Pre-Monsoon Extreme Heat & High GHI",
+    icon: "fa-temperature-high text-orange-400", badgeClass: "bg-orange-500/20 text-orange-300 border-orange-400/30",
+    ghiBenchmark: 6.8, cloudBenchmark: 18, tempBenchmark: 41,
+    desc: "Maximum annual Global Horizontal Irradiance (GHI 6.5 - 7.2 kWh/m²/day) and longest daylight hours (~13.4 hrs). Counterbalanced by severe heatwave conditions (ambient 40-44°C). The Khurja reservoir water body provides a crucial 4-6°C evaporative cooling benefit to floating modules compared to land mounts.",
+    deratingRisk: "Extreme (ambient >42°C causes notable midday power flattening despite peak irradiance; major driver of YoY heatwave variances)."
+  },
+  {
+    month: 6, name: "June", seasonName: "Monsoon Onset Window & Pre-Monsoon Squalls",
+    icon: "fa-cloud-bolt text-amber-400", badgeClass: "bg-amber-500/20 text-amber-300 border-amber-400/30",
+    ghiBenchmark: 6.1, cloudBenchmark: 45, tempBenchmark: 40,
+    desc: "High solar potential interrupted by advancing monsoon squalls, cloud build-ups, and dust storms. Arrival timing of the Southwest monsoon front across western UP dictates whether June yields high summer generation or early cloud attenuation.",
+    deratingRisk: "High to Variable (early monsoon arrival drastically drops June output by 15-30% YoY)."
+  },
+  {
+    month: 7, name: "July", seasonName: "Southwest Monsoon Peak Cloud Attenuation",
+    icon: "fa-cloud-showers-heavy text-blue-400", badgeClass: "bg-blue-500/20 text-blue-300 border-blue-400/30",
+    ghiBenchmark: 4.6, cloudBenchmark: 75, tempBenchmark: 35,
+    desc: "Dense monsoonal cloud decks (65-85% cloud cover) and frequent rain showers attenuate direct solar beam radiation. Diffuse radiation fraction surges to 60-70%. CUF drops to lowest annual levels (12-16%), though rain washing cleans module soiling completely.",
+    deratingRisk: "Low thermal derating (rain cooling keeps panels under 35°C), but heavy optical cloud obscuration dominates."
+  },
+  {
+    month: 8, name: "August", seasonName: "Active Southwest Monsoon",
+    icon: "fa-cloud-rain text-blue-400", badgeClass: "bg-blue-500/20 text-blue-300 border-blue-400/30",
+    ghiBenchmark: 4.5, cloudBenchmark: 78, tempBenchmark: 34,
+    desc: "Persistent monsoon depressions. High variance between continuous overcast rain days (15-22 MWh) and intermittent 'monsoon breaks' with crisp, washed clear sky spikes (50-58 MWh).",
+    deratingRisk: "Low thermal, high cloud optical thickness variance."
+  },
+  {
+    month: 9, name: "September", seasonName: "Late Monsoon Withdrawal Transition",
+    icon: "fa-cloud-sun text-teal-400", badgeClass: "bg-teal-500/20 text-teal-300 border-teal-400/30",
+    ghiBenchmark: 5.3, cloudBenchmark: 45, tempBenchmark: 33,
+    desc: "Monsoon withdrawal begins from North-West India. Cloud cover drops rapidly from 70% to 30%. Clean air post-rains results in sharp generation recovery as direct normal irradiance returns.",
+    deratingRisk: "Low to Moderate; fast rebound in capacity utilization factor."
+  },
+  {
+    month: 10, name: "October", seasonName: "Post-Monsoon Autumn High Clarity",
+    icon: "fa-sun text-emerald-400", badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30",
+    ghiBenchmark: 5.7, cloudBenchmark: 15, tempBenchmark: 32,
+    desc: "Pristine clear skies, low humidity, and pleasant daytime temperatures (28-32°C). Provides highest system performance ratio (PR 82-84%) of the year, though day length naturally contracts to ~11.2 hours.",
+    deratingRisk: "Very Low (near-optimal electrical cell conversion conditions)."
+  },
+  {
+    month: 11, name: "November", seasonName: "Post-Monsoon / Pre-Winter Smog Window",
+    icon: "fa-smog text-slate-400", badgeClass: "bg-slate-500/20 text-slate-300 border-slate-400/30",
+    ghiBenchmark: 4.8, cloudBenchmark: 20, tempBenchmark: 27,
+    desc: "Clear skies but descending sun elevation angle. Regional agricultural biomass burning and nocturnal temperature inversion trap atmospheric particulate matter (PM2.5/PM10) in western UP, attenuating direct solar irradiance by 8-15%.",
+    deratingRisk: "Low thermal; aerosol optical depth (AOD) and smog haze are primary variance factors."
+  },
+  {
+    month: 12, name: "December", seasonName: "Early Winter Low Sun & Fog Initiation",
+    icon: "fa-snowflake text-sky-400", badgeClass: "bg-sky-500/20 text-sky-300 border-sky-400/30",
+    ghiBenchmark: 4.0, cloudBenchmark: 40, tempBenchmark: 21,
+    desc: "Shortest daylight window of the year (~10.0 hrs, winter solstice). Radiation fog episodes commence in the NCR/Khurja belt. Cold temperatures (6-16°C) give crisp, high-voltage generation during sunny midday hours.",
+    deratingRisk: "Zero thermal derating; daylight duration and morning fog clearance dictate variance."
+  }
+];
+
+function getSolarSeasonInfo(monthNumber) {
+  const m = parseInt(monthNumber, 10) || 5;
+  return SOLAR_SEASONS.find(x => x.month === m) || SOLAR_SEASONS[4];
+}
+
+// Fetch or retrieve cached meteorological data for a given Year-Month
+async function fetchYoyMonthWeather(year, month) {
+  const mStr = String(month).padStart(2, "0");
+  const cacheKey = `${year}-${mStr}`;
+  if (yoyWeatherCache.has(cacheKey)) return yoyWeatherCache.get(cacheKey);
+
+  const lastDay = new Date(year, month, 0).getDate();
+  const startDate = `${year}-${mStr}-01`;
+  const endDate = `${year}-${mStr}-${String(lastDay).padStart(2, "0")}`;
+
+  const lat = (typeof weatherSiteConfig !== "undefined" && weatherSiteConfig.lat) ? weatherSiteConfig.lat : 28.239;
+  const lon = (typeof weatherSiteConfig !== "undefined" && weatherSiteConfig.lon) ? weatherSiteConfig.lon : 77.873;
+
+  try {
+    const url = `/api/weather?startDate=${startDate}&endDate=${endDate}&lat=${lat}&lon=${lon}`;
+    const resp = await fetch(url);
+    if (resp.ok) {
+      const json = await resp.json();
+      if (json.success && Array.isArray(json.daily) && json.daily.length > 0) {
+        yoyWeatherCache.set(cacheKey, json.daily);
+        return json.daily;
+      }
+    }
+  } catch (err) {
+    console.warn("YoY Weather API fetch failed for", cacheKey, err.message);
+  }
+
+  // Fallback generation for Khurja climate
+  const season = getSolarSeasonInfo(month);
+  const fallback = [];
+  for (let d = 1; d <= lastDay; d++) {
+    const dStr = `${year}-${mStr}-${String(d).padStart(2, "0")}`;
+    const seed = (d * 17 + month * 31 + (year % 10) * 11) % 100;
+    const isRain = (month === 7 || month === 8) && (seed % 4 === 0);
+    const isCloudy = seed % 5 === 0;
+    const insolation = +(season.ghiBenchmark * (isRain ? 0.45 : isCloudy ? 0.72 : (0.9 + (seed / 100) * 0.2))).toFixed(2);
+    fallback.push({
+      date: dStr,
+      weatherCode: isRain ? 63 : isCloudy ? 3 : 0,
+      weatherDesc: isRain ? "Rain Showers" : isCloudy ? "Overcast" : "Clear Sky",
+      weatherIcon: isRain ? "fa-cloud-showers-heavy text-blue-600" : isCloudy ? "fa-cloud text-slate-400" : "fa-sun text-amber-500",
+      solarInsolationKwh: insolation,
+      cloudCover: isRain ? 85 : isCloudy ? 70 : season.cloudBenchmark,
+      precipMm: isRain ? +(12 + (seed % 30)).toFixed(1) : 0,
+      tempMax: +(season.tempBenchmark + (seed % 6 - 3)).toFixed(1)
+    });
+  }
+  yoyWeatherCache.set(cacheKey, fallback);
+  return fallback;
+}
+
+// Automatically sync year options in select dropdowns based on state.trades
+function initYoyYearOptions() {
+  const trades = sortedTrades();
+  const yearsFound = new Set();
+  trades.forEach(t => {
+    if (t.date && t.date.length >= 4) {
+      yearsFound.add(parseInt(t.date.slice(0, 4), 10));
+    }
+  });
+
+  const curSelect = $("yoyCurYearSelect");
+  const compSelect = $("yoyCompYearSelect");
+  if (!curSelect || !compSelect) return;
+
+  const currentYearNow = new Date().getFullYear();
+  if (yearsFound.size === 0) {
+    yearsFound.add(2024);
+    yearsFound.add(2023);
+  } else if (yearsFound.size === 1) {
+    const single = [...yearsFound][0];
+    yearsFound.add(single - 1);
+  }
+
+  // Ensure current year now is available
+  yearsFound.add(currentYearNow);
+
+  const sortedYears = [...yearsFound].sort((a, b) => b - a);
+
+  const prevCurVal = curSelect.value ? parseInt(curSelect.value, 10) : sortedYears[0];
+  const prevCompVal = compSelect.value ? parseInt(compSelect.value, 10) : (prevCurVal - 1);
+
+  curSelect.innerHTML = sortedYears.map(y => `<option value="${y}" ${y === prevCurVal ? 'selected' : ''}>${y}</option>`).join("");
+  compSelect.innerHTML = sortedYears.map(y => `<option value="${y}" ${y === prevCompVal ? 'selected' : ''}>${y} (Prior Year)</option>`).join("");
+}
+
+function onYoyCurYearChange() {
+  const curY = parseInt($("yoyCurYearSelect")?.value, 10) || 2024;
+  const compSelect = $("yoyCompYearSelect");
+  if (compSelect) {
+    compSelect.value = String(curY - 1);
+    if (!compSelect.value) {
+      // If curY - 1 is not in options, append it
+      compSelect.innerHTML += `<option value="${curY - 1}" selected>${curY - 1} (Prior Year)</option>`;
+      compSelect.value = String(curY - 1);
+    }
+  }
+  renderYoyComparison();
+}
+window.onYoyCurYearChange = onYoyCurYearChange;
+
+// Main Year-over-Year Comparison Calculation & Rendering Routine
+async function renderYoyComparison() {
+  initYoyYearOptions();
+
+  const mVal = parseInt($("yoyMonthSelect")?.value, 10) || 5;
+  const curYear = parseInt($("yoyCurYearSelect")?.value, 10) || 2024;
+  const compYear = parseInt($("yoyCompYearSelect")?.value, 10) || 2023;
+  const segFilter = $("yoySegSelect")?.value || "ALL";
+
+  const seasonInfo = getSolarSeasonInfo(mVal);
+
+  // Update Section Header Context
+  if ($("yoySeasonBadge")) {
+    $("yoySeasonBadge").className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold ${seasonInfo.badgeClass} flex items-center gap-1`;
+    $("yoySeasonBadge").innerHTML = `<i class="fa-solid ${seasonInfo.icon}"></i> ${seasonInfo.seasonName}`;
+  }
+  if ($("yoyHeaderTitle")) {
+    $("yoyHeaderTitle").innerText = `${seasonInfo.name} ${curYear} vs ${seasonInfo.name} ${compYear} Solar Generation Comparison`;
+  }
+  if ($("yoySeasonDescription")) {
+    $("yoySeasonDescription").innerText = `${seasonInfo.desc} (${seasonInfo.deratingRisk})`;
+  }
+
+  // Filter trades for both periods
+  const mPrefix = String(mVal).padStart(2, "0");
+  const curPrefix = `${curYear}-${mPrefix}`;
+  const compPrefix = `${compYear}-${mPrefix}`;
+
+  let allTrades = sortedTrades();
+  if (segFilter !== "ALL") {
+    allTrades = allTrades.filter(t => (t.seg || "G-DAM") === segFilter);
+  }
+
+  const curTrades = allTrades.filter(t => t.date && t.date.startsWith(curPrefix));
+  const compTrades = allTrades.filter(t => t.date && t.date.startsWith(compPrefix));
+
+  // Toggle Missing Data Alert
+  const missingBanner = $("yoyMissingDataBanner");
+  if (missingBanner) {
+    if (compTrades.length === 0) {
+      missingBanner.classList.remove("hidden");
+      if ($("yoyMissingDataTitle")) $("yoyMissingDataTitle").innerText = `No Historical Trades for ${seasonInfo.name} ${compYear}`;
+      if ($("yoyMissingDataText")) $("yoyMissingDataText").innerHTML = `Trade records for comparison year <strong>${seasonInfo.name} ${compYear}</strong> are not yet loaded. You can click <strong>Load Prior Year Baseline</strong> below to immediately populate benchmark 11 MW Khurja solar generation records for ${seasonInfo.name} ${compYear} and analyze seasonal variances!`;
+    } else {
+      missingBanner.classList.add("hidden");
+    }
+  }
+
+  // Days in month
+  const totalDaysInMonth = new Date(curYear, mVal, 0).getDate();
+
+  // Aggregate daily records
+  const curDailyMap = new Map();
+  const compDailyMap = new Map();
+
+  // 96-block diurnal profile accumulator
+  const curBlockSums = new Array(97).fill(0);
+  const curBlockCounts = new Array(97).fill(0);
+  const compBlockSums = new Array(97).fill(0);
+  const compBlockCounts = new Array(97).fill(0);
+
+  curTrades.forEach(t => {
+    const day = parseInt(t.date.slice(8, 10), 10);
+    if (!curDailyMap.has(day)) curDailyMap.set(day, { date: t.date, mwh: 0, rev: 0, maxMw: 0, blocks: [], mcpSum: 0 });
+    const rec = curDailyMap.get(day);
+    const mw = Math.abs(t.qty || 0);
+    const qMwh = mw * 0.25;
+    rec.mwh += qMwh;
+    rec.rev += amount(t);
+    rec.mcpSum += (t.mcp || 0) * qMwh;
+    if (mw > rec.maxMw) rec.maxMw = mw;
+    rec.blocks.push(t);
+
+    const b = parseInt(t.block, 10);
+    if (b >= 1 && b <= 96) {
+      curBlockSums[b] += mw;
+      curBlockCounts[b]++;
+    }
+  });
+
+  compTrades.forEach(t => {
+    const day = parseInt(t.date.slice(8, 10), 10);
+    if (!compDailyMap.has(day)) compDailyMap.set(day, { date: t.date, mwh: 0, rev: 0, maxMw: 0, blocks: [], mcpSum: 0 });
+    const rec = compDailyMap.get(day);
+    const mw = Math.abs(t.qty || 0);
+    const qMwh = mw * 0.25;
+    rec.mwh += qMwh;
+    rec.rev += amount(t);
+    rec.mcpSum += (t.mcp || 0) * qMwh;
+    if (mw > rec.maxMw) rec.maxMw = mw;
+    rec.blocks.push(t);
+
+    const b = parseInt(t.block, 10);
+    if (b >= 1 && b <= 96) {
+      compBlockSums[b] += mw;
+      compBlockCounts[b]++;
+    }
+  });
+
+  // Fetch weather data for both years
+  const curWeather = await fetchYoyMonthWeather(curYear, mVal);
+  const compWeather = await fetchYoyMonthWeather(compYear, mVal);
+
+  const curWeatherMap = new Map(curWeather.map(w => [parseInt(w.date.slice(8, 10), 10), w]));
+  const compWeatherMap = new Map(compWeather.map(w => [parseInt(w.date.slice(8, 10), 10), w]));
+
+  // Aggregate Totals
+  const curActiveDays = curDailyMap.size;
+  const compActiveDays = compDailyMap.size;
+
+  const curTotalMwh = [...curDailyMap.values()].reduce((s, d) => s + d.mwh, 0);
+  const compTotalMwh = [...compDailyMap.values()].reduce((s, d) => s + d.mwh, 0);
+
+  const curTotalRev = [...curDailyMap.values()].reduce((s, d) => s + d.rev, 0);
+  const compTotalRev = [...compDailyMap.values()].reduce((s, d) => s + d.rev, 0);
+
+  const curPeakMw = curTrades.reduce((mx, t) => Math.max(mx, Math.abs(t.qty || 0)), 0);
+  const compPeakMw = compTrades.reduce((mx, t) => Math.max(mx, Math.abs(t.qty || 0)), 0);
+
+  // Accurate CUF calculation for 11 MW: Energy / (11 MW * 24 h * activeDays) * 100
+  const curCuf = curActiveDays > 0 ? (curTotalMwh / (11.0 * 24 * curActiveDays)) * 100 : 0;
+  const compCuf = compActiveDays > 0 ? (compTotalMwh / (11.0 * 24 * compActiveDays)) * 100 : 0;
+
+  const curDailyAvg = curActiveDays > 0 ? curTotalMwh / curActiveDays : 0;
+  const compDailyAvg = compActiveDays > 0 ? compTotalMwh / compActiveDays : 0;
+
+  const curMcpWeighted = curTotalMwh > 0 ? curTotalRev / curTotalMwh : 0;
+  const compMcpWeighted = compTotalMwh > 0 ? compTotalRev / compTotalMwh : 0;
+
+  // Weather Averages
+  const curAvgGhi = curWeather.length ? curWeather.reduce((s, w) => s + (w.solarInsolationKwh || 0), 0) / curWeather.length : seasonInfo.ghiBenchmark;
+  const compAvgGhi = compWeather.length ? compWeather.reduce((s, w) => s + (w.solarInsolationKwh || 0), 0) / compWeather.length : seasonInfo.ghiBenchmark;
+
+  const curAvgCloud = curWeather.length ? Math.round(curWeather.reduce((s, w) => s + (w.cloudCover || 0), 0) / curWeather.length) : seasonInfo.cloudBenchmark;
+  const compAvgCloud = compWeather.length ? Math.round(compWeather.reduce((s, w) => s + (w.cloudCover || 0), 0) / compWeather.length) : seasonInfo.cloudBenchmark;
+
+  const curAvgTemp = curWeather.length ? +(curWeather.reduce((s, w) => s + (w.tempMax || 0), 0) / curWeather.length).toFixed(1) : seasonInfo.tempBenchmark;
+  const compAvgTemp = compWeather.length ? +(compWeather.reduce((s, w) => s + (w.tempMax || 0), 0) / compWeather.length).toFixed(1) : seasonInfo.tempBenchmark;
+
+  const curRainDays = curWeather.filter(w => (w.precipMm || 0) >= 1.0).length;
+  const compRainDays = compWeather.filter(w => (w.precipMm || 0) >= 1.0).length;
+
+  // Variances
+  const deltaMwh = curTotalMwh - compTotalMwh;
+  const pctMwh = compTotalMwh > 0 ? ((deltaMwh / compTotalMwh) * 100) : (curTotalMwh > 0 ? 100 : 0);
+  const deltaCuf = curCuf - compCuf;
+  const deltaPeak = curPeakMw - compPeakMw;
+  const deltaGhi = curAvgGhi - compAvgGhi;
+  const pctGhi = compAvgGhi > 0 ? ((deltaGhi / compAvgGhi) * 100) : 0;
+  const deltaCloud = curAvgCloud - compAvgCloud;
+  const deltaTemp = curAvgTemp - compAvgTemp;
+  const deltaRev = curTotalRev - compTotalRev;
+  const pctRev = compTotalRev > 0 ? ((deltaRev / compTotalRev) * 100) : 0;
+  const deltaMcp = curMcpWeighted - compMcpWeighted;
+
+  // Store computation data for table search and Excel export
+  yoyCurrentComparisonData = {
+    monthNumber: mVal,
+    monthName: seasonInfo.name,
+    curYear,
+    compYear,
+    seasonInfo,
+    curTotalMwh,
+    compTotalMwh,
+    deltaMwh,
+    pctMwh,
+    curCuf,
+    compCuf,
+    deltaCuf,
+    curDailyAvg,
+    compDailyAvg,
+    curPeakMw,
+    compPeakMw,
+    curTotalRev,
+    compTotalRev,
+    deltaRev,
+    curMcpWeighted,
+    compMcpWeighted,
+    deltaMcp,
+    curAvgGhi,
+    compAvgGhi,
+    deltaGhi,
+    pctGhi,
+    curAvgCloud,
+    compAvgCloud,
+    deltaCloud,
+    curAvgTemp,
+    compAvgTemp,
+    deltaTemp,
+    curRainDays,
+    compRainDays,
+    curActiveDays,
+    compActiveDays,
+    curDailyMap,
+    compDailyMap,
+    curWeatherMap,
+    compWeatherMap,
+    curBlockSums,
+    curBlockCounts,
+    compBlockSums,
+    compBlockCounts,
+    totalDaysInMonth
+  };
+
+  // 1. Executive Summary & Diagnostic Badges
+  if ($("yoyHeadlineSummary")) {
+    const isGain = deltaMwh >= 0;
+    const sign = isGain ? "+" : "";
+    $("yoyHeadlineSummary").innerHTML = compTotalMwh > 0 ? `
+      ${seasonInfo.name} ${curYear} Dispatched <span class="${isGain ? 'text-emerald-700' : 'text-rose-700'} font-black">${curTotalMwh.toFixed(2)} MWh</span>
+      (${sign}${deltaMwh.toFixed(2)} MWh / ${sign}${pctMwh.toFixed(1)}%) vs ${seasonInfo.name} ${compYear} (${compTotalMwh.toFixed(2)} MWh)
+    ` : `
+      ${seasonInfo.name} ${curYear} Dispatched <span class="text-blue-700 font-black">${curTotalMwh.toFixed(2)} MWh</span> Across ${curActiveDays} Days
+    `;
+  }
+
+  if ($("yoyPeriodSubtitle")) {
+    $("yoyPeriodSubtitle").innerText = `Comparison Period: ${curActiveDays} active days in ${curYear} vs ${compActiveDays} active days in ${compYear} • Plant Capacity: 11.0 MW AC`;
+  }
+
+  // Diagnostic Badges
+  if ($("yoyDiagnosticPills")) {
+    const badges = [];
+    if (deltaMwh >= 0) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> +${pctMwh.toFixed(1)}% YoY Generation Gain</span>`);
+    } else {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-down"></i> ${pctMwh.toFixed(1)}% YoY Deficit</span>`);
+    }
+
+    if (deltaCuf >= 0.5) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-300"><i class="fa-solid fa-bolt"></i> +${deltaCuf.toFixed(2)}% CUF Outperformance</span>`);
+    } else if (deltaCuf <= -0.5) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300"><i class="fa-solid fa-triangle-exclamation"></i> ${deltaCuf.toFixed(2)}% CUF Contraction</span>`);
+    }
+
+    if (deltaGhi >= 0.2) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300"><i class="fa-solid fa-sun text-amber-500"></i> +${pctGhi.toFixed(1)}% Higher Irradiance</span>`);
+    } else if (deltaGhi <= -0.2) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-300"><i class="fa-solid fa-cloud text-sky-500"></i> Cloud Cover Attenuation</span>`);
+    }
+
+    if (deltaTemp >= 1.5 && (mVal >= 4 && mVal <= 6)) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="fa-solid fa-temperature-high text-rose-600"></i> Extreme Heat Derating (+${deltaTemp.toFixed(1)}°C)</span>`);
+    }
+
+    if (curRainDays !== compRainDays) {
+      badges.push(`<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300"><i class="fa-solid fa-cloud-showers-heavy"></i> ${curRainDays} vs ${compRainDays} Rain Days</span>`);
+    }
+
+    $("yoyDiagnosticPills").innerHTML = badges.join("");
+  }
+
+  // 4 Seasonal Drivers
+  if ($("yoyDriverGhiBadge")) {
+    const s = deltaGhi >= 0 ? "+" : "";
+    $("yoyDriverGhiBadge").innerText = `${s}${pctGhi.toFixed(1)}%`;
+    $("yoyDriverGhiBadge").className = `font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded ${deltaGhi >= 0 ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-800'}`;
+  }
+  if ($("yoyDriverGhiText")) {
+    const s = deltaGhi >= 0 ? "+" : "";
+    $("yoyDriverGhiText").innerText = `Mean GHI: ${curAvgGhi.toFixed(2)} vs ${compAvgGhi.toFixed(2)} kWh/m²/day (${s}${deltaGhi.toFixed(2)} kWh/m² difference).`;
+  }
+
+  if ($("yoyDriverCloudBadge")) {
+    const s = deltaCloud >= 0 ? "+" : "";
+    $("yoyDriverCloudBadge").innerText = `${s}${deltaCloud}%`;
+    $("yoyDriverCloudBadge").className = `font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded ${deltaCloud <= 0 ? 'bg-emerald-200 text-emerald-900' : 'bg-sky-200 text-sky-900'}`;
+  }
+  if ($("yoyDriverCloudText")) {
+    $("yoyDriverCloudText").innerText = `Mean cloud cover was ${curAvgCloud}% in ${curYear} vs ${compAvgCloud}% in ${compYear} (${curRainDays} vs ${compRainDays} precipitation days).`;
+  }
+
+  if ($("yoyDriverTempBadge")) {
+    const s = deltaTemp >= 0 ? "+" : "";
+    $("yoyDriverTempBadge").innerText = `${s}${deltaTemp.toFixed(1)}°C`;
+    $("yoyDriverTempBadge").className = `font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded ${deltaTemp > 1.0 ? 'bg-rose-200 text-rose-900' : 'bg-slate-200 text-slate-800'}`;
+  }
+  if ($("yoyDriverTempText")) {
+    const thermalDeratingPct = deltaTemp * 0.38; // ~0.38% per deg C
+    const penaltyDesc = deltaTemp > 1.0 ? `estimated ~${thermalDeratingPct.toFixed(1)}% voltage derating loss` : 'normal temperature variance';
+    $("yoyDriverTempText").innerText = `Average Tmax: ${curAvgTemp}°C vs ${compAvgTemp}°C (${penaltyDesc}).`;
+  }
+
+  if ($("yoyDriverPriceBadge")) {
+    const s = deltaMcp >= 0 ? "+" : "";
+    $("yoyDriverPriceBadge").innerText = `${s}₹${(deltaMcp / 1000).toFixed(2)}/kWh`;
+    $("yoyDriverPriceBadge").className = `font-mono text-[11px] font-extrabold px-1.5 py-0.5 rounded ${deltaMcp >= 0 ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'}`;
+  }
+  if ($("yoyDriverPriceText")) {
+    const s = deltaMcp >= 0 ? "+" : "";
+    $("yoyDriverPriceText").innerText = `Weighted MCP: ₹${curMcpWeighted.toFixed(0)} vs ₹${compMcpWeighted.toFixed(0)}/MWh (${s}₹${deltaMcp.toFixed(0)} difference).`;
+  }
+
+  // 2. Render 9 Comparative KPI Cards
+  renderYoyKpis(curYear, compYear, {
+    curTotalMwh, compTotalMwh, deltaMwh, pctMwh,
+    curCuf, compCuf, deltaCuf,
+    curDailyAvg, compDailyAvg,
+    curPeakMw, compPeakMw, deltaPeak,
+    curAvgGhi, compAvgGhi, deltaGhi, pctGhi,
+    curAvgCloud, compAvgCloud, deltaCloud, curRainDays, compRainDays,
+    curAvgTemp, compAvgTemp, deltaTemp,
+    curTotalRev, compTotalRev, deltaRev, pctRev,
+    curMcpWeighted, compMcpWeighted, deltaMcp
+  });
+
+  // 3. Render Visualizations
+  renderYoyDailyGenChart(curYear, compYear, totalDaysInMonth, curDailyMap, compDailyMap, curWeatherMap, compWeatherMap);
+  renderYoyCumulativeGenChart(curYear, compYear, totalDaysInMonth, curDailyMap, compDailyMap);
+  renderYoyDiurnalProfileChart(curYear, compYear, curBlockSums, curBlockCounts, compBlockSums, compBlockCounts, curActiveDays, compActiveDays);
+
+  // 4. Render Day-by-Day Reconciliation Table
+  renderYoyTable(curYear, compYear, totalDaysInMonth, curDailyMap, compDailyMap, curWeatherMap, compWeatherMap, seasonInfo);
+}
+window.renderYoyComparison = renderYoyComparison;
+
+// Render 9 Comparative Side-by-Side KPI Cards
+function renderYoyKpis(curYear, compYear, d) {
+  const container = $("yoyKpiGrid");
+  if (!container) return;
+
+  function deltaPill(delta, pct, unit="", higherIsBetter=true) {
+    if (isNaN(delta) || !isFinite(delta)) return `<span class="text-[10px] text-slate-400">N/A</span>`;
+    const isZero = Math.abs(delta) < 0.001;
+    if (isZero) return `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">Equal (0.0%)</span>`;
+    const isPositive = delta > 0;
+    const isGood = higherIsBetter ? isPositive : !isPositive;
+    const color = isGood ? 'emerald' : 'rose';
+    const sign = isPositive ? "+" : "";
+    const pctStr = pct !== null && isFinite(pct) ? ` (${sign}${pct.toFixed(1)}%)` : '';
+    return `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-${color}-100 text-${color}-800 border border-${color}-200 flex items-center gap-1">
+      <i class="fa-solid fa-arrow-${isPositive ? 'up' : 'down'} text-[9px]"></i> ${sign}${delta.toFixed(2)}${unit}${pctStr}
+    </span>`;
+  }
+
+  const kpis = [
+    {
+      title: "Total Generation (MWh)",
+      icon: "fa-bolt text-blue-600",
+      curVal: `${d.curTotalMwh.toFixed(2)} MWh`,
+      curSub: `${(d.curTotalMwh / 1000).toFixed(3)} MU`,
+      compVal: `${d.compTotalMwh.toFixed(2)} MWh`,
+      compSub: `${(d.compTotalMwh / 1000).toFixed(3)} MU in ${compYear}`,
+      pill: deltaPill(d.deltaMwh, d.pctMwh, " MWh", true)
+    },
+    {
+      title: "Capacity Utilization Factor (CUF)",
+      icon: "fa-chart-pie text-teal-600",
+      curVal: `${d.curCuf.toFixed(2)}%`,
+      curSub: "11 MW AC Installed Base",
+      compVal: `${d.compCuf.toFixed(2)}%`,
+      compSub: `Prior year benchmark`,
+      pill: deltaPill(d.deltaCuf, null, "% pts", true)
+    },
+    {
+      title: "Daily Average Generation",
+      icon: "fa-calendar-day text-indigo-600",
+      curVal: `${d.curDailyAvg.toFixed(2)} MWh/d`,
+      curSub: "Mean daily energy yield",
+      compVal: `${d.compDailyAvg.toFixed(2)} MWh/d`,
+      compSub: `in ${compYear}`,
+      pill: deltaPill(d.curDailyAvg - d.compDailyAvg, d.compDailyAvg > 0 ? ((d.curDailyAvg - d.compDailyAvg) / d.compDailyAvg) * 100 : 0, " MWh/d", true)
+    },
+    {
+      title: "Peak Dispatched Output",
+      icon: "fa-solar-panel text-amber-500",
+      curVal: `${d.curPeakMw.toFixed(2)} MW`,
+      curSub: "Max 15-min scheduled power",
+      compVal: `${d.compPeakMw.toFixed(2)} MW`,
+      compSub: `Prior year peak`,
+      pill: deltaPill(d.deltaPeak, null, " MW", true)
+    },
+    {
+      title: "Mean Solar Insolation (GHI)",
+      icon: "fa-sun text-amber-500",
+      curVal: `${d.curAvgGhi.toFixed(2)} kWh/m²`,
+      curSub: "Peak Sun Hours / day",
+      compVal: `${d.compAvgGhi.toFixed(2)} kWh/m²`,
+      compSub: `in ${compYear}`,
+      pill: deltaPill(d.deltaGhi, d.pctGhi, " kWh/m²", true)
+    },
+    {
+      title: "Mean Cloud Cover & Rain",
+      icon: "fa-cloud-showers-heavy text-sky-600",
+      curVal: `${d.curAvgCloud}% Cloud`,
+      curSub: `${d.curRainDays} rainy day${d.curRainDays === 1 ? '' : 's'}`,
+      compVal: `${d.compAvgCloud}% Cloud`,
+      compSub: `${d.compRainDays} rain days in ${compYear}`,
+      pill: deltaPill(d.deltaCloud, null, "%", false)
+    },
+    {
+      title: "Max Ambient Temperature",
+      icon: "fa-temperature-high text-rose-500",
+      curVal: `${d.curAvgTemp}°C`,
+      curSub: "PV Thermal Derating Driver",
+      compVal: `${d.compAvgTemp}°C`,
+      compSub: `Prior year mean Tmax`,
+      pill: deltaPill(d.deltaTemp, null, "°C", false)
+    },
+    {
+      title: "Gross Market Revenue",
+      icon: "fa-indian-rupee-sign text-emerald-600",
+      curVal: money(d.curTotalRev),
+      curSub: `₹${(d.curTotalRev / 100000).toFixed(2)} Lakhs`,
+      compVal: money(d.compTotalRev),
+      compSub: `in ${compYear}`,
+      pill: deltaPill(d.deltaRev, d.pctRev, "", true)
+    },
+    {
+      title: "Volume-Weighted MCP",
+      icon: "fa-scale-balanced text-purple-600",
+      curVal: `₹${d.curMcpWeighted.toFixed(2)}/MWh`,
+      curSub: `₹${(d.curMcpWeighted / 1000).toFixed(3)}/kWh net`,
+      compVal: `₹${d.compMcpWeighted.toFixed(2)}/MWh`,
+      compSub: `Prior year clearing price`,
+      pill: deltaPill(d.deltaMcp, d.compMcpWeighted > 0 ? ((d.deltaMcp / d.compMcpWeighted) * 100) : 0, "/MWh", true)
+    }
+  ];
+
+  container.innerHTML = kpis.map(x => `
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 flex flex-col justify-between hover:border-blue-400 hover:shadow transition space-y-3">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">${x.title}</p>
+          <div class="flex items-baseline gap-2 mt-1">
+            <h4 class="text-xl font-black text-slate-900">${x.curVal}</h4>
+          </div>
+          <p class="text-[10px] font-semibold text-slate-400">${x.curSub}</p>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-base shrink-0">
+          <i class="fa-solid ${x.icon}"></i>
+        </div>
+      </div>
+
+      <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 block">${compYear} Benchmark:</span>
+          <span class="font-bold text-slate-700 text-xs">${x.compVal}</span>
+        </div>
+        <div>
+          ${x.pill}
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// Chart 1: Day-by-Day Generation Comparison (Day 1 to 31)
+function renderYoyDailyGenChart(curYear, compYear, totalDays, curMap, compMap, curWeatherMap, compWeatherMap) {
+  const canvas = $("yoyDailyGenChart");
+  if (!canvas) return;
+
+  if (yoyDailyChartInst) {
+    yoyDailyChartInst.destroy();
+    yoyDailyChartInst = null;
+  }
+
+  const labels = [];
+  const curData = [];
+  const compData = [];
+  const curGhiData = [];
+
+  for (let d = 1; d <= totalDays; d++) {
+    labels.push(`Day ${d}`);
+    const c = curMap.get(d);
+    const p = compMap.get(d);
+    const cw = curWeatherMap.get(d);
+
+    curData.push(c ? +c.mwh.toFixed(2) : 0);
+    compData.push(p ? +p.mwh.toFixed(2) : 0);
+    curGhiData.push(cw ? +cw.solarInsolationKwh.toFixed(2) : null);
+  }
+
+  yoyDailyChartInst = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `${curYear} Generation (MWh)`,
+          data: curData,
+          backgroundColor: "#2563eb",
+          borderRadius: 4,
+          order: 2
+        },
+        {
+          label: `${compYear} Generation (MWh)`,
+          data: compData,
+          backgroundColor: "#10b981",
+          borderRadius: 4,
+          order: 3
+        },
+        {
+          label: `${curYear} Solar GHI (kWh/m²)`,
+          data: curGhiData,
+          type: "line",
+          borderColor: "#f59e0b",
+          backgroundColor: "#f59e0b",
+          borderWidth: 2,
+          pointRadius: 2,
+          yAxisID: "yGhi",
+          tension: 0.25,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10 } }
+        },
+        y: {
+          title: { display: true, text: "Generation (MWh)", font: { size: 10, weight: "bold" } },
+          suggestedMax: 70
+        },
+        yGhi: {
+          position: "right",
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: "Insolation (kWh/m²)", font: { size: 10, weight: "bold" } },
+          suggestedMax: 8
+        }
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { boxWidth: 10, font: { size: 11, weight: "bold" } }
+        },
+        tooltip: {
+          callbacks: {
+            footer: (items) => {
+              const dIndex = items[0].dataIndex;
+              const curMwh = curData[dIndex] || 0;
+              const compMwh = compData[dIndex] || 0;
+              const diff = curMwh - compMwh;
+              const sign = diff >= 0 ? "+" : "";
+              const pct = compMwh > 0 ? ((diff / compMwh) * 100).toFixed(1) : "0.0";
+              return `Variance: ${sign}${diff.toFixed(2)} MWh (${sign}${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Chart 2: Cumulative Energy Trajectory
+function renderYoyCumulativeGenChart(curYear, compYear, totalDays, curMap, compMap) {
+  const canvas = $("yoyCumulativeGenChart");
+  if (!canvas) return;
+
+  if (yoyCumulativeChartInst) {
+    yoyCumulativeChartInst.destroy();
+    yoyCumulativeChartInst = null;
+  }
+
+  const labels = [];
+  const curCum = [];
+  const compCum = [];
+
+  let sumCur = 0;
+  let sumComp = 0;
+
+  for (let d = 1; d <= totalDays; d++) {
+    labels.push(`Day ${d}`);
+    const c = curMap.get(d);
+    const p = compMap.get(d);
+
+    if (c) sumCur += c.mwh;
+    if (p) sumComp += p.mwh;
+
+    curCum.push(c ? +sumCur.toFixed(2) : null);
+    compCum.push(p ? +sumComp.toFixed(2) : null);
+  }
+
+  yoyCumulativeChartInst = new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `${curYear} Cumulative (MWh)`,
+          data: curCum,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.08)",
+          fill: true,
+          borderWidth: 2.5,
+          pointRadius: 2,
+          tension: 0.2
+        },
+        {
+          label: `${compYear} Cumulative (MWh)`,
+          data: compCum,
+          borderColor: "#10b981",
+          backgroundColor: "transparent",
+          borderDash: [5, 4],
+          borderWidth: 2.5,
+          pointRadius: 2,
+          tension: 0.2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 9 }, maxTicksLimit: 10 }
+        },
+        y: {
+          title: { display: true, text: "Cumulative MWh", font: { size: 10, weight: "bold" } }
+        }
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { boxWidth: 10, font: { size: 10, weight: "bold" } }
+        }
+      }
+    }
+  });
+}
+
+// Chart 3: Diurnal 96-Block Generation Profile Comparison (Solar Noon Curve)
+function renderYoyDiurnalProfileChart(curYear, compYear, curSums, curCounts, compSums, compCounts, curActiveDays, compActiveDays) {
+  const canvas = $("yoyDiurnalProfileChart");
+  if (!canvas) return;
+
+  if (yoyDiurnalChartInst) {
+    yoyDiurnalChartInst.destroy();
+    yoyDiurnalChartInst = null;
+  }
+
+  const labels = [];
+  const curProfile = [];
+  const compProfile = [];
+
+  for (let b = 1; b <= 96; b++) {
+    const startMin = (b - 1) * 15;
+    const h = String(Math.floor(startMin / 60)).padStart(2, "0");
+    const m = String(startMin % 60).padStart(2, "0");
+    labels.push(`${h}:${m}`);
+
+    const curAvg = curCounts[b] > 0 ? +(curSums[b] / curCounts[b]).toFixed(3) : 0;
+    const compAvg = compCounts[b] > 0 ? +(compSums[b] / compCounts[b]).toFixed(3) : 0;
+
+    curProfile.push(curAvg);
+    compProfile.push(compAvg);
+  }
+
+  yoyDiurnalChartInst = new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `${curYear} Diurnal Average (MW)`,
+          data: curProfile,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.12)",
+          fill: true,
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.3
+        },
+        {
+          label: `${compYear} Diurnal Average (MW)`,
+          data: compProfile,
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          fill: true,
+          borderDash: [4, 4],
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 16,
+            font: { size: 10 }
+          },
+          grid: { display: false }
+        },
+        y: {
+          title: { display: true, text: "Average Power (MW)", font: { size: 10, weight: "bold" } },
+          suggestedMax: 11.5,
+          ticks: {
+            callback: v => `${v} MW`
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { boxWidth: 10, font: { size: 11, weight: "bold" } }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(3)} MW`
+          }
+        }
+      }
+    }
+  });
+}
+
+// Render Detailed Day-by-Day Table
+function renderYoyTable(curYear, compYear, totalDays, curMap, compMap, curWeatherMap, compWeatherMap, seasonInfo) {
+  const tbody = $("yoyTableRows");
+  const tfoot = $("yoyTableFoot");
+  if (!tbody || !tfoot) return;
+
+  if ($("yoyThCurDate")) $("yoyThCurDate").innerText = `${curYear} Date`;
+  if ($("yoyThCompDate")) $("yoyThCompDate").innerText = `${compYear} Date`;
+
+  const rows = [];
+  let totCurMwh = 0;
+  let totCompMwh = 0;
+  let totDiff = 0;
+
+  for (let d = 1; d <= totalDays; d++) {
+    const cur = curMap.get(d);
+    const comp = compMap.get(d);
+    const cw = curWeatherMap.get(d);
+    const pw = compWeatherMap.get(d);
+
+    const curMwh = cur ? cur.mwh : 0;
+    const compMwh = comp ? comp.mwh : 0;
+    const curPeak = cur ? cur.maxMw : 0;
+    const compPeak = comp ? comp.maxMw : 0;
+
+    totCurMwh += curMwh;
+    totCompMwh += compMwh;
+
+    const diff = curMwh - compMwh;
+    totDiff += diff;
+
+    const hasData = curMwh > 0 || compMwh > 0;
+    if (!hasData) continue;
+
+    const pct = compMwh > 0 ? ((diff / compMwh) * 100) : (curMwh > 0 ? 100 : 0);
+    const sign = diff >= 0 ? "+" : "";
+
+    // Seasonal variance diagnostic note
+    let note = "Normal operational parity";
+    if (cw && cw.precipMm >= 5.0) {
+      note = `Rain obscuration (${cw.precipMm} mm) suppressed generation`;
+    } else if (cw && cw.cloudCover >= 65) {
+      note = `Cloud attenuation (${cw.cloudCover}% cloud deck) caused solar drop`;
+    } else if (cw && cw.tempMax >= 42.0 && seasonInfo.month === 5) {
+      note = `Extreme heatwave (${cw.tempMax}°C) caused ~${((cw.tempMax - 25) * 0.38).toFixed(1)}% thermal voltage derating`;
+    } else if (diff > 5.0 && cw && cw.solarInsolationKwh >= 6.5) {
+      note = `Clear sky radiation surplus (+${(cw.solarInsolationKwh - (pw ? pw.solarInsolationKwh : 6.0)).toFixed(1)} kWh/m² GHI)`;
+    } else if (diff < -5.0 && (pw ? pw.solarInsolationKwh : 6.0) >= 6.5) {
+      note = `Prior year experienced higher clear sky window`;
+    } else if (Math.abs(pct) <= 4.0) {
+      note = `Seasonal parity (±${Math.abs(pct).toFixed(1)}% variance)`;
+    }
+
+    const curDateStr = cur ? cur.date : `${curYear}-${String(seasonInfo.month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const compDateStr = comp ? comp.date : `${compYear}-${String(seasonInfo.month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+    const ghiBadge = cw ? `
+      <span class="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-amber-700">
+        <i class="fa-solid ${cw.weatherIcon || 'fa-sun text-amber-500'}"></i> ${cw.solarInsolationKwh.toFixed(1)}
+      </span>
+    ` : `<span class="text-slate-400 font-mono">-</span>`;
+
+    const diffBadge = compMwh > 0 ? `
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${diff >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+        ${sign}${pct.toFixed(1)}%
+      </span>
+    ` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">New (${curYear})</span>`;
+
+    rows.push(`
+      <tr class="hover:bg-slate-50 transition yoy-data-row" data-day="${d}" data-note="${note.toLowerCase()}">
+        <td class="p-3 text-left font-bold text-slate-800">Day ${String(d).padStart(2, "0")}</td>
+        <td class="p-3 font-mono text-slate-600 text-xs">${curDateStr}</td>
+        <td class="p-3 font-extrabold text-blue-700">${curMwh > 0 ? curMwh.toFixed(2) : '-'}</td>
+        <td class="p-3 font-bold text-slate-700">${curPeak > 0 ? curPeak.toFixed(2) : '-'}</td>
+        <td class="p-3 font-mono text-slate-600 text-xs">${compDateStr}</td>
+        <td class="p-3 font-extrabold text-emerald-700">${compMwh > 0 ? compMwh.toFixed(2) : '-'}</td>
+        <td class="p-3 font-bold text-slate-700">${compPeak > 0 ? compPeak.toFixed(2) : '-'}</td>
+        <td class="p-3 font-mono font-black ${diff >= 0 ? 'text-emerald-700' : 'text-rose-700'}">${sign}${diff.toFixed(2)}</td>
+        <td class="p-3 text-center">${diffBadge}</td>
+        <td class="p-3 text-center">${ghiBadge}</td>
+        <td class="p-3 text-left text-slate-600 font-medium">${note}</td>
+      </tr>
+    `);
+  }
+
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="11" class="p-6 text-center text-slate-400">No trading records found for the selected month in either year.</td></tr>`;
+
+  const totalPct = totCompMwh > 0 ? ((totDiff / totCompMwh) * 100) : (totCurMwh > 0 ? 100 : 0);
+  const totalSign = totDiff >= 0 ? "+" : "";
+
+  tfoot.innerHTML = `
+    <tr>
+      <td class="p-3 text-left">Monthly Total</td>
+      <td class="p-3">-</td>
+      <td class="p-3 text-blue-700">${totCurMwh.toFixed(2)}</td>
+      <td class="p-3">-</td>
+      <td class="p-3">-</td>
+      <td class="p-3 text-emerald-700">${totCompMwh.toFixed(2)}</td>
+      <td class="p-3">-</td>
+      <td class="p-3 ${totDiff >= 0 ? 'text-emerald-800' : 'text-rose-800'}">${totalSign}${totDiff.toFixed(2)}</td>
+      <td class="p-3 text-center">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${totDiff >= 0 ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'}">
+          ${totalSign}${totalPct.toFixed(1)}%
+        </span>
+      </td>
+      <td class="p-3 text-center">-</td>
+      <td class="p-3 text-left font-bold text-slate-700">Net Monthly Variance Reconciliation</td>
+    </tr>
+  `;
+}
+
+function filterYoyTable(query) {
+  const q = (query || "").trim().toLowerCase();
+  const rows = document.querySelectorAll(".yoy-data-row");
+  rows.forEach(r => {
+    const text = r.innerText.toLowerCase();
+    const note = r.dataset.note || "";
+    if (!q || text.includes(q) || note.includes(q)) {
+      r.classList.remove("hidden");
+    } else {
+      r.classList.add("hidden");
+    }
+  });
+}
+window.filterYoyTable = filterYoyTable;
+
+// Generate & Load Realistic Historical Baseline Trades for Prior Year
+async function loadSamplePriorYearTrades() {
+  const mVal = parseInt($("yoyMonthSelect")?.value, 10) || 5;
+  const compYear = parseInt($("yoyCompYearSelect")?.value, 10) || 2023;
+  const season = getSolarSeasonInfo(mVal);
+
+  const daysInMonth = new Date(compYear, mVal, 0).getDate();
+  const generated = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dStr = `${compYear}-${String(mVal).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const seed = (d * 19 + mVal * 31 + (compYear % 10) * 17) % 100;
+
+    // Realistic seasonal weather simulation for prior year
+    const isRain = (mVal === 7 || mVal === 8) ? (seed % 4 === 0) : (mVal === 5 && d === 11);
+    const isCloudy = seed % 5 === 0;
+    const isHeatwave = mVal === 5 && (d >= 4 && d <= 7);
+
+    let peakMw = 10.4;
+    if (isRain) peakMw = 3.2;
+    else if (isCloudy) peakMw = 5.6;
+    else if (isHeatwave) peakMw = 9.1; // thermal derating
+    else peakMw = +(10.1 + (seed % 6) * 0.1).toFixed(2);
+
+    const baseMcp = 3800 + (seed % 12) * 50;
+
+    for (let b = 1; b <= 96; b++) {
+      let mw = 0;
+      if (b >= 25 && b <= 72) { // 06:00 to 18:00
+        const progress = (b - 25) / (72 - 25);
+        const bell = Math.sin(progress * Math.PI);
+        if (isRain && b >= 44 && b <= 60) {
+          mw = 0.5; // sudden afternoon monsoon shower
+        } else {
+          mw = bell * peakMw;
+        }
+        mw = +mw.toFixed(3);
+      }
+
+      generated.push({
+        date: dStr,
+        block: b,
+        qty: -mw, // standard sell convention
+        mcp: baseMcp + (b % 4) * 40,
+        seg: "G-DAM",
+        txn: "SELL"
+      });
+    }
+  }
+
+  pushUndoSnapshot(`Load Prior Year Baseline (${season.name} ${compYear})`);
+
+  // Merge into state.trades (replace any existing trades for that date range)
+  const existingOtherTrades = state.trades.filter(t => !t.date || !t.date.startsWith(`${compYear}-${String(mVal).padStart(2, "0")}`));
+  state.trades = [...existingOtherTrades, ...generated];
+
+  save();
+  await saveStateToIndexedDB();
+  updateUndoUI();
+
+  showUndoToast(`Loaded ${daysInMonth} Days of ${compYear} Historical Baseline Trades (${generated.length} blocks)`, true);
+  await renderYoyComparison();
+}
+window.loadSamplePriorYearTrades = loadSamplePriorYearTrades;
+
+// Export Comprehensive Multi-Tab YoY Excel Report
+function exportYoyReportExcel() {
+  if (!yoyCurrentComparisonData) {
+    alert("Please load or select a comparison period before exporting.");
+    return;
+  }
+
+  const d = yoyCurrentComparisonData;
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Executive KPI & Seasonal Variance Diagnostics
+  const summaryAoa = [
+    ["THDCIL 11 MW FLOATING SOLAR PV PLANT — KHURJA STPP"],
+    [`YEAR-OVER-YEAR SOLAR GENERATION & SEASONAL VARIANCE COMPARISON REPORT`],
+    [`Comparison: ${d.monthName} ${d.curYear} vs ${d.monthName} ${d.compYear} | Generated: ${new Date().toLocaleString('en-IN')}`],
+    [],
+    ["EXECUTIVE SEASONAL SYNTHESIS"],
+    ["Solar Climate Regime:", d.seasonInfo.seasonName],
+    ["Seasonal Characteristics:", d.seasonInfo.desc],
+    ["Thermal Derating Risk:", d.seasonInfo.deratingRisk],
+    [],
+    ["METRIC SUMMARY", `${d.curYear} (Current)`, `${d.compYear} (Prior Year)`, "Variance (Delta)", "YoY Variance (%)"],
+    ["Total Generation (MWh)", +d.curTotalMwh.toFixed(2), +d.compTotalMwh.toFixed(2), +(d.deltaMwh).toFixed(2), +d.pctMwh.toFixed(2)],
+    ["Total Energy (MU)", +(d.curTotalMwh / 1000).toFixed(4), +(d.compTotalMwh / 1000).toFixed(4), +(d.deltaMwh / 1000).toFixed(4), +d.pctMwh.toFixed(2)],
+    ["Capacity Utilization Factor (CUF %)", +d.curCuf.toFixed(2), +d.compCuf.toFixed(2), +d.deltaCuf.toFixed(2), "-"],
+    ["Daily Average Generation (MWh/day)", +d.curDailyAvg.toFixed(2), +d.compDailyAvg.toFixed(2), +(d.curDailyAvg - d.compDailyAvg).toFixed(2), +((d.curDailyAvg - d.compDailyAvg) / (d.compDailyAvg || 1) * 100).toFixed(2)],
+    ["Peak Scheduled Output (MW)", +d.curPeakMw.toFixed(2), +d.compPeakMw.toFixed(2), +(d.curPeakMw - d.compPeakMw).toFixed(2), "-"],
+    ["Mean Solar Insolation (GHI kWh/m²/day)", +d.curAvgGhi.toFixed(2), +d.compAvgGhi.toFixed(2), +d.deltaGhi.toFixed(2), +d.pctGhi.toFixed(2)],
+    ["Mean Cloud Cover (%)", +d.curAvgCloud, +d.compAvgCloud, +d.deltaCloud, "-"],
+    ["Rainy Days (>=1mm)", d.curRainDays, d.compRainDays, d.curRainDays - d.compRainDays, "-"],
+    ["Average Max Temperature (°C)", +d.curAvgTemp, +d.compAvgTemp, +d.deltaTemp, "-"],
+    ["Gross Traded Revenue (₹)", +d.curTotalRev.toFixed(2), +d.compTotalRev.toFixed(2), +d.deltaRev.toFixed(2), +((d.deltaRev / (d.compTotalRev || 1)) * 100).toFixed(2)],
+    ["Volume-Weighted MCP (₹/MWh)", +d.curMcpWeighted.toFixed(2), +d.compMcpWeighted.toFixed(2), +d.deltaMcp.toFixed(2), +((d.deltaMcp / (d.compMcpWeighted || 1)) * 100).toFixed(2)],
+    ["Active Delivery Days", d.curActiveDays, d.compActiveDays, d.curActiveDays - d.compActiveDays, "-"]
+  ];
+
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryAoa);
+  XLSX.utils.book_append_sheet(wb, wsSummary, "YoY_Executive_Summary");
+
+  // Sheet 2: Day-by-Day Reconciliation Breakdown
+  const tableAoa = [
+    ["Day", `${d.curYear} Date`, `${d.curYear} MWh`, `${d.curYear} Peak MW`, `${d.compYear} Date`, `${d.compYear} MWh`, `${d.compYear} Peak MW`, "Variance Delta (MWh)", "Variance %", "GHI (kWh/m²)", "Seasonal Note"]
+  ];
+
+  for (let day = 1; day <= d.totalDaysInMonth; day++) {
+    const cur = d.curDailyMap.get(day);
+    const comp = d.compDailyMap.get(day);
+    const cw = d.curWeatherMap.get(day);
+
+    const curMwh = cur ? +cur.mwh.toFixed(2) : 0;
+    const compMwh = comp ? +comp.mwh.toFixed(2) : 0;
+    const curPeak = cur ? +cur.maxMw.toFixed(2) : 0;
+    const compPeak = comp ? +comp.maxMw.toFixed(2) : 0;
+    const diff = +(curMwh - compMwh).toFixed(2);
+    const pct = compMwh > 0 ? +((diff / compMwh) * 100).toFixed(1) : 0;
+
+    tableAoa.push([
+      day,
+      cur ? cur.date : `${d.curYear}-${String(d.monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+      curMwh,
+      curPeak,
+      comp ? comp.date : `${d.compYear}-${String(d.monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+      compMwh,
+      compPeak,
+      diff,
+      pct,
+      cw ? +cw.solarInsolationKwh.toFixed(2) : "-",
+      cw && cw.precipMm >= 5 ? `Rainfall (${cw.precipMm} mm)` : (cw && cw.cloudCover >= 65 ? `Cloudy (${cw.cloudCover}%)` : "Clear sky window")
+    ]);
+  }
+
+  const wsTable = XLSX.utils.aoa_to_sheet(tableAoa);
+  XLSX.utils.book_append_sheet(wb, wsTable, "Day_by_Day_Reconciliation");
+
+  // Sheet 3: Diurnal 96-Block Average Profiles
+  const blockAoa = [
+    ["Block", "Time Period", `${d.curYear} Average Power (MW)`, `${d.compYear} Average Power (MW)`, "Diurnal Delta (MW)"]
+  ];
+
+  for (let b = 1; b <= 96; b++) {
+    const startMin = (b - 1) * 15;
+    const endMin = b * 15;
+    const period = `${String(Math.floor(startMin / 60)).padStart(2, "0")}:${String(startMin % 60).padStart(2, "0")} - ${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+
+    const curAvg = d.curBlockCounts[b] > 0 ? +(d.curBlockSums[b] / d.curBlockCounts[b]).toFixed(3) : 0;
+    const compAvg = d.compBlockCounts[b] > 0 ? +(d.compBlockSums[b] / d.compBlockCounts[b]).toFixed(3) : 0;
+    const delta = +(curAvg - compAvg).toFixed(3);
+
+    blockAoa.push([b, period, curAvg, compAvg, delta]);
+  }
+
+  const wsBlock = XLSX.utils.aoa_to_sheet(blockAoa);
+  XLSX.utils.book_append_sheet(wb, wsBlock, "Diurnal_96_Block_Curves");
+
+  const filename = `THDC_11MW_Solar_YoY_${d.monthName}_${d.curYear}_vs_${d.compYear}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+window.exportYoyReportExcel = exportYoyReportExcel;
 </script>
 </body>
 </html>

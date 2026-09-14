@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Trade Record Validation
+    function isValidTrade(data) {
+      return data.keys().hasAll(['date', 'block', 'qty', 'mcp', 'seg', 'txn', 'userId']) &&
+        data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        data.block is number && data.block >= 1 && data.block <= 96 &&
+        data.qty is number && data.qty >= -25 && data.qty <= 25 &&
+        data.mcp is number && data.mcp >= 0 && data.mcp <= 100000 &&
+        data.seg in ['G-DAM', 'DAM', 'TAM', 'RTM'] &&
+        data.txn in ['SELL', 'BUY'] &&
+        data.userId is string && data.userId == request.auth.uid;
+    }
+
+    // Monthly Settlement Validation
+    function isValidSettlement(data) {
+      return data.keys().hasAll(['monthKey', 'totalMwh', 'totalRevenue', 'netReceivable', 'status', 'userId']) &&
+        data.monthKey is string && data.monthKey.matches('^[0-9]{4}-[0-9]{2}$') &&
+        data.totalMwh is number && data.totalMwh >= 0 &&
+        data.totalRevenue is number &&
+        data.netReceivable is number &&
+        data.status in ['draft', 'reconciled', 'approved'] &&
+        data.userId is string && data.userId == request.auth.uid;
+    }
+
+    // Plant Config Validation
+    function isValidConfig(data) {
+      return data.keys().hasAll(['plantName', 'capacityMw', 'nvvnRate', 'nvvnGst', 'pxRate', 'pxGst', 'userId']) &&
+        data.plantName is string && data.plantName.size() <= 100 &&
+        data.capacityMw is number && data.capacityMw > 0 && data.capacityMw <= 100 &&
+        data.nvvnRate is number && data.nvvnRate >= 0 &&
+        data.nvvnGst is number && data.nvvnGst >= 0 && data.nvvnGst <= 100 &&
+        data.pxRate is number && data.pxRate >= 0 &&
+        data.pxGst is number && data.pxGst >= 0 && data.pxGst <= 100 &&
+        data.userId is string && data.userId == request.auth.uid;
+    }
+
+    // 1. Trade Records Collection
+    match /trades/{tradeId} {
+      allow get: if isSignedIn() && isOwner(existing().userId) && isValidId(tradeId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(tradeId) && isValidTrade(incoming());
+      allow update: if isSignedIn() && isValidId(tradeId) &&
+                    isOwner(existing().userId) &&
+                    incoming().userId == existing().userId &&
+                    isValidTrade(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['qty', 'mcp', 'seg', 'txn', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(tradeId) && isOwner(existing().userId);
+    }
+
+    // 2. Monthly Settlements Collection
+    match /settlements/{settlementId} {
+      allow get: if isSignedIn() && isOwner(existing().userId) && isValidId(settlementId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(settlementId) && isValidSettlement(incoming());
+      allow update: if isSignedIn() && isValidId(settlementId) &&
+                    isOwner(existing().userId) &&
+                    incoming().userId == existing().userId &&
+                    isValidSettlement(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['totalMwh', 'totalRevenue', 'netReceivable', 'cuf', 'status', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(settlementId) && isOwner(existing().userId);
+    }
+
+    // 3. Plant Configurations Collection
+    match /configs/{configId} {
+      allow get: if isSignedIn() && isOwner(existing().userId) && isValidId(configId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(configId) && isValidConfig(incoming());
+      allow update: if isSignedIn() && isValidId(configId) &&
+                    isOwner(existing().userId) &&
+                    incoming().userId == existing().userId &&
+                    isValidConfig(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['plantName', 'capacityMw', 'nvvnRate', 'nvvnGst', 'pxRate', 'pxGst', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(configId) && isOwner(existing().userId);
+    }
+  }
+}
