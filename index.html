@@ -18,12 +18,32 @@
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
+<script src="thdc_assets.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   body { font-family: 'Inter', sans-serif; }
   .table-container { max-height: calc(100vh - 280px); }
   @media (max-width: 768px) { .table-container { max-height: 480px; } }
+  
+  /* Refined subtle scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* Official Print CSS */
+  @media print {
+    body { background: white !important; color: #0f172a !important; font-size: 10pt !important; }
+    header, #periodUploadPanel, .no-print, nav, button, input, select, #kpis, #heatmap96 { display: none !important; }
+    .page-sec { display: none !important; }
+    #reports { display: block !important; margin: 0 !important; padding: 0 !important; }
+    .table-container { max-height: none !important; overflow: visible !important; }
+    table { width: 100% !important; border-collapse: collapse !important; }
+    th, td { border: 1px solid #cbd5e1 !important; padding: 5pt 6pt !important; }
+    th { background-color: #0f2b5c !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tfoot tr { background-color: #f1f5f9 !important; font-weight: bold !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 <style>
 #periodUploadPanel .date-upload-done{border-color:#86efac;background:#f0fdf4}
@@ -32,39 +52,69 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
 <!-- Top App Bar -->
-<header class="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white sticky top-0 z-30 shadow-md">
-  <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between flex-wrap gap-3">
-    <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center text-amber-300 text-xl font-bold">
-        <i class="fa-solid fa-solar-panel"></i>
+<header class="bg-gradient-to-r from-[#07172e] via-[#0f2b5c] to-[#1e3a8a] text-white sticky top-0 z-30 shadow-lg border-b border-blue-900/60 no-print">
+  <div class="max-w-7xl mx-auto px-4 py-2.5 sm:px-6 flex items-center justify-between flex-wrap gap-3">
+    <!-- Brand Logo and Name (Clickable to return directly to Front Page) -->
+    <div onclick="goToHomePage()" class="flex items-center space-x-3.5 cursor-pointer select-none group" title="Return to Front Page / Dashboard">
+      <div class="w-12 h-12 rounded-xl bg-white p-1 shadow-md flex items-center justify-center border border-white/80 shrink-0 group-hover:ring-2 group-hover:ring-amber-400 transition transform group-hover:scale-105">
+        <img src="thdc_emblem.png" onerror="this.src='thdcil_emblem.svg'" alt="THDCIL Official Emblem" class="w-full h-full object-contain" referrerPolicy="no-referrer">
       </div>
       <div>
-        <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">THDCIL 11 MW Solar</h1>
-        <p class="text-xs text-blue-200">Portfolio: N2UP0NVN0289 • Exact Precision Engine</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight flex items-center gap-2 group-hover:text-blue-100 transition">
+            <span>टीएचडीसी इंडिया लिमिटेड</span>
+            <span class="opacity-40 font-normal">|</span>
+            <span>THDC INDIA LIMITED</span>
+          </h1>
+          <span class="hidden md:inline-flex items-center text-[9px] uppercase font-bold tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
+            Schedule 'A' Mini Ratna CPSU
+          </span>
+        </div>
+        <p class="text-xs text-blue-200 font-medium">
+          11 MW Solar PV Plant • Commercial Settlement & Power Trading Portal
+          <span class="text-blue-300 font-semibold">• Portfolio: N2UP0NVN0289</span>
+        </p>
       </div>
     </div>
     <div class="flex items-center gap-2">
+      <!-- Direct Home Button in Header -->
+      <button onclick="goToHomePage()" title="Go directly to Front Page / Dashboard" class="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition flex items-center gap-1.5 border border-white/20 shadow-xs hover:border-amber-300/60">
+        <i class="fa-solid fa-house text-amber-300"></i> <span class="hidden sm:inline">Home</span>
+      </button>
+
       <!-- DATE-SPECIFIC CLEAR DATA -->
-      <div class="flex items-center bg-rose-900/40 border border-rose-500/50 rounded-lg overflow-hidden shadow-sm">
-        <input type="date" id="clearDateInput" class="bg-transparent px-2 py-1.5 text-xs text-rose-100 font-semibold outline-none border-r border-rose-500/50 [color-scheme:dark]" title="Select date to clear">
+      <div class="flex items-center bg-rose-950/50 border border-rose-500/40 rounded-xl overflow-hidden shadow-sm">
+        <input type="date" id="clearDateInput" class="bg-transparent px-2.5 py-1.5 text-xs text-rose-100 font-semibold outline-none border-r border-rose-500/40 [color-scheme:dark]" title="Select date to clear">
         <button onclick="clearDateData()" title="Clear Data for Selected Date" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-500 text-white font-bold transition flex items-center gap-1.5">
           <i class="fa-solid fa-trash-can"></i> <span class="hidden sm:inline">Clear Day</span>
         </button>
       </div>
-      <button onclick="clearAllData()" title="Wipe All Data" class="px-2.5 py-1.5 text-xs bg-rose-800 hover:bg-rose-700 text-white rounded-lg font-medium transition flex items-center gap-1 ml-1">
+      <button onclick="clearAllData()" title="Wipe All Data" class="px-3 py-1.5 text-xs bg-rose-800/80 hover:bg-rose-700 text-white rounded-xl font-medium transition flex items-center gap-1 border border-rose-700">
         <i class="fa-solid fa-burst"></i> Wipe
       </button>
     </div>
   </div>
   
   <!-- Navigation Bar -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-2 overflow-x-auto scrollbar-none py-1.5 text-xs sm:text-sm font-semibold border-t border-white/10">
-    <button class="nav-btn active px-3.5 py-1.5 rounded-lg bg-white text-blue-900 shadow-sm whitespace-nowrap transition" data-target="dashboard"><i class="fa-solid fa-chart-line mr-1.5"></i>Dashboard</button>
-    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="entry"><i class="fa-solid fa-file-arrow-up mr-1.5"></i>Data Upload</button>
-    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="trades"><i class="fa-solid fa-list-check mr-1.5"></i>Blockwise</button>
-    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="billing"><i class="fa-solid fa-receipt mr-1.5"></i>Billing & Margins</button>
-    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="reports"><i class="fa-solid fa-file-invoice mr-1.5"></i>Export Reports</button>
-    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition" data-target="obligations"><i class="fa-solid fa-scale-balanced mr-1.5"></i>Obligations</button>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-1.5 overflow-x-auto scrollbar-none py-1.5 text-xs sm:text-sm font-semibold border-t border-white/10">
+    <button id="navHomeBtn" class="nav-btn active px-3.5 py-1.5 rounded-lg bg-white text-blue-900 shadow-sm whitespace-nowrap transition flex items-center gap-1.5 font-bold" data-target="dashboard" title="Return to Front Page">
+      <i class="fa-solid fa-house text-blue-700"></i><span>Home</span>
+    </button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="entry">
+      <i class="fa-solid fa-file-arrow-up"></i><span>Data Upload</span>
+    </button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="trades">
+      <i class="fa-solid fa-list-check"></i><span>Blockwise Trades</span>
+    </button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="billing">
+      <i class="fa-solid fa-receipt"></i><span>Billing & Margins</span>
+    </button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="reports">
+      <i class="fa-solid fa-file-invoice-dollar text-amber-300"></i><span>Export Reports</span>
+    </button>
+    <button class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5" data-target="obligations">
+      <i class="fa-solid fa-scale-balanced"></i><span>Obligations</span>
+    </button>
   </div>
 </header>
 
@@ -72,6 +122,32 @@
 
   <!-- DASHBOARD -->
   <section id="dashboard" class="page-sec space-y-6">
+    <!-- Market Segment & Transaction Type Quick Filter -->
+    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-blue-700"></i> Market Segment:
+        </span>
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold" id="dashSegPills">
+          <button type="button" class="dash-seg-btn active px-3 py-1 rounded-lg bg-white text-blue-900 shadow-sm transition" onclick="setDashboardSeg('ALL')">All</button>
+          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('G-DAM')">G-DAM</button>
+          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('DAM')">DAM</button>
+          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('TAM')">TAM</button>
+          <button type="button" class="dash-seg-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardSeg('RTM')">RTM</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-right-arrow-left text-emerald-600"></i> Transaction Type:
+        </span>
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold" id="dashTxnPills">
+          <button type="button" class="dash-txn-btn active px-3 py-1 rounded-lg bg-white text-emerald-800 shadow-sm transition" onclick="setDashboardTxn('ALL')">All</button>
+          <button type="button" class="dash-txn-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardTxn('SELL')">SELL</button>
+          <button type="button" class="dash-txn-btn px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition" onclick="setDashboardTxn('BUY')">BUY</button>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="kpis"></div>
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div class="lg:col-span-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
@@ -85,17 +161,87 @@
         <div class="overflow-y-auto flex-1 max-h-[300px]">
           <table class="w-full text-xs text-right">
             <thead class="text-slate-500 bg-slate-50 sticky top-0 font-semibold border-b border-slate-200">
-              <tr><th class="p-2 text-left">Month</th><th class="p-2">MU</th><th class="p-2">₹ Lakh</th><th class="p-2">Avg MCP</th></tr>
+              <tr><th class="p-2 text-left">Month</th><th class="p-2">Energy (MU)</th><th class="p-2">Revenue (₹)</th><th class="p-2">Avg MCP (₹)</th></tr>
             </thead>
             <tbody id="monthRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
           </table>
         </div>
       </div>
     </div>
+
+    <!-- 96-BLOCK HEATMAP SECTION -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+            <i class="fa-solid fa-solar-panel text-amber-500"></i> 96-Block Daily Solar Generation Heatmap
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5" id="heatmapStatus">
+            Visualizing 15-minute time block energy output (MW & MWh) with color intensity scale
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="heatmapDate" class="text-xs font-bold text-slate-600">Selected Date:</label>
+          <input type="date" id="heatmapDate" onchange="render96BlockStudy(this.value)"
+            class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-semibold outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 hover:bg-white transition">
+        </div>
+      </div>
+
+      <!-- Color scale legend & hover status -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 text-xs">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-[11px] font-bold text-slate-500 mr-1 uppercase">Output Scale:</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 inline-block"></span> 0 MW</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-amber-100 border border-amber-200 inline-block"></span> 0.1–2 MW</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-amber-200 border border-amber-300 inline-block"></span> 2–5 MW</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-amber-300 border border-amber-400 inline-block"></span> 5–7.5 MW</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-amber-400 border border-amber-500 inline-block"></span> 7.5–9.5 MW</span>
+          <span class="flex items-center gap-1 text-[11px] text-slate-600"><span class="w-3.5 h-3.5 rounded bg-amber-500 border border-amber-600 inline-block"></span> 9.5–11 MW</span>
+        </div>
+        <div id="heatmapSelectedBlockInfo" class="text-[11px] font-medium text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+          Hover or click any block to inspect details
+        </div>
+      </div>
+
+      <div id='heatmap96' class='grid grid-cols-12 gap-0.5 mt-4 p-4 bg-white rounded-2xl'></div>
+
+      <details class="mt-4 text-xs group">
+        <summary class="cursor-pointer font-bold text-slate-600 hover:text-blue-700 select-none flex items-center gap-2 py-2">
+          <i class="fa-solid fa-chevron-right text-[10px] transition-transform group-open:rotate-90 text-slate-400"></i>
+          <span>View 96-Block Tabular Breakdown</span>
+        </summary>
+        <div class="mt-2 overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-right text-xs divide-y divide-slate-200">
+            <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold uppercase text-[10px]">
+              <tr>
+                <th class="p-2 text-left">Block</th>
+                <th class="p-2">Time Period</th>
+                <th class="p-2">Scheduled (MW)</th>
+                <th class="p-2">Energy (MWh)</th>
+                <th class="p-2">MCP (₹/MWh)</th>
+                <th class="p-2">Traded Value (₹)</th>
+                <th class="p-2 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="blockStudyRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
   </section>
 
   <!-- IEX EXCEL, TEMPLATE & PDF UPLOAD -->
-  <section id="entry" class="page-sec hidden space-y-6">
+  <section id="entry" class="page-sec hidden space-y-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-3 mb-1">
+      <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <button onclick="goToHomePage()" class="hover:text-blue-700 font-bold flex items-center gap-1 text-slate-600 transition"><i class="fa-solid fa-house text-blue-700"></i> Home</button>
+        <span>/</span>
+        <span class="text-slate-800 font-bold">Data Upload</span>
+      </div>
+      <button onclick="goToHomePage()" class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl transition shadow-xs">
+        <i class="fa-solid fa-house"></i> <span>Back to Home</span>
+      </button>
+    </div>
     <div class="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200/80">
       <div class="flex items-center gap-4 mb-4">
         <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl">
@@ -139,6 +285,45 @@
         <div id="dateWiseUploadSlots" class="hidden mt-4 border-t border-blue-100 pt-4"></div>
       </div>
 
+      <!-- Market Segment & Transaction Type Configuration -->
+      <div class="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-indigo-700 text-sm"></i>
+            <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Market Segment & Transaction Type</span>
+          </div>
+          <span class="text-[10px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200">
+            Default tagging for uploads & settlement
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Market Segment</label>
+            <select id="uploadMarketSeg" class="w-full border border-indigo-300 bg-white rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="G-DAM" selected>G-DAM (Green Day Ahead Market)</option>
+              <option value="DAM">DAM (Day Ahead Market)</option>
+              <option value="TAM">TAM (Term Ahead Market)</option>
+              <option value="RTM">RTM (Real Time Market)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Transaction Type</label>
+            <select id="uploadTxnType" class="w-full border border-indigo-300 bg-white rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="SELL" selected>SELL (Power Generation Sale)</option>
+              <option value="BUY">BUY (Power Purchase / Auxiliary)</option>
+            </select>
+          </div>
+          <div>
+            <button type="button" onclick="applyMarketConfigToTrades()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate"></i> Apply to All Loaded Data
+            </button>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2">
+          Tag incoming files with selected Segment & Type. Click "Apply to All Loaded Data" to retroactively update already loaded trades.
+        </p>
+      </div>
+
       <div class="border-2 border-dashed border-emerald-200 bg-emerald-50/50 rounded-2xl p-10 text-center mt-6">
         <div class="flex justify-center gap-4 mb-4 text-emerald-400 text-5xl">
           <i class="fa-solid fa-file-excel"></i>
@@ -176,17 +361,48 @@
   <section id="trades" class="page-sec hidden space-y-4">
     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-end justify-between gap-3">
       <div class="flex flex-wrap items-center gap-3">
-        <div><label class="block text-xs font-semibold text-slate-500 mb-1">From Date</label><input id="tFrom" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none"></div>
-        <div><label class="block text-xs font-semibold text-slate-500 mb-1">To Date</label><input id="tTo" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">From Date</label><input id="tFrom" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none" onchange="renderTrades()"></div>
+        <div><label class="block text-xs font-semibold text-slate-500 mb-1">To Date</label><input id="tTo" type="date" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 outline-none" onchange="renderTrades()"></div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Market Segment</label>
+          <select id="tSeg" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold outline-none bg-white" onchange="renderTrades()">
+            <option value="ALL">All Segments</option>
+            <option value="G-DAM">G-DAM</option>
+            <option value="DAM">DAM</option>
+            <option value="TAM">TAM</option>
+            <option value="RTM">RTM</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Txn Type</label>
+          <select id="tTxn" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold outline-none bg-white" onchange="renderTrades()">
+            <option value="ALL">All Types</option>
+            <option value="SELL">SELL</option>
+            <option value="BUY">BUY</option>
+          </select>
+        </div>
         <button onclick="renderTrades()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition self-end">Filter</button>
       </div>
-      <button onclick="exportTrades()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Export CSV</button>
+      <div class="flex items-center gap-2">
+        <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow-xs"><i class="fa-solid fa-house"></i> Home</button>
+        <button onclick="exportTrades()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Export Excel</button>
+      </div>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
       <div class="table-container overflow-y-auto">
         <table class="w-full text-xs text-right divide-y divide-slate-200">
           <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold tracking-wider uppercase text-[11px]">
-            <tr><th class="p-3 text-left">Date</th><th class="p-3">Block</th><th class="p-3">Time Period</th><th class="p-3">Qty (MW)</th><th class="p-3">Qty (MWh)</th><th class="p-3">MCP (₹/MWh)</th><th class="p-3">Traded Value (₹)</th></tr>
+            <tr>
+              <th class="p-3 text-left">Date</th>
+              <th class="p-3">Block</th>
+              <th class="p-3">Time Period</th>
+              <th class="p-3 text-center">Segment</th>
+              <th class="p-3 text-center">Txn Type</th>
+              <th class="p-3">Qty (MW)</th>
+              <th class="p-3">Qty (MWh)</th>
+              <th class="p-3">MCP (₹/MWh)</th>
+              <th class="p-3">Traded Value (₹)</th>
+            </tr>
           </thead>
           <tbody id="tradeRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
         </table>
@@ -206,15 +422,38 @@
           <p class="text-xs text-slate-500 mt-1">Page 4–5 style billing: Delivery Date, SELL/RTM, Traded Quantum, Trade Value, Corridor Charges, PX Fees, GST, Power Exchange Net, NVVN Margin, GST and final NVVN Net.</p>
         </div>
         <div class="flex gap-2">
+          <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1.5 transition shadow-xs"><i class="fa-solid fa-house"></i> Home</button>
           <button onclick="exportBillingExcel()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-3 py-2 rounded-lg text-xs"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
           <button onclick="exportBillingPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold px-3 py-2 rounded-lg text-xs"><i class="fa-solid fa-file-pdf mr-1"></i> PDF</button>
         </div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><div class="text-[10px] uppercase font-bold text-blue-600">Portfolio</div><div class="font-extrabold text-sm">N2UP0NVN0289</div></div>
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200"><div class="text-[10px] uppercase font-bold text-slate-500">Txn Type</div><div class="font-extrabold text-sm">SELL</div></div>
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200"><div class="text-[10px] uppercase font-bold text-slate-500">Market Segment</div><div class="font-extrabold text-sm">RTM</div></div>
-        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100"><div class="text-[10px] uppercase font-bold text-emerald-600">Billing Basis</div><div class="font-extrabold text-sm">Sheet1 / 96 Blocks</div></div>
+        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+          <div class="text-[10px] uppercase font-bold text-blue-600">Portfolio</div>
+          <div class="font-extrabold text-sm">N2UP0NVN0289</div>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label for="billingTxnFilter" class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Txn Type Filter</label>
+          <select id="billingTxnFilter" onchange="renderBilling()" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="ALL">All (SELL & BUY)</option>
+            <option value="SELL" selected>SELL</option>
+            <option value="BUY">BUY</option>
+          </select>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label for="billingSegFilter" class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Market Segment Filter</label>
+          <select id="billingSegFilter" onchange="renderBilling()" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="ALL">All Segments</option>
+            <option value="G-DAM" selected>G-DAM</option>
+            <option value="DAM">DAM</option>
+            <option value="TAM">TAM</option>
+            <option value="RTM">RTM</option>
+          </select>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+          <div class="text-[10px] uppercase font-bold text-emerald-600">Billing Basis</div>
+          <div class="font-extrabold text-sm">Sheet1 / 96 Blocks</div>
+        </div>
       </div>
     </div>
 
@@ -231,20 +470,75 @@
       </div>
     </div>
 
+    <!-- BILLING SUMMARY TABLE: Monthly Comparison & Seasonal Performance Variations -->
+    <div id="billingSummarySection" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-4 bg-gradient-to-r from-slate-50 to-blue-50/40 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-blue-700"></i>
+              Billing Summary — Monthly Net Realized Revenue & Seasonal Performance
+            </h3>
+            <span class="text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">MoM Comparison</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Compares current active month's Net Realized Revenue against preceding operational months to evaluate solar insolation variations, seasonal generation trends, and effective realized tariffs.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportBillingSummaryExcel()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold px-3 py-1.5 rounded-lg text-xs shadow-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i> Export Summary (Excel)
+          </button>
+          <button onclick="exportBillingSummaryPDF()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold px-3 py-1.5 rounded-lg text-xs shadow-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-file-pdf text-rose-600"></i> Export Summary (PDF)
+          </button>
+        </div>
+      </div>
+
+      <!-- Executive Seasonal MoM Comparison Banner -->
+      <div id="billingSeasonalBanner" class="p-4 border-b border-slate-200 bg-slate-50/60"></div>
+
+      <!-- Billing Summary Table -->
+      <div class="overflow-auto">
+        <table id="billingSummaryTable" class="w-full text-right divide-y divide-slate-200" style="font-size:11px; min-width:1300px;">
+          <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase">
+            <tr>
+              <th class="p-2.5 border text-left">Operational Month</th>
+              <th class="p-2.5 border text-center">Timeline Role</th>
+              <th class="p-2.5 border text-center">Seasonal Phase</th>
+              <th class="p-2.5 border text-center">Active Days</th>
+              <th class="p-2.5 border">Energy Quantum</th>
+              <th class="p-2.5 border">Gross Trade Value (₹)</th>
+              <th class="p-2.5 border">Deductions (₹)</th>
+              <th class="p-2.5 border bg-emerald-50 text-emerald-950 font-black">Net Realized Revenue (₹)</th>
+              <th class="p-2.5 border">Effective Tariff (₹/kWh)</th>
+              <th class="p-2.5 border">Avg Daily Net (₹/day)</th>
+              <th class="p-2.5 border text-center">MoM Variance (vs Prev Month)</th>
+              <th class="p-2.5 border text-center">Seasonal Index (vs Avg)</th>
+              <th class="p-2.5 border text-center">Detailed Annexure</th>
+            </tr>
+          </thead>
+          <tbody id="billingSummaryRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          <tfoot id="billingSummaryFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Daily Billing KPIs and Range Selector for Annexure 1 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="billKpis"></div>
-<div class="mt-4 p-3 rounded-xl border border-blue-200 bg-blue-50/60">
-  <div class="flex flex-wrap items-end gap-3">
-    <label class="text-[10px] font-bold text-slate-600">Billing Start Date
-      <input id="billingStartDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
-    </label>
-    <label class="text-[10px] font-bold text-slate-600">Billing End Date
-      <input id="billingEndDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
-    </label>
-    <button onclick="applyBillingPeriod()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs">Apply Billing Period</button>
-    <button onclick="resetBillingPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs">Reset</button>
-    <span id="billingRangeMsg" class="text-[10px] font-bold text-blue-700 ml-auto"></span>
-  </div>
-</div>
+    <div class="p-3 rounded-xl border border-blue-200 bg-blue-50/60">
+      <div class="flex flex-wrap items-end gap-3">
+        <label class="text-[10px] font-bold text-slate-600">Annexure Start Date
+          <input id="billingStartDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+        </label>
+        <label class="text-[10px] font-bold text-slate-600">Annexure End Date
+          <input id="billingEndDate" type="date" class="block mt-1 border border-blue-300 rounded-lg px-3 py-2 text-xs bg-white">
+        </label>
+        <button onclick="applyBillingPeriod()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg text-xs">Apply Annexure Period</button>
+        <button onclick="resetBillingPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs">Reset to All Dates</button>
+        <span id="billingRangeMsg" class="text-[10px] font-bold text-blue-700 ml-auto"></span>
+      </div>
+    </div>
 
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
@@ -278,66 +572,192 @@
     </div>
   </section>
 
-  <!-- ADVANCED REPORTS (FIXED ALIGNMENT) -->
-  <section id="reports" class="page-sec hidden space-y-4">
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex flex-wrap items-end gap-3 w-full">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Report Start Date</label>
-          <input id="reportStartDate" type="date" onchange="renderReports()"
-                 class="border border-blue-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700">
+  <!-- ADVANCED REPORTS (EXECUTIVE COMMERCIAL & BILLING SETTLEMENT) -->
+  <section id="reports" class="page-sec hidden space-y-6">
+    <!-- Official Letterhead Card (Visible on screen and print) -->
+    <div class="bg-gradient-to-r from-[#07172e] via-[#0f2b5c] to-[#1e3a8a] text-white p-5 sm:p-6 rounded-2xl shadow-sm border border-blue-900/50 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="h-16 px-3 py-1.5 rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-white/90">
+          <img src="thdc_logo.png" onerror="this.src='thdcil_logo.svg'" alt="THDC India Limited Official Logo" class="h-12 w-auto max-w-[220px] object-contain" referrerPolicy="no-referrer">
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Report End Date</label>
-          <input id="reportEndDate" type="date" onchange="renderReports()"
-                 class="border border-blue-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-base sm:text-xl font-extrabold tracking-tight">टीएचडीसी इंडिया लिमिटेड • THDC INDIA LIMITED</h2>
+            <span class="text-[9px] uppercase font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+              A Schedule 'A' Mini Ratna CPSU
+            </span>
+          </div>
+          <p class="text-xs text-blue-200 mt-1 font-medium">11 MW Solar PV Power Plant • Commercial Settlement & Energy Trading Reconciliations</p>
+          <div class="flex items-center gap-3 text-[11px] text-blue-300 mt-1.5 flex-wrap">
+            <span><strong>Portfolio ID:</strong> N2UP0NVN0289</span>
+            <span>•</span>
+            <span><strong>Exchange Segments:</strong> RTM / GDAM / DAM (IEX)</span>
+            <span>•</span>
+            <span><strong>Trader / Facilitator:</strong> NVVN Limited</span>
+          </div>
         </div>
-        <button onclick="setReportPeriodFromData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs">
-          <i class="fa-solid fa-calendar-range mr-1"></i> Apply Period
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <button onclick="goToHomePage()" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs backdrop-blur-sm transition border border-white/20 flex items-center gap-1.5 shadow-xs">
+          <i class="fa-solid fa-house text-amber-300"></i> <span>Home</span>
         </button>
-        <button onclick="clearReportPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs">
-          Clear
+        <button onclick="window.print()" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs backdrop-blur-sm transition border border-white/20 flex items-center gap-1.5 shadow-xs">
+          <i class="fa-solid fa-print"></i> <span>Print Official Memo</span>
         </button>
       </div>
-
-      <div class="flex items-center gap-3">
-        <label class="text-sm font-bold text-slate-700">Grouping View:</label>
-        <select id="reportGroup" onchange="renderReports()" class="border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
-          <option value="day">Day-wise Snapshot</option>
-          <option value="month">Month-wise Summary</option>
-          <option value="quarter">Quarter-wise Summary</option>
-          <option value="fy">Financial Year (FY) Summary</option>
-        </select>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="exportReportExcel()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-          <i class="fa-solid fa-file-excel"></i> Excel
-        </button>
-        <button onclick="exportReportPDF()" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-          <i class="fa-solid fa-file-pdf"></i> PDF
-        </button>
-      </div>
-      <div id="reportPeriodNote" class="w-full text-[10px] text-slate-500 mt-2">Report Period: All</div>
     </div>
 
+    <!-- Filter and Export Controls Card -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 no-print">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Quick Period:</span>
+          <button onclick="setReportPreset('all')" class="report-preset-btn active px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition">All Data</button>
+          <button onclick="setReportPreset('month')" class="report-preset-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">This Month</button>
+          <button onclick="setReportPreset('30d')" class="report-preset-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Last 30 Days</button>
+          <button onclick="setReportPreset('quarter')" class="report-preset-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Current Qtr</button>
+          <button onclick="setReportPreset('fy')" class="report-preset-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Financial Year</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="exportReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-file-excel"></i> <span>Export Excel</span>
+          </button>
+          <button onclick="exportReportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-file-pdf"></i> <span>Export Official PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-wrap items-end gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">From Date</label>
+            <input id="reportStartDate" type="date" onchange="renderReports()"
+                   class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">To Date</label>
+            <input id="reportEndDate" type="date" onchange="renderReports()"
+                   class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <button onclick="renderReports()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm">
+            Apply
+          </button>
+          <button onclick="clearReportPeriod()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+            Reset
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Market Segment</label>
+            <select id="reportSeg" onchange="renderReports()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+              <option value="ALL">All Segments (DAM, G-DAM, TAM, RTM)</option>
+              <option value="G-DAM">G-DAM</option>
+              <option value="DAM">DAM</option>
+              <option value="TAM">TAM</option>
+              <option value="RTM">RTM</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Txn Type</label>
+            <select id="reportTxn" onchange="renderReports()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+              <option value="ALL">All Types (SELL & BUY)</option>
+              <option value="SELL" selected>SELL</option>
+              <option value="BUY">BUY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Aggregation View</label>
+            <select id="reportGroup" onchange="renderReports()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+              <option value="day">Day-wise Detailed Reconciliation</option>
+              <option value="month">Month-wise Summary</option>
+              <option value="quarter">Quarter-wise Summary</option>
+              <option value="fy">Financial Year (FY) Summary</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="reportPeriodNote" class="text-xs text-slate-500 font-medium pt-1">
+        Report Scope: Loading...
+      </div>
+    </div>
+
+    <!-- Executive KPI Summary Cards Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="reportSummaryCards"></div>
+
+    <!-- Reports Table Card -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-4 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-blue-700"></i>
+            Commercial Energy & Financial Settlement Statement
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Physical Generation, Gross Traded Value, Statutory Deductions, and Net Amount Receivable</p>
+        </div>
+        <div class="text-[11px] font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+          All amounts in Indian Rupees (₹) • Strict Block-level Arithmetic
+        </div>
+      </div>
+
       <div class="table-container overflow-y-auto">
         <table id="reportsTable" class="w-full text-xs text-right divide-y divide-slate-200">
-          <thead class="bg-slate-50 text-slate-600 sticky top-0 font-bold uppercase text-[10px] sm:text-[11px]">
+          <thead class="bg-slate-100 text-slate-700 sticky top-0 font-extrabold uppercase text-[10px] sm:text-[11px] tracking-tight">
             <tr>
-              <th class="p-3 text-left">Period</th>
+              <th class="p-3 text-left">Period / Date</th>
+              <th class="p-3 text-center">Segment</th>
+              <th class="p-3 text-center">Type</th>
               <th class="p-3">Qty (MWh)</th>
-              <th class="p-3">Avg MCP (₹)</th>
-              <th class="p-3">Gross Value (₹)</th>
-              <th class="p-3 text-rose-600">Grid Chg (₹)</th>
-              <th class="p-3 text-amber-600">PX (Fee+GST) (₹)</th>
-              <th class="p-3 text-blue-600">NVVN (Mar+GST) (₹)</th>
+              <th class="p-3">Avg MCP (₹/MWh)</th>
+              <th class="p-3 text-slate-900">Gross Value (₹)</th>
+              <th class="p-3 text-rose-600">Grid Charges (₹)</th>
+              <th class="p-3 text-amber-700">PX (Fee+GST) (₹)</th>
+              <th class="p-3 text-blue-700">NVVN (Mar+GST) (₹)</th>
               <th class="p-3 text-rose-700 font-bold">Total Ded. (₹)</th>
-              <th class="p-3 text-emerald-700 font-black">Net Recv. (₹)</th>
+              <th class="p-3 text-emerald-800 font-extrabold">Net Recv. (₹)</th>
+              <th class="p-3 text-indigo-700 font-bold">Net Tariff (₹/u)</th>
             </tr>
           </thead>
           <tbody id="reportRows" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          <tfoot id="reportFoot" class="bg-slate-50 font-extrabold text-slate-900 sticky bottom-0 border-t-2 border-slate-300"></tfoot>
         </table>
+      </div>
+    </div>
+
+    <!-- Official Corporate Sign-off & Audit Block -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-stamp text-blue-700"></i> Corporate Settlement & Verification Sign-off
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+        <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50/50 flex flex-col justify-between h-28">
+          <span class="text-[10px] font-bold uppercase text-slate-400">Prepared By</span>
+          <div>
+            <p class="text-xs font-bold text-slate-800">Executive (Commercial Settlement)</p>
+            <p class="text-[10px] text-slate-500">THDC India Limited • Khurja Solar</p>
+          </div>
+        </div>
+        <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50/50 flex flex-col justify-between h-28">
+          <span class="text-[10px] font-bold uppercase text-slate-400">Reconciled & Checked By</span>
+          <div>
+            <p class="text-xs font-bold text-slate-800">Sr. Manager (Energy Trading & Billing)</p>
+            <p class="text-[10px] text-slate-500">Commercial Directorate, THDCIL</p>
+          </div>
+        </div>
+        <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50/50 flex flex-col justify-between h-28">
+          <span class="text-[10px] font-bold uppercase text-slate-400">Approved By</span>
+          <div>
+            <p class="text-xs font-bold text-slate-800">Addl. General Manager / Project Head</p>
+            <p class="text-[10px] text-slate-500">11 MW Solar Power Project, THDCIL</p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400">
+        <span>Certified True Extract of IEX Daily Obligation Records & Billing Statements</span>
+        <span>Generated via THDCIL Commercial Analytics Suite</span>
       </div>
     </div>
   </section>
@@ -361,7 +781,10 @@
           <span id="manualPeriodStatus" class="text-[10px] text-slate-500 pb-2">Select period to view manual overrides.</span>
         </div>
 <label class="text-xs font-bold text-slate-600">Date:</label><input id="oDate" type="date" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-semibold outline-none" onchange="loadObligation()"></div>
-        <button onclick="saveObligation()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm">Save Manual Override</button>
+        <div class="flex items-center gap-2">
+          <button onclick="goToHomePage()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-xs flex items-center gap-1.5"><i class="fa-solid fa-house"></i> Home</button>
+          <button onclick="saveObligation()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition shadow-sm">Save Manual Override</button>
+        </div>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
         <div><label class="block text-[10px] font-bold text-slate-500 mb-1">NLDC App (₹)</label><input id="o_nldcApp" type="number" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 text-xs"></div>
@@ -432,7 +855,9 @@ function compactState(s){
     trades:(Array.isArray(s?.trades)?s.trades:[]).map(t=>({
       date:t.date, block:Number(t.block)||0, period:t.period||"",
       qty:Number(t.qty)||0, mcp:Number(t.mcp)||0,
-      amount:Number.isFinite(Number(t.amount))?Number(t.amount):undefined
+      amount:Number.isFinite(Number(t.amount))?Number(t.amount):undefined,
+      seg:t.seg||"G-DAM",
+      txn:t.txn||"SELL"
     })),
     obligations:(Array.isArray(s?.obligations)?s.obligations:[]).map(o=>({
       date:o.date,
@@ -545,7 +970,7 @@ function save() {
     }
   }
 }
-function money(n) { return "₹" + (n||0).toLocaleString("en-IN", { maximumFractionDigits: 2 }); }
+function money(n) { return "₹" + Number(n||0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function qtyMwh(t) { return Math.abs(t.qty) * 0.25; }
 
 // CRITICAL FIX: Strict Block-level rounding matching Excel perfectly
@@ -557,7 +982,32 @@ function amount(t) {
 
 function period(b) { let s=(b-1)*15,e=b*15; const f=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0"); return f(s)+"-"+(b===96?"24:00":f(e)); }
 function monthKey(d) { return months[(+d.slice(5,7)-4+12)%12]; }
-function sortedTrades() { return [...state.trades].sort((a,b) => a.date.localeCompare(b.date) || a.block - b.block); }
+function sortedTrades() {
+  return [...state.trades].map(t => ({
+    ...t,
+    seg: t.seg || "G-DAM",
+    txn: t.txn || "SELL"
+  })).sort((a,b) => a.date.localeCompare(b.date) || a.block - b.block);
+}
+
+function applyMarketConfigToTrades() {
+  const seg = $("uploadMarketSeg")?.value || "G-DAM";
+  const txn = $("uploadTxnType")?.value || "SELL";
+  if (!state.trades || !state.trades.length) {
+    alert("No trade records currently loaded in the database.");
+    return;
+  }
+  state.trades.forEach(t => {
+    t.seg = seg;
+    t.txn = txn;
+  });
+  save();
+  alert(`✅ Successfully updated ${state.trades.length} trade blocks with:\nMarket Segment: ${seg}\nTransaction Type: ${txn}`);
+  renderDashboard();
+  renderTrades();
+  renderBilling();
+  renderReports();
+}
 
 function updateMarginRates() {
   nvvnRate = parseFloat($("nvvnRateInput").value) || 0;
@@ -606,11 +1056,11 @@ function clearAllData() {
 
 function downloadTemplate() {
   const headers = [
-    ["Delivery Date", "Block", "Scheduled Qty (MW)", "MCP (Rs/MWh)", "NLDC Application Fees", "Operating Charges - Sell", "CTU Transmission Charges", "STU Transmission Charges", "SLDC Scheduling"]
+    ["Delivery Date", "Block", "Market Segment", "Transaction Type", "Scheduled Qty (MW)", "MCP (Rs/MWh)", "NLDC Application Fees", "Operating Charges - Sell", "CTU Transmission Charges", "STU Transmission Charges", "SLDC Scheduling"]
   ];
   const today = new Date().toISOString().slice(0, 10);
-  headers.push([today, 27, -0.250, 3500.00, 4.83, 34.05, 0, 0, 1500]);
-  headers.push([today, 28, -0.500, 3200.00, "", "", "", "", ""]);
+  headers.push([today, 27, "G-DAM", "SELL", -0.250, 3500.00, 4.83, 34.05, 0, 0, 1500]);
+  headers.push([today, 28, "G-DAM", "SELL", -0.500, 3200.00, "", "", "", "", ""]);
   let wb = XLSX.utils.aoa_to_sheet(headers);
   let book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, wb, "Sheet1");
@@ -623,6 +1073,23 @@ document.querySelectorAll(".nav-btn").forEach(b => b.onclick = () => {
   document.querySelectorAll(".page-sec").forEach(x => x.classList.add("hidden"));
   $(b.dataset.target).classList.remove("hidden"); refreshPage(b.dataset.target);
 });
+
+function goToHomePage() {
+  document.querySelectorAll(".nav-btn").forEach(x => {
+    x.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm");
+    x.classList.add("text-blue-100");
+    if (x.dataset.target === "dashboard") {
+      x.classList.add("active", "bg-white", "text-blue-900", "shadow-sm");
+      x.classList.remove("text-blue-100");
+    }
+  });
+  document.querySelectorAll(".page-sec").forEach(x => x.classList.add("hidden"));
+  const dash = $("dashboard");
+  if (dash) dash.classList.remove("hidden");
+  refreshPage("dashboard");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.goToHomePage = goToHomePage;
 
 function refreshPage(p) {
   if(p==="dashboard") renderDashboard();
@@ -808,6 +1275,23 @@ function importStrictSheet1(workbook, forcedDate=""){
   obligation.other=chargeFallback("any other charges",obligation.other);
   obligation.sldc=chargeFallback("sldc scheduling and operating charges",obligation.sldc);
 
+  const selectedSeg = $("uploadMarketSeg")?.value || "G-DAM";
+  const selectedTxn = $("uploadTxnType")?.value || "SELL";
+  let detectedSeg = selectedSeg;
+  let detectedTxn = selectedTxn;
+
+  // Auto-detect Market Segment & Txn Type if explicitly labeled in file
+  for(let r=0; r<Math.min(matrix.length, 30); r++){
+    const rowStr = (matrix[r]||[]).map(v => String(v??"").toUpperCase()).join(" ");
+    if(rowStr.includes("G-DAM") || rowStr.includes("GDAM") || rowStr.includes("GREEN DAY")) detectedSeg = "G-DAM";
+    else if(rowStr.includes("DAM") && !rowStr.includes("G-DAM") && !rowStr.includes("GDAM")) detectedSeg = "DAM";
+    else if(rowStr.includes("TAM") || rowStr.includes("TERM AHEAD")) detectedSeg = "TAM";
+    else if(rowStr.includes("RTM") || rowStr.includes("REAL TIME")) detectedSeg = "RTM";
+
+    if(rowStr.includes("SELL") || rowStr.includes("SALE") || rowStr.includes("INJECTION")) detectedTxn = "SELL";
+    else if(rowStr.includes("BUY") || rowStr.includes("PURCHASE") || rowStr.includes("DRAWAL")) detectedTxn = "BUY";
+  }
+
   const records=[], seen=new Set();
   const add=(period, qtyCell, rateCell, amountCell, block)=>{
     if(!period || !/^\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}$/.test(period)) return;
@@ -820,7 +1304,9 @@ function importStrictSheet1(workbook, forcedDate=""){
       date:tradeDate, block, period,
       qty:rawQ,
       mcp:Number.isFinite(rate)?rate:0,
-      amount:Number.isFinite(amount)?Math.abs(amount):Math.abs(rawQ)*((Number.isFinite(rate)?rate:0))*0.25
+      amount:Number.isFinite(amount)?Math.abs(amount):Math.abs(rawQ)*((Number.isFinite(rate)?rate:0))*0.25,
+      seg: detectedSeg,
+      txn: detectedTxn
     });
   };
 
@@ -834,10 +1320,10 @@ function importStrictSheet1(workbook, forcedDate=""){
   let newN=0,updN=0,skipN=0;
   records.forEach(t=>{
     const idx=state.trades.findIndex(x=>x.date===t.date&&x.block===t.block);
-    const obj={date:t.date,block:t.block,qty:t.qty,mcp:t.mcp,amount:t.amount,period:t.period};
+    const obj={date:t.date,block:t.block,qty:t.qty,mcp:t.mcp,amount:t.amount,period:t.period,seg:t.seg,txn:t.txn};
     if(idx>=0){
       const old=state.trades[idx];
-      if(old.qty===obj.qty && old.mcp===obj.mcp && Math.abs((old.amount??0)-obj.amount)<0.01) skipN++;
+      if(old.qty===obj.qty && old.mcp===obj.mcp && Math.abs((old.amount??0)-obj.amount)<0.01 && (old.seg||"G-DAM")===obj.seg && (old.txn||"SELL")===obj.txn) skipN++;
       else {state.trades[idx]=Object.assign({},old,obj);updN++;}
     }else{state.trades.push(obj);newN++;}
   });
@@ -854,7 +1340,7 @@ function importStrictSheet1(workbook, forcedDate=""){
     const corridorTotal=Math.abs(obligation.nldcApp+obligation.ctu+obligation.nldcSchedBuy+obligation.nldcSchedSell+
       obligation.stu+obligation.distribution+obligation.other+obligation.sldc);
     $("uploadStatusMsg").innerHTML=
-      `<b>Sheet1 ✓</b> • Delivery Date: ${tradeDate} • 96-block layout detected • ${records.length} rows
+      `<b>Sheet1 ✓</b> • Delivery Date: ${tradeDate} • Segment: <span class="px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 font-bold text-[11px]">${detectedSeg}</span> • Txn: <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px]">${detectedTxn}</span> • 96-block layout detected • ${records.length} rows
        <br><b>Corridor Charges: ₹${corridorTotal.toFixed(2)}</b>
        <br><span class="text-[10px]">NLDC App ₹${obligation.nldcApp.toFixed(2)} • CTU ₹${obligation.ctu.toFixed(2)}
        • NLDC Buy ₹${obligation.nldcSchedBuy.toFixed(2)} • NLDC Sell ₹${obligation.nldcSchedSell.toFixed(2)}
@@ -1102,35 +1588,194 @@ function uploadOnePeriodExcel(date,input){
 
 // DASHBOARD
 let mChartInstance = null;
+window.dashSeg = "ALL";
+window.dashTxn = "ALL";
+
+function setDashboardSeg(seg) {
+  window.dashSeg = seg;
+  document.querySelectorAll(".dash-seg-btn").forEach(b => {
+    const text = b.innerText.trim();
+    if (text === (seg === "ALL" ? "All" : seg)) {
+      b.classList.add("active", "bg-white", "text-blue-900", "shadow-sm");
+      b.classList.remove("text-slate-600");
+    } else {
+      b.classList.remove("active", "bg-white", "text-blue-900", "shadow-sm");
+      b.classList.add("text-slate-600");
+    }
+  });
+  renderDashboard();
+}
+
+function setDashboardTxn(txn) {
+  window.dashTxn = txn;
+  document.querySelectorAll(".dash-txn-btn").forEach(b => {
+    const text = b.innerText.trim();
+    if (text === (txn === "ALL" ? "All" : txn)) {
+      b.classList.add("active", "bg-white", "text-emerald-800", "shadow-sm");
+      b.classList.remove("text-slate-600");
+    } else {
+      b.classList.remove("active", "bg-white", "text-emerald-800", "shadow-sm");
+      b.classList.add("text-slate-600");
+    }
+  });
+  renderDashboard();
+}
+
 function renderDashboard() {
-  let ts = sortedTrades(), totalQty = ts.reduce((s,t)=>s+qtyMwh(t),0), rev = ts.reduce((s,t)=>s+amount(t),0), avg = totalQty ? rev/totalQty : 0;
-  $("kpis").innerHTML = [
-    { t: "Traded Quantum", v: (totalQty/1000).toFixed(3)+" MU", c: "blue", i: "fa-bolt" },
-    { t: "Traded Value", v: "₹"+(rev/100000).toFixed(2)+" L", c: "emerald", i: "fa-indian-rupee-sign" },
-    { t: "Weighted Price", v: "₹"+avg.toFixed(2), c: "amber", i: "fa-scale-balanced" },
-    { t: "Active Days", v: new Set(ts.map(t=>t.date)).size+" Days", c: "indigo", i: "fa-calendar-check" }
-  ].map(x => `<div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border border-slate-200"><div><p class="text-[11px] font-bold text-slate-500 uppercase">${x.t}</p><h3 class="text-xl font-extrabold text-slate-800 mt-1">${x.v}</h3></div><div class="w-10 h-10 rounded-xl bg-${x.c}-50 text-${x.c}-600 flex items-center justify-center text-lg"><i class="fa-solid ${x.i}"></i></div></div>`).join("");
+  let ts = sortedTrades();
+  if (window.dashSeg && window.dashSeg !== "ALL") ts = ts.filter(t => (t.seg || "G-DAM") === window.dashSeg);
+  if (window.dashTxn && window.dashTxn !== "ALL") ts = ts.filter(t => (t.txn || "SELL") === window.dashTxn);
+
+  let totalQty = ts.reduce((s,t)=>s+qtyMwh(t),0), rev = ts.reduce((s,t)=>s+amount(t),0), avg = totalQty ? rev/totalQty : 0;
   
-  let a = months.map(m => { let x=ts.filter(t=>monthKey(t.date)===m), q=x.reduce((s,t)=>s+qtyMwh(t),0), r=x.reduce((s,t)=>s+amount(t),0); return {m, q:q/1000, r:r/100000, w:q?x.reduce((s,t)=>s+qtyMwh(t)*t.mcp,0)/q:0}; });
-  $("monthRows").innerHTML = a.filter(x=>x.q>0).map(x=>`<tr><td class="p-2 font-bold">${mNames[x.m]}</td><td class="p-2">${x.q.toFixed(3)}</td><td class="p-2 font-bold text-emerald-700">₹${x.r.toFixed(2)}</td><td class="p-2">₹${x.w.toFixed(1)}</td></tr>`).join("") || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No data found.</td></tr>';
+  // Calculate total deductions across all active dates
+  let totalDed = 0;
+  const uniqueDates = [...new Set(ts.map(t=>t.date))];
+  uniqueDates.forEach(d => {
+    let dayQ = ts.filter(t=>t.date===d).reduce((s,t)=>s+qtyMwh(t),0);
+    let o = obFor(d);
+    let grid = (Number(o.nldcApp)||0)+(Number(o.nldcSched||((o.nldcSchedBuy||0)+(o.nldcSchedSell||0)))||0)+(Number(o.ctu)||0)+(Number(o.stu)||0)+(Number(o.sldc)||0);
+    let px = roundPrecise(dayQ * 1000 * pxRate * (1 + pxGst / 100));
+    let nvvn = roundPrecise(dayQ * 1000 * nvvnRate * (1 + nvvnGst / 100));
+    totalDed += (grid + px + nvvn);
+  });
+  let netRev = Math.max(0, rev - totalDed);
+  let netTariff = totalQty > 0 ? netRev / (totalQty * 1000) : 0;
+  let maxPeak = ts.reduce((mx, t) => Math.max(mx, Math.abs(t.qty || 0)), 0);
+
+  $("kpis").innerHTML = [
+    { t: "Traded Quantum", v: (totalQty/1000).toFixed(3)+" MU", sub: totalQty.toFixed(1)+" MWh scheduled", c: "blue", i: "fa-bolt" },
+    { t: "Gross Market Value", v: money(rev), sub: "IEX Traded Gross", c: "emerald", i: "fa-indian-rupee-sign" },
+    { t: "Net Realized Revenue", v: money(netRev), sub: "After All Deductions", c: "teal", i: "fa-sack-dollar" },
+    { t: "Weighted Avg MCP", v: "₹"+avg.toFixed(2)+"/MWh", sub: "Volume-weighted MCP", c: "amber", i: "fa-scale-balanced" },
+    { t: "Total Commercial Ded.", v: money(totalDed), sub: "Grid + PX + NVVN Margin", c: "rose", i: "fa-money-bill-transfer" },
+    { t: "Realized Net Tariff", v: "₹"+netTariff.toFixed(3)+"/kWh", sub: "Effective Unit Inflow", c: "indigo", i: "fa-chart-line" },
+    { t: "Active Trading Days", v: uniqueDates.length+" Days", sub: "Reconciled Delivery Days", c: "sky", i: "fa-calendar-check" },
+    { t: "Peak Scheduled Output", v: maxPeak.toFixed(2)+" MW", sub: "Plant Cap: 11 MW", c: "amber", i: "fa-solar-panel" }
+  ].map(x => `
+    <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border border-slate-200/90 hover:border-blue-400 hover:shadow transition">
+      <div>
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">${x.t}</p>
+        <h3 class="text-xl font-black text-slate-800 mt-0.5">${x.v}</h3>
+        <p class="text-[10px] font-semibold text-slate-400 mt-0.5">${x.sub}</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-${x.c}-50 text-${x.c}-600 flex items-center justify-center text-lg shrink-0 border border-${x.c}-100">
+        <i class="fa-solid ${x.i}"></i>
+      </div>
+    </div>
+  `).join("");
+  
+  let a = months.map(m => { let x=ts.filter(t=>monthKey(t.date)===m), q=x.reduce((s,t)=>s+qtyMwh(t),0), r=x.reduce((s,t)=>s+amount(t),0); return {m, q:q/1000, r:r, w:q?x.reduce((s,t)=>s+qtyMwh(t)*t.mcp,0)/q:0}; });
+  $("monthRows").innerHTML = a.filter(x=>x.q>0).map(x=>`<tr><td class="p-2.5 font-bold text-slate-800">${mNames[x.m]}</td><td class="p-2.5 font-semibold text-blue-700">${x.q.toFixed(3)}</td><td class="p-2.5 font-bold text-emerald-700">${money(x.r)}</td><td class="p-2.5 text-slate-600">₹${x.w.toFixed(2)}</td></tr>`).join("") || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No data found.</td></tr>';
   
   if(mChartInstance) mChartInstance.destroy();
-  mChartInstance = new Chart($("monthlyChart").getContext("2d"), { type: 'bar', data: { labels: a.map(x=>x.m), datasets: [{label:'Quantum (MU)', data:a.map(x=>x.q), backgroundColor:'#3b82f6'}, {label:'Value (₹ L)', data:a.map(x=>x.r), backgroundColor:'#10b981', yAxisID:'y1'}] }, options: { responsive: true, maintainAspectRatio: false, scales: { y1: {position:'right', grid:{drawOnChartArea:false}} } } });
+  mChartInstance = new Chart($("monthlyChart").getContext("2d"), {
+    type: 'bar',
+    data: {
+      labels: a.map(x=>x.m),
+      datasets: [
+        { label:'Quantum (MU)', data:a.map(x=>x.q), backgroundColor:'#1d4ed8', borderRadius: 4 },
+        { label:'Revenue (₹)', data:a.map(x=>x.r), backgroundColor:'#059669', borderRadius: 4, yAxisID:'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: {
+          title: { display: true, text: 'Energy (MU)', font: { size: 10, weight: 'bold' } }
+        },
+        y1: {
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Revenue (₹)', font: { size: 10, weight: 'bold' } },
+          ticks: {
+            callback: function(v) { return '₹' + Number(v).toLocaleString('en-IN'); }
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.dataset.yAxisID === 'y1') {
+                return 'Revenue: ' + money(ctx.raw);
+              }
+              return 'Energy: ' + Number(ctx.raw).toFixed(3) + ' MU';
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // TRADES
 function renderTrades() {
-  let f=$("tFrom").value, t=$("tTo").value;
-  $("tradeRows").innerHTML = sortedTrades().filter(x=>(!f||x.date>=f)&&(!t||x.date<=t)).map(x=>`<tr><td class="p-3 font-semibold">${x.date}</td><td class="p-3">${x.block}</td><td class="p-3 font-mono text-slate-500">${period(x.block)}</td><td class="p-3 font-bold">${Math.abs(x.qty).toFixed(3)}</td><td class="p-3 text-blue-700 font-bold">${qtyMwh(x).toFixed(3)}</td><td class="p-3">₹${x.mcp.toFixed(2)}</td><td class="p-3 text-emerald-700 font-bold">₹${amount(x).toFixed(2)}</td></tr>`).join("");
+  let f=$("tFrom")?.value||"", t=$("tTo")?.value||"";
+  let seg=$("tSeg")?.value||"ALL";
+  let txn=$("tTxn")?.value||"ALL";
+  let filtered = sortedTrades().filter(x => {
+    if (f && x.date < f) return false;
+    if (t && x.date > t) return false;
+    if (seg !== "ALL" && (x.seg || "G-DAM") !== seg) return false;
+    if (txn !== "ALL" && (x.txn || "SELL") !== txn) return false;
+    return true;
+  });
+
+  const getSegBadge = s => {
+    const map = {
+      'G-DAM': 'bg-teal-100 text-teal-800 border border-teal-300',
+      'DAM': 'bg-blue-100 text-blue-800 border border-blue-300',
+      'TAM': 'bg-purple-100 text-purple-800 border border-purple-300',
+      'RTM': 'bg-amber-100 text-amber-800 border border-amber-300'
+    };
+    const cls = map[s] || 'bg-slate-100 text-slate-800 border border-slate-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${cls}">${s}</span>`;
+  };
+
+  const getTxnBadge = tx => {
+    const cls = tx === 'SELL' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${cls}">${tx}</span>`;
+  };
+
+  $("tradeRows").innerHTML = filtered.map(x=>`
+    <tr class="hover:bg-slate-50 font-medium">
+      <td class="p-3 font-semibold">${x.date}</td>
+      <td class="p-3 text-center font-bold text-slate-600">${x.block}</td>
+      <td class="p-3 font-mono text-slate-500">${period(x.block)}</td>
+      <td class="p-3 text-center">${getSegBadge(x.seg || 'G-DAM')}</td>
+      <td class="p-3 text-center">${getTxnBadge(x.txn || 'SELL')}</td>
+      <td class="p-3 font-bold">${Math.abs(x.qty).toFixed(3)}</td>
+      <td class="p-3 text-blue-700 font-bold">${qtyMwh(x).toFixed(3)}</td>
+      <td class="p-3">₹${x.mcp.toFixed(2)}</td>
+      <td class="p-3 text-emerald-700 font-bold">₹${amount(x).toFixed(2)}</td>
+    </tr>
+  `).join("") || '<tr><td colspan="9" class="p-8 text-center text-slate-400">No trade blocks found matching the selected filters.</td></tr>';
 }
 
 function exportTrades() {
-  let rows = [["Date","Block","Period","Qty (MW)","Qty (MWh)","MCP (₹/MWh)","Amount (₹)"]];
-  sortedTrades().forEach(x => rows.push([x.date, x.block, period(x.block), Math.abs(x.qty).toFixed(3), qtyMwh(x).toFixed(3), x.mcp, amount(x).toFixed(2)]));
+  let f=$("tFrom")?.value||"", t=$("tTo")?.value||"";
+  let seg=$("tSeg")?.value||"ALL";
+  let txn=$("tTxn")?.value||"ALL";
+  let filtered = sortedTrades().filter(x => {
+    if (f && x.date < f) return false;
+    if (t && x.date > t) return false;
+    if (seg !== "ALL" && (x.seg || "G-DAM") !== seg) return false;
+    if (txn !== "ALL" && (x.txn || "SELL") !== txn) return false;
+    return true;
+  });
+
+  let rows = [["Delivery Date","Block","Time Period","Market Segment","Transaction Type","Scheduled Qty (MW)","Scheduled Qty (MWh)","MCP (₹/MWh)","Traded Value (₹)"]];
+  filtered.forEach(x => rows.push([
+    x.date, x.block, period(x.block), x.seg || "G-DAM", x.txn || "SELL",
+    Math.abs(x.qty).toFixed(3), qtyMwh(x).toFixed(3), x.mcp, amount(x).toFixed(2)
+  ]));
   let wb = XLSX.utils.aoa_to_sheet(rows);
   let book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, wb, "Trades");
-  XLSX.writeFile(book, "THDC_11MW_Trades.xlsx");
+  XLSX.writeFile(book, `THDC_11MW_Trades_${seg}_${txn}.xlsx`);
 }
 
 // BILLING ENGINE
@@ -1142,12 +1787,16 @@ function buildBillingRows() {
   const allDates=[...new Set(sortedTrades().map(x=>x.date))].sort();
   const bs=$('billingStartDate')?.value||'';
   const be=$('billingEndDate')?.value||'';
+  const seg=$('billingMarketSeg')?.value||$('billingSegFilter')?.value||'ALL';
+  const txn=$('billingTxnType')?.value||$('billingTxnFilter')?.value||'ALL';
   const from=bs||allDates[0]||'';
   const to=be||allDates[allDates.length-1]||'';
   const dates=allDates.filter(d=>(!from||d>=from)&&(!to||d<=to));
   const rows=[];
   dates.forEach((d,idx)=>{
-    const a=sortedTrades().filter(x=>x.date===d);
+    let a=sortedTrades().filter(x=>x.date===d);
+    if(seg !== 'ALL') a=a.filter(x=>(x.seg||'G-DAM')===seg);
+    if(txn !== 'ALL') a=a.filter(x=>(x.txn||'SELL')===txn);
     if(!a.length) return;
     const q=roundPrecise(a.reduce((s,x)=>s+qtyMwh(x),0));
     const tradeValue=roundPrecise(a.reduce((s,x)=>s+amount(x),0));
@@ -1164,7 +1813,9 @@ function buildBillingRows() {
     const nvvnMargin=roundPrecise(q*1000*nvvnRate);
     const nvvnGstAmt=roundPrecise(nvvnMargin*(nvvnGst/100));
     const nvvnNet=roundPrecise(powerExchangeNet-nvvnMargin-nvvnGstAmt);
-    rows.push({sl:901+idx,date:d,txn:"SELL",seg:"RTM",q,tradeValue,corridor,pxFee,pxGst:pxGstAmt,powerExchangeNet,nvvnMargin,nvvnGst:nvvnGstAmt,nvvnNet});
+    const rowSeg = a[0]?.seg || (seg !== 'ALL' ? seg : 'G-DAM');
+    const rowTxn = a[0]?.txn || (txn !== 'ALL' ? txn : 'SELL');
+    rows.push({sl:901+idx,date:d,txn:rowTxn,seg:rowSeg,q,tradeValue,corridor,pxFee,pxGst:pxGstAmt,powerExchangeNet,nvvnMargin,nvvnGst:nvvnGstAmt,nvvnNet});
   });
   return rows;
 }
@@ -1183,11 +1834,665 @@ function applyBillingPeriod() {
   if(note) note.textContent=`Applied: ${bs||"All"} → ${be||"All"}`;
   renderBilling();
 }
+
 function resetBillingPeriod() {
   const dates=[...new Set(sortedTrades().map(x=>x.date))].sort();
   if($('billingStartDate')) $('billingStartDate').value=dates[0]||'';
   if($('billingEndDate')) $('billingEndDate').value=dates[dates.length-1]||'';
+  if($('billingMarketSeg')) $('billingMarketSeg').value='ALL';
+  if($('billingSegFilter')) $('billingSegFilter').value='ALL';
+  if($('billingTxnType')) $('billingTxnType').value='ALL';
+  if($('billingTxnFilter')) $('billingTxnFilter').value='ALL';
   renderBilling();
+}
+
+// MONTHLY BILLING SUMMARY AGGREGATOR
+function buildBillingMonthlySummary() {
+  const allTrades = sortedTrades();
+  if (!allTrades || !allTrades.length) return [];
+
+  const seg = $('billingMarketSeg')?.value || $('billingSegFilter')?.value || 'ALL';
+  const txn = $('billingTxnType')?.value || $('billingTxnFilter')?.value || 'ALL';
+
+  const allDates = [...new Set(allTrades.map(x => x.date))].sort();
+  if (!allDates.length) return [];
+
+  const dailyRecords = [];
+  allDates.forEach(d => {
+    let a = allTrades.filter(x => x.date === d);
+    if (seg !== 'ALL') a = a.filter(x => (x.seg || 'G-DAM') === seg);
+    if (txn !== 'ALL') a = a.filter(x => (x.txn || 'SELL') === txn);
+    if (!a.length) return;
+
+    const q = roundPrecise(a.reduce((s, x) => s + qtyMwh(x), 0));
+    const tradeValue = roundPrecise(a.reduce((s, x) => s + amount(x), 0));
+    const o = obFor(d);
+    const corridor = Math.abs(roundPrecise(
+      (Number(o.nldcApp) || 0) + (Number(o.ctu) || 0) +
+      (Number(o.nldcSchedBuy) || 0) + (Number(o.nldcSchedSell) || 0) +
+      (Number(o.stu) || 0) + (Number(o.distribution) || 0) +
+      (Number(o.other) || 0) + (Number(o.sldc) || 0)
+    ));
+    const pxFee = roundPrecise(q * 1000 * pxRate);
+    const pxGstAmt = roundPrecise(pxFee * (pxGst / 100));
+    const powerExchangeNet = roundPrecise(tradeValue - corridor - pxFee - pxGstAmt);
+    const nvvnMargin = roundPrecise(q * 1000 * nvvnRate);
+    const nvvnGstAmt = roundPrecise(nvvnMargin * (nvvnGst / 100));
+    const nvvnNet = roundPrecise(powerExchangeNet - nvvnMargin - nvvnGstAmt);
+    const deductions = roundPrecise(corridor + pxFee + pxGstAmt + nvvnMargin + nvvnGstAmt);
+
+    dailyRecords.push({
+      date: d,
+      monthKey: d.slice(0, 7),
+      q,
+      tradeValue,
+      corridor,
+      pxFee,
+      pxGst: pxGstAmt,
+      powerExchangeNet,
+      nvvnMargin,
+      nvvnGst: nvvnGstAmt,
+      nvvnNet,
+      totalDeductions: deductions
+    });
+  });
+
+  if (!dailyRecords.length) return [];
+
+  const monthMap = {};
+  const monthNamesFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  dailyRecords.forEach(r => {
+    if (!monthMap[r.monthKey]) {
+      const [yr, mo] = r.monthKey.split("-");
+      const mIdx = parseInt(mo, 10) - 1;
+      monthMap[r.monthKey] = {
+        monthKey: r.monthKey,
+        year: yr,
+        monthIndex: mIdx,
+        monthLabel: `${monthNamesFull[mIdx]} ${yr}`,
+        shortLabel: `${monthNamesShort[mIdx]} ${yr}`,
+        dates: [],
+        days: 0,
+        q: 0,
+        tradeValue: 0,
+        corridor: 0,
+        pxFee: 0,
+        pxGst: 0,
+        powerExchangeNet: 0,
+        nvvnMargin: 0,
+        nvvnGst: 0,
+        netRevenue: 0,
+        totalDeductions: 0
+      };
+    }
+    const m = monthMap[r.monthKey];
+    m.dates.push(r.date);
+    m.days += 1;
+    m.q += r.q;
+    m.tradeValue += r.tradeValue;
+    m.corridor += r.corridor;
+    m.pxFee += r.pxFee;
+    m.pxGst += r.pxGst;
+    m.powerExchangeNet += r.powerExchangeNet;
+    m.nvvnMargin += r.nvvnMargin;
+    m.nvvnGst += r.nvvnGst;
+    m.netRevenue += r.nvvnNet;
+    m.totalDeductions += r.totalDeductions;
+  });
+
+  const sortedMonths = Object.values(monthMap).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+
+  // Determine active month in current session
+  const activeStart = $('billingStartDate')?.value || '';
+  const activeEnd = $('billingEndDate')?.value || '';
+  let activeMonthKey = '';
+  if (activeEnd && monthMap[activeEnd.slice(0, 7)]) {
+    activeMonthKey = activeEnd.slice(0, 7);
+  } else if (activeStart && monthMap[activeStart.slice(0, 7)]) {
+    activeMonthKey = activeStart.slice(0, 7);
+  }
+  if (!activeMonthKey || !monthMap[activeMonthKey]) {
+    activeMonthKey = sortedMonths[sortedMonths.length - 1].monthKey;
+  }
+
+  const totalNetAll = sortedMonths.reduce((s, x) => s + x.netRevenue, 0);
+  const meanMonthlyNet = sortedMonths.length ? (totalNetAll / sortedMonths.length) : 0;
+
+  const getSeasonalInfo = (mIdx) => {
+    // 0=Jan, 1=Feb, 2=Mar, 3=Apr, 4=May, 5=Jun, 6=Jul, 7=Aug, 8=Sep, 9=Oct, 10=Nov, 11=Dec
+    if (mIdx >= 2 && mIdx <= 5) {
+      return { category: "Summer Peak", color: "amber", icon: "fa-sun", badgeBg: "bg-amber-100 text-amber-900 border-amber-300" };
+    } else if (mIdx >= 6 && mIdx <= 8) {
+      return { category: "Monsoon Lean", color: "sky", icon: "fa-cloud-showers-heavy", badgeBg: "bg-sky-100 text-sky-900 border-sky-300" };
+    } else if (mIdx >= 9 && mIdx <= 10) {
+      return { category: "Post-Monsoon", color: "teal", icon: "fa-cloud-sun", badgeBg: "bg-teal-100 text-teal-900 border-teal-300" };
+    } else {
+      return { category: "Winter Lean", color: "indigo", icon: "fa-snowflake", badgeBg: "bg-indigo-100 text-indigo-900 border-indigo-300" };
+    }
+  };
+
+  return sortedMonths.map((m, idx) => {
+    const qRound = roundPrecise(m.q);
+    const tradeRound = roundPrecise(m.tradeValue);
+    const dedRound = roundPrecise(m.totalDeductions);
+    const netRound = roundPrecise(m.netRevenue);
+    const mu = qRound / 1000;
+    const effectiveTariff = qRound > 0 ? (netRound / (qRound * 1000)) : 0;
+    const avgDailyNet = m.days > 0 ? (netRound / m.days) : 0;
+
+    let momDiff = null;
+    let momPct = null;
+    if (idx > 0) {
+      const prev = sortedMonths[idx - 1];
+      momDiff = roundPrecise(netRound - prev.netRevenue);
+      momPct = prev.netRevenue !== 0 ? ((momDiff / Math.abs(prev.netRevenue)) * 100) : 0;
+    }
+
+    const seasonalVarPct = meanMonthlyNet > 0 ? (((netRound - meanMonthlyNet) / meanMonthlyNet) * 100) : 0;
+    const seasonInfo = getSeasonalInfo(m.monthIndex);
+    const isCurrent = m.monthKey === activeMonthKey;
+
+    return {
+      monthKey: m.monthKey,
+      monthLabel: m.monthLabel,
+      shortLabel: m.shortLabel,
+      isCurrentMonth: isCurrent,
+      dates: m.dates,
+      days: m.days,
+      q: qRound,
+      mu,
+      tradeValue: tradeRound,
+      totalDeductions: dedRound,
+      corridor: roundPrecise(m.corridor),
+      pxFee: roundPrecise(m.pxFee),
+      pxGst: roundPrecise(m.pxGst),
+      nvvnMargin: roundPrecise(m.nvvnMargin),
+      nvvnGst: roundPrecise(m.nvvnGst),
+      powerExchangeNet: roundPrecise(m.powerExchangeNet),
+      netRevenue: netRound,
+      effectiveTariff,
+      avgDailyNet: roundPrecise(avgDailyNet),
+      momDiff,
+      momPct,
+      seasonalVarPct,
+      seasonCategory: seasonInfo.category,
+      seasonColor: seasonInfo.color,
+      seasonIcon: seasonInfo.icon,
+      badgeBg: seasonInfo.badgeBg
+    };
+  });
+}
+
+function filterBillingByMonth(mKey) {
+  const summary = buildBillingMonthlySummary();
+  const target = summary.find(x => x.monthKey === mKey);
+  if (!target || !target.dates.length) return;
+  const sortedDates = [...target.dates].sort();
+  if ($('billingStartDate')) $('billingStartDate').value = sortedDates[0];
+  if ($('billingEndDate')) $('billingEndDate').value = sortedDates[sortedDates.length - 1];
+  renderBilling();
+  const annexureEl = document.getElementById('billingTable');
+  if (annexureEl) {
+    annexureEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function renderBillingSummary() {
+  const summaryRows = buildBillingMonthlySummary();
+  const summaryTable = $("billingSummaryRows");
+  const summaryFoot = $("billingSummaryFoot");
+  const seasonalBanner = $("billingSeasonalBanner");
+
+  if (!summaryRows.length) {
+    if (summaryTable) {
+      summaryTable.innerHTML = '<tr><td colspan="13" class="p-8 text-center text-slate-400 font-medium">No trade or billing data found. Upload trades in the Trade Entry tab to view the monthly billing comparison.</td></tr>';
+    }
+    if (summaryFoot) summaryFoot.innerHTML = '';
+    if (seasonalBanner) {
+      seasonalBanner.innerHTML = `
+        <div class="p-4 text-center text-slate-500 text-xs font-medium">
+          <i class="fa-solid fa-chart-line text-blue-500 mr-1.5"></i>
+          Upload 96-block trade files or historical invoices to unlock Month-over-Month (MoM) Net Realized Revenue comparisons and seasonal solar performance tracking.
+        </div>`;
+    }
+    return;
+  }
+
+  const currentMonth = summaryRows.find(x => x.isCurrentMonth) || summaryRows[summaryRows.length - 1];
+  const currIdx = summaryRows.findIndex(x => x.monthKey === currentMonth.monthKey);
+  const prevMonth = currIdx > 0 ? summaryRows[currIdx - 1] : null;
+
+  if (seasonalBanner) {
+    let varianceCardContent = '';
+    let insightText = '';
+
+    if (prevMonth) {
+      const diff = currentMonth.netRevenue - prevMonth.netRevenue;
+      const pct = prevMonth.netRevenue !== 0 ? ((diff / Math.abs(prevMonth.netRevenue)) * 100) : 0;
+      const isUp = diff >= 0;
+      const diffSign = isUp ? '+' : '';
+      const colorCls = isUp ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-rose-700 bg-rose-50 border-rose-300';
+      const iconCls = isUp ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+
+      varianceCardContent = `
+        <div class="flex items-center gap-2 mt-1">
+          <span class="px-2.5 py-1 rounded-lg border font-black text-xs flex items-center gap-1.5 ${colorCls}">
+            <i class="fa-solid ${iconCls}"></i>
+            ${diffSign}${money(diff)} (${diffSign}${pct.toFixed(1)}%)
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5">vs Preceding ${prevMonth.monthLabel}</div>
+      `;
+
+      if (isUp) {
+        insightText = `Current month (<strong>${currentMonth.monthLabel}</strong>) Net Realized Revenue expanded by <strong class="text-emerald-700">${money(diff)} (+${pct.toFixed(1)}%)</strong> over ${prevMonth.monthLabel}. This upward swing aligns with favorable solar insolation, higher clear-sky irradiation, and improved market clearing prices on the power exchange.`;
+      } else {
+        insightText = `Current month (<strong>${currentMonth.monthLabel}</strong>) Net Realized Revenue reflects a seasonal moderation of <strong class="text-rose-700">${money(Math.abs(diff))} (${pct.toFixed(1)}%)</strong> compared to ${prevMonth.monthLabel}, typical of solar seasonality during cloud cover / monsoon attenuation or lower winter solar elevation.`;
+      }
+    } else {
+      varianceCardContent = `
+        <div class="mt-1">
+          <span class="px-2.5 py-1 rounded-lg border font-bold text-xs bg-slate-100 text-slate-700 border-slate-300 inline-block">
+            Initial Operational Baseline
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5">First recorded period in active ledger</div>
+      `;
+      insightText = `Current active period (<strong>${currentMonth.monthLabel}</strong>) represents the primary baseline in the ledger. When additional operating months are recorded, automatic Month-over-Month (MoM) variance and seasonal comparison curves will display here.`;
+    }
+
+    seasonalBanner.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
+            <span>Current Month</span>
+            <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-black">Active Focus</span>
+          </div>
+          <div class="text-sm font-black text-slate-900 mt-1">${currentMonth.monthLabel}</div>
+          <div class="text-base font-black text-emerald-700 mt-0.5">${money(currentMonth.netRevenue)}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5 font-medium">${currentMonth.mu.toFixed(3)} MU • Tariff: ₹${currentMonth.effectiveTariff.toFixed(3)}/kWh</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
+            <span>Preceding Month</span>
+            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold">Comparison</span>
+          </div>
+          <div class="text-sm font-black text-slate-800 mt-1">${prevMonth ? prevMonth.monthLabel : '— Baseline'}</div>
+          <div class="text-base font-black text-slate-800 mt-0.5">${prevMonth ? money(prevMonth.netRevenue) : '—'}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5 font-medium">${prevMonth ? `${prevMonth.mu.toFixed(3)} MU • Tariff: ₹${prevMonth.effectiveTariff.toFixed(3)}/kWh` : 'No prior month loaded'}</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[10px] uppercase font-bold text-slate-500">MoM Revenue Variance</div>
+          ${varianceCardContent}
+          <div class="text-[10px] text-slate-500 mt-1 font-medium">Daily Net Avg: <strong class="text-slate-800">${money(currentMonth.avgDailyNet)}/day</strong></div>
+        </div>
+
+        <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 shadow-xs">
+          <div class="flex items-center gap-1.5 text-[10px] uppercase font-bold text-blue-900">
+            <i class="fa-solid fa-cloud-sun text-amber-600"></i> Seasonal Performance Note
+          </div>
+          <p class="text-xs text-slate-700 mt-1 leading-relaxed">${insightText}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (summaryTable) {
+    summaryTable.innerHTML = summaryRows.map(x => {
+      let momDisplay = '';
+      if (x.momDiff === null) {
+        momDisplay = '<span class="text-slate-400 font-medium text-[10px]">— Baseline</span>';
+      } else {
+        const isUp = x.momDiff >= 0;
+        const sign = isUp ? '+' : '';
+        const cls = isUp ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold';
+        const icon = isUp ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+        momDisplay = `<span class="${cls}"><i class="fa-solid ${icon} text-[9px] mr-1"></i>${sign}${money(x.momDiff)} <span class="text-[10px] font-semibold">(${sign}${x.momPct.toFixed(1)}%)</span></span>`;
+      }
+
+      let seasonVarDisplay = '';
+      if (x.seasonalVarPct > 0) {
+        seasonVarDisplay = `<span class="text-emerald-700 font-bold">+${x.seasonalVarPct.toFixed(1)}% <span class="text-[9px] text-slate-500 font-normal">vs Avg</span></span>`;
+      } else if (x.seasonalVarPct < 0) {
+        seasonVarDisplay = `<span class="text-rose-700 font-bold">${x.seasonalVarPct.toFixed(1)}% <span class="text-[9px] text-slate-500 font-normal">vs Avg</span></span>`;
+      } else {
+        seasonVarDisplay = `<span class="text-slate-500 font-bold">Par Avg</span>`;
+      }
+
+      const rowHighlight = x.isCurrentMonth ? 'bg-blue-50/50 font-semibold' : 'hover:bg-slate-50';
+      const timelineBadge = x.isCurrentMonth
+        ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-700 text-white shadow-2xs">Current Month</span>'
+        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Previous</span>';
+
+      return `
+        <tr class="${rowHighlight} border-b border-slate-100 transition">
+          <td class="p-2.5 border text-left font-black text-slate-900">${x.monthLabel}</td>
+          <td class="p-2.5 border text-center">${timelineBadge}</td>
+          <td class="p-2.5 border text-center">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold border ${x.badgeBg}">
+              <i class="fa-solid ${x.seasonIcon}"></i> ${x.seasonCategory}
+            </span>
+          </td>
+          <td class="p-2.5 border text-center font-bold text-slate-700">${x.days}</td>
+          <td class="p-2.5 border font-bold text-blue-700">${x.mu.toFixed(3)} MU <span class="text-[9px] text-slate-400 font-normal">(${x.q.toFixed(2)} MWh)</span></td>
+          <td class="p-2.5 border text-slate-800">${money(x.tradeValue)}</td>
+          <td class="p-2.5 border text-rose-700 font-medium">${money(x.totalDeductions)}</td>
+          <td class="p-2.5 border font-black text-emerald-800 bg-emerald-50/70">${money(x.netRevenue)}</td>
+          <td class="p-2.5 border font-bold text-indigo-700">₹${x.effectiveTariff.toFixed(3)}/kWh</td>
+          <td class="p-2.5 border font-medium text-slate-700">${money(x.avgDailyNet)}</td>
+          <td class="p-2.5 border text-center">${momDisplay}</td>
+          <td class="p-2.5 border text-center">${seasonVarDisplay}</td>
+          <td class="p-2.5 border text-center">
+            <button onclick="filterBillingByMonth('${x.monthKey}')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-300 px-2 py-1 rounded text-[10px] font-bold shadow-2xs transition inline-flex items-center gap-1">
+              <i class="fa-solid fa-table-list"></i> Annexure 1
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  if (summaryFoot) {
+    const totDays = summaryRows.reduce((s, x) => s + x.days, 0);
+    const totQ = summaryRows.reduce((s, x) => s + x.q, 0);
+    const totMu = totQ / 1000;
+    const totTrade = summaryRows.reduce((s, x) => s + x.tradeValue, 0);
+    const totDeds = summaryRows.reduce((s, x) => s + x.totalDeductions, 0);
+    const totNet = summaryRows.reduce((s, x) => s + x.netRevenue, 0);
+    const avgMonthlyRev = totNet / summaryRows.length;
+    const overallTariff = totQ > 0 ? (totNet / (totQ * 1000)) : 0;
+
+    summaryFoot.innerHTML = `
+      <tr class="bg-slate-100 font-black text-slate-900 border-t-2 border-slate-300">
+        <td class="p-2.5 border text-left uppercase">Portfolio Total (${summaryRows.length} Operational Months)</td>
+        <td class="p-2.5 border text-center text-[10px] text-slate-500">—</td>
+        <td class="p-2.5 border text-center text-[10px] text-slate-500">All Seasons</td>
+        <td class="p-2.5 border text-center">${totDays}</td>
+        <td class="p-2.5 border text-blue-900 font-black">${totMu.toFixed(3)} MU</td>
+        <td class="p-2.5 border">${money(totTrade)}</td>
+        <td class="p-2.5 border text-rose-800">${money(totDeds)}</td>
+        <td class="p-2.5 border bg-emerald-100 text-emerald-950 font-black">${money(totNet)}</td>
+        <td class="p-2.5 border text-indigo-900 font-black">₹${overallTariff.toFixed(3)}/kWh</td>
+        <td class="p-2.5 border text-[10px] text-slate-700 font-bold">Avg ${money(avgMonthlyRev)}/mo</td>
+        <td class="p-2.5 border text-center text-[10px] text-slate-500">—</td>
+        <td class="p-2.5 border text-center text-[10px] text-slate-500">100% Baseline</td>
+        <td class="p-2.5 border text-center">
+          <button onclick="resetBillingPeriod()" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 underline">
+            Reset All
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function exportBillingSummaryExcel() {
+  const summaryRows = buildBillingMonthlySummary();
+  if (!summaryRows.length) {
+    alert("No monthly billing data available to export.");
+    return;
+  }
+  const segVal = $('billingMarketSeg')?.value || $('billingSegFilter')?.value || 'ALL';
+  const txnVal = $('billingTxnType')?.value || $('billingTxnFilter')?.value || 'ALL';
+
+  const aoa = [
+    ["THDC INDIA LIMITED — 11 MW Solar PV Power Project"],
+    ["Billing Summary — Monthly Net Realized Revenue & Seasonal Performance Comparison"],
+    [`Portfolio: N2UP0NVN0289`, `Market Segment: ${segVal}`, `Txn Type: ${txnVal}`, `Generated On: ${new Date().toLocaleString('en-IN')}`],
+    [],
+    [
+      "Operational Month",
+      "Timeline Role",
+      "Seasonal Phase",
+      "Active Days",
+      "Energy Quantum (MU)",
+      "Energy Quantum (MWh)",
+      "Gross Trade Value (₹)",
+      "Commercial Deductions (₹)",
+      "Net Realized Revenue (₹)",
+      "Effective Net Tariff (₹/kWh)",
+      "Avg Daily Net Revenue (₹/day)",
+      "MoM Difference (₹)",
+      "MoM Growth (%)",
+      "Seasonal Var vs Mean (%)"
+    ],
+    ...summaryRows.map(x => [
+      x.monthLabel,
+      x.isCurrentMonth ? "Current Month" : "Previous Month",
+      x.seasonCategory,
+      x.days,
+      Number(x.mu.toFixed(4)),
+      Number(x.q.toFixed(4)),
+      x.tradeValue,
+      x.totalDeductions,
+      x.netRevenue,
+      Number(x.effectiveTariff.toFixed(4)),
+      x.avgDailyNet,
+      x.momDiff !== null ? x.momDiff : 0,
+      x.momPct !== null ? Number(x.momPct.toFixed(2)) : 0,
+      Number(x.seasonalVarPct.toFixed(2))
+    ])
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [
+    { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 18 },
+    { wch: 18 }, { wch: 22 }, { wch: 24 }, { wch: 24 }, { wch: 26 },
+    { wch: 24 }, { wch: 20 }, { wch: 16 }, { wch: 22 }
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "Billing_Summary");
+  XLSX.writeFile(wb, `THDC_11MW_Billing_Summary_Monthly_Comparison_${segVal}_${txnVal}.xlsx`);
+}
+
+// THDCIL OFFICIAL LOGO CACHE FOR REPORTS & INVOICES
+let thdcilLogoDataUrl = typeof window !== "undefined" && window.THDC_LOGO_BASE64 ? window.THDC_LOGO_BASE64 : null;
+function initThdcilLogo() {
+  if (typeof window !== "undefined" && window.THDC_LOGO_BASE64) {
+    thdcilLogoDataUrl = window.THDC_LOGO_BASE64;
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function() {
+    try {
+      const cv = document.createElement("canvas");
+      cv.width = 1571;
+      cv.height = 379;
+      const ctx = cv.getContext("2d");
+      ctx.drawImage(img, 0, 0, 1571, 379);
+      thdcilLogoDataUrl = cv.toDataURL("image/png");
+    } catch(e) {
+      console.warn("Logo canvas toDataURL error:", e);
+    }
+  };
+  img.src = "thdc_logo.png";
+}
+initThdcilLogo();
+
+function exportBillingSummaryPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("landscape", "mm", "a4");
+
+  const summaryRows = typeof buildBillingMonthlySummary === "function" ? buildBillingMonthlySummary() : [];
+  if (!summaryRows || !summaryRows.length) {
+    alert("No monthly billing data available to export.");
+    return;
+  }
+
+  const segVal = $('billingMarketSeg')?.value || $('billingSegFilter')?.value || 'ALL';
+  const txnVal = $('billingTxnType')?.value || $('billingTxnFilter')?.value || 'ALL';
+
+  // 1. Corporate Header with Official THDC India Limited Logo (True aspect ratio 4.145:1)
+  const logo = (typeof window !== "undefined" && window.THDC_LOGO_BASE64) || thdcilLogoDataUrl;
+  if (logo) {
+    try {
+      doc.addImage(logo, "PNG", 12, 8, 53.9, 13);
+    } catch (e) {
+      console.warn("Logo render error in PDF:", e);
+    }
+  }
+
+  doc.setFontSize(12);
+  doc.setTextColor(15, 43, 92);
+  doc.setFont('helvetica', 'bold');
+  doc.text("THDC INDIA LIMITED", 70, 13);
+
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.text("A Schedule 'A' Mini Ratna CPSU • Govt. of India Enterprise | Portfolio: N2UP0NVN0289", 70, 17);
+  doc.text("11 MW Solar PV Power Project, Tehri • Monthly Billing Summary & Seasonal Comparison", 70, 21);
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Ref: THDC/11MW/COMM/BILL-SUMM/" + new Date().getFullYear(), 285, 12, { align: "right" });
+  doc.text("Date Generated: " + new Date().toLocaleDateString('en-IN'), 285, 16, { align: "right" });
+  doc.text("Market Seg: " + segVal + " | Txn: " + txnVal, 285, 20, { align: "right" });
+  doc.text("Tariff Benchmark: Rs. 3.150/kWh", 285, 24, { align: "right" });
+
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.4);
+  doc.line(12, 26, 285, 26);
+
+  // 2. Executive Stat Strip
+  const totDays = summaryRows.reduce((s, x) => s + x.days, 0);
+  const totMu = summaryRows.reduce((s, x) => s + x.mu, 0);
+  const totQ = summaryRows.reduce((s, x) => s + x.q, 0);
+  const totTrade = summaryRows.reduce((s, x) => s + x.tradeValue, 0);
+  const totDeds = summaryRows.reduce((s, x) => s + x.totalDeductions, 0);
+  const totNet = summaryRows.reduce((s, x) => s + x.netRevenue, 0);
+  const overallTariff = totQ > 0 ? (totNet / (totQ * 1000)) : 0;
+  const avgMonthlyRev = summaryRows.length > 0 ? (totNet / summaryRows.length) : 0;
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(12, 28, 273, 9.5, 1.5, 1.5, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(12, 28, 273, 9.5, 1.5, 1.5, 'S');
+
+  doc.setFontSize(7.2);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text("Operational Months: " + summaryRows.length + " (" + totDays + " Days)", 15, 34.2);
+  doc.text("Delivered Energy: " + totMu.toFixed(3) + " MU (" + totQ.toLocaleString('en-IN', {maximumFractionDigits:1}) + " MWh)", 70, 34.2);
+  doc.text("Gross Trade: Rs. " + formatIndianCurrency(totTrade) + " | Deductions: Rs. " + formatIndianCurrency(totDeds), 140, 34.2);
+  doc.setTextColor(5, 120, 85);
+  doc.text("Net Realized: Rs. " + formatIndianCurrency(totNet) + " (Tariff: Rs. " + overallTariff.toFixed(3) + "/kWh)", 216, 34.2);
+
+  // 3. Clean Structured Table
+  const head = [[
+    "Operational Month",
+    "Role",
+    "Seasonal Profile",
+    "Days",
+    "Energy (MU)",
+    "Energy (MWh)",
+    "Gross Trade (Rs.)",
+    "Deductions (Rs.)",
+    "Net Realized Revenue (Rs.)",
+    "Net Tariff (Rs./kWh)",
+    "Avg Daily Net (Rs./d)",
+    "MoM Growth",
+    "Seasonal Var"
+  ]];
+
+  const body = summaryRows.map(x => [
+    x.monthLabel,
+    x.isCurrentMonth ? "Active Focus" : "Historical",
+    x.seasonCategory,
+    String(x.days),
+    x.mu.toFixed(3),
+    x.q.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    formatIndianCurrency(x.tradeValue),
+    formatIndianCurrency(x.totalDeductions),
+    formatIndianCurrency(x.netRevenue),
+    x.effectiveTariff.toFixed(3),
+    formatIndianCurrency(x.avgDailyNet),
+    x.momPct !== null ? ((x.momPct >= 0 ? "+" : "") + x.momPct.toFixed(1) + "%") : "-",
+    (x.seasonalVarPct >= 0 ? "+" : "") + x.seasonalVarPct.toFixed(1) + "% vs avg"
+  ]);
+
+  const foot = [[
+    "Portfolio Total",
+    "-",
+    "All Seasons",
+    String(totDays),
+    totMu.toFixed(3),
+    totQ.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    formatIndianCurrency(totTrade),
+    formatIndianCurrency(totDeds),
+    formatIndianCurrency(totNet),
+    overallTariff.toFixed(3),
+    formatIndianCurrency(avgMonthlyRev) + "/mo",
+    "-",
+    "100% Base"
+  ]];
+
+  doc.autoTable({
+    head: head,
+    body: body,
+    foot: foot,
+    startY: 40.5,
+    theme: "grid",
+    styles: { fontSize: 6.8, cellPadding: 2, halign: "right", textColor: [30, 41, 59] },
+    headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 7, fontStyle: 'bold', halign: 'right' },
+    columnStyles: {
+      0: { halign: "left", fontStyle: "bold" },
+      1: { halign: "center" },
+      2: { halign: "left" },
+      3: { halign: "center" },
+      8: { halign: "right", fontStyle: "bold", textColor: [5, 120, 85] },
+      9: { halign: "right", fontStyle: "bold" },
+      11: { halign: "center" },
+      12: { halign: "center" }
+    },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 7 },
+    didDrawPage: function(data) {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text("THDC India Limited • Official Commercial Settlement Document | 11 MW Solar PV Project", 12, 203);
+      doc.text("Page " + data.pageNumber + " of " + pageCount, 285, 203, { align: "right" });
+    }
+  });
+
+  // 4. Executive Signatures block
+  let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 160;
+  if (finalY > 165) {
+    doc.addPage();
+    finalY = 20;
+  }
+  const sigY = finalY + 8;
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineDashPattern([1, 1], 0);
+  const boxW = 82;
+  [12, 107, 203].forEach(bx => doc.rect(bx, sigY, boxW, 16, 'S'));
+  doc.setLineDashPattern([], 0);
+
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(148, 163, 184);
+  doc.text("PREPARED BY", 15, sigY + 4.5);
+  doc.text("CHECKED & RECONCILED BY", 110, sigY + 4.5);
+  doc.text("APPROVED BY", 206, sigY + 4.5);
+
+  doc.setFontSize(7);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Executive (Commercial Settlement)", 15, sigY + 10);
+  doc.text("Sr. Manager (Power Trading & Billing)", 110, sigY + 10);
+  doc.text("Addl. General Manager / Project Head", 206, sigY + 10);
+
+  doc.setFontSize(6);
+  doc.setTextColor(100, 116, 139);
+  doc.text("THDCIL Khurja / Tehri Solar", 15, sigY + 13.5);
+  doc.text("Commercial Directorate, THDCIL", 110, sigY + 13.5);
+  doc.text("11 MW Solar Project, THDCIL", 206, sigY + 13.5);
+
+  doc.save("THDC_11MW_Billing_Summary_Monthly_Comparison.pdf");
 }
 
 function renderBilling() {
@@ -1196,16 +2501,27 @@ function renderBilling() {
   $("pxRateInput").value=pxRate;
   $("pxGstRateInput").value=pxGst;
 
+  // Render Monthly Billing Summary & Seasonal Comparison
+  renderBillingSummary();
+
   const allDates=[...new Set(sortedTrades().map(x=>x.date))].sort();
   const bs=$('billingStartDate'), be=$('billingEndDate');
   if(bs && !bs.value && allDates.length) bs.value=allDates[0];
   if(be && !be.value && allDates.length) be.value=allDates[allDates.length-1];
 
   const rows=buildBillingRows();
+  const segVal=$('billingMarketSeg')?.value||$('billingSegFilter')?.value||'ALL';
+  const txnVal=$('billingTxnType')?.value||$('billingTxnFilter')?.value||'ALL';
   const rangeMsg=$('billingRangeMsg');
-  if(rangeMsg) rangeMsg.textContent=(bs?.value&&be?.value)?`Billing period: ${formatInvoiceDate(bs.value)} to ${formatInvoiceDate(be.value)}`:'All loaded dates';
+  if(rangeMsg) {
+    let msg = (bs?.value&&be?.value)?`Annexure period: ${formatInvoiceDate(bs.value)} to ${formatInvoiceDate(be.value)}`:'All loaded dates';
+    if(segVal !== 'ALL') msg += ` • Segment: ${segVal}`;
+    if(txnVal !== 'ALL') msg += ` • Txn: ${txnVal}`;
+    rangeMsg.textContent = msg;
+  }
+
   if(!rows.length){
-    $("billRows").innerHTML='<tr><td colspan="13" class="p-8 text-center text-slate-400">No billing data. Upload Sheet1 and Run Analysis first.</td></tr>';
+    $("billRows").innerHTML='<tr><td colspan="13" class="p-8 text-center text-slate-400">No billing data found for selected period and filters.</td></tr>';
     $("billFoot").innerHTML="";
     $("billKpis").innerHTML="";
     return;
@@ -1224,12 +2540,28 @@ function renderBilling() {
     {t:"Final NVVN Net",v:money(totals.nvvnNet)}
   ].map(k=>`<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200"><p class="text-[10px] font-bold uppercase text-slate-500">${k.t}</p><h3 class="text-lg font-black text-slate-800 mt-1">${k.v}</h3></div>`).join("");
 
+  const getSegBadge = s => {
+    const map = {
+      'G-DAM': 'bg-teal-100 text-teal-800 border-teal-300',
+      'DAM': 'bg-blue-100 text-blue-800 border-blue-300',
+      'TAM': 'bg-purple-100 text-purple-800 border-purple-300',
+      'RTM': 'bg-amber-100 text-amber-800 border-amber-300'
+    };
+    const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold border ${cls}">${s}</span>`;
+  };
+
+  const getTxnBadge = tx => {
+    const cls = tx === 'SELL' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-rose-100 text-rose-800 border-rose-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold border ${cls}">${tx}</span>`;
+  };
+
   $("billRows").innerHTML=rows.map(x=>`
     <tr class="hover:bg-slate-50 font-medium">
       <td class="p-2 border text-center">${x.sl}</td>
       <td class="p-2 border text-left font-bold">${formatInvoiceDate(x.date)}</td>
-      <td class="p-2 border text-center">SELL</td>
-      <td class="p-2 border text-center">RTM</td>
+      <td class="p-2 border text-center">${getTxnBadge(x.txn)}</td>
+      <td class="p-2 border text-center">${getSegBadge(x.seg)}</td>
       <td class="p-2 border">${x.q.toFixed(4)}</td>
       <td class="p-2 border">${x.tradeValue.toFixed(4)}</td>
       <td class="p-2 border text-rose-600">${x.corridor.toFixed(4)}</td>
@@ -1242,9 +2574,10 @@ function renderBilling() {
     </tr>`).join("");
 
   const f=v=>Number(v||0).toFixed(4);
+  const dominantTxn = rows[0]?.txn || "SALE";
   $("billFoot").innerHTML=`
     <tr class="bg-slate-100 font-extrabold">
-      <td class="p-2 border" colspan="4">Sub Total (SALE)</td>
+      <td class="p-2 border" colspan="4">Sub Total (${dominantTxn})</td>
       <td class="p-2 border">${f(totals.q)}</td><td class="p-2 border">${f(totals.tradeValue)}</td>
       <td class="p-2 border">${f(totals.corridor)}</td><td class="p-2 border">${f(totals.pxFee)}</td>
       <td class="p-2 border">${f(totals.pxGst)}</td><td class="p-2 border">${f(totals.powerExchangeNet)}</td>
@@ -1263,9 +2596,11 @@ function renderBilling() {
 
 function exportBillingExcel() {
   const rows=buildBillingRows();
+  const segVal=$('billingMarketSeg')?.value||$('billingSegFilter')?.value||'ALL';
+  const txnVal=$('billingTxnType')?.value||$('billingTxnFilter')?.value||'ALL';
   const aoa=[
     ["Annexure 1 to NVVN Reimbursement Invoice"],
-    ["Client: THDC INDIA LIMITED","Portfolio: N2UP0NVN0289"],
+    ["Client: THDC INDIA LIMITED","Portfolio: N2UP0NVN0289", `Segment Filter: ${segVal}`, `Txn Filter: ${txnVal}`],
     [],
     ["Sl.No.","Delivery (Schedule) Date","Txn Type (Sale/Buy)","Mkt Seg#","Traded Quantum","Trade Value","Corridor Charges","Power Exchange Fees","GST on Power Exchange Fees","Net receivable (+) / payable (-) Power Exchange","NVVN Margin","GST on NVVN Margin","Net receivable (+) / payable (-) NVVN"],
     ...rows.map(x=>[x.sl,formatInvoiceDate(x.date),x.txn,x.seg,x.q,x.tradeValue,x.corridor,x.pxFee,x.pxGst,x.powerExchangeNet,x.nvvnMargin,x.nvvnGst,x.nvvnNet])
@@ -1273,20 +2608,196 @@ function exportBillingExcel() {
   const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"]=[8,18,16,10,15,16,16,18,22,27,16,19,27].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Annexure");
-  XLSX.writeFile(wb,"THDC_11MW_NVVN_Annexure_Billing.xlsx");
+  XLSX.writeFile(wb,`THDC_11MW_NVVN_Annexure_Billing_${segVal}_${txnVal}.xlsx`);
 }
 
 function exportBillingPDF() {
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF("landscape","mm","a3");
-  doc.setFontSize(15); doc.text("Annexure 1 to NVVN Reimbursement Invoice",14,14);
-  doc.setFontSize(9); doc.text("Client: THDC INDIA LIMITED | Portfolio: N2UP0NVN0289 | SELL / RTM",14,20);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("landscape", "mm", "a4");
+
+  const rows = typeof buildBillingRows === "function" ? buildBillingRows() : [];
+  if (!rows || !rows.length) {
+    alert("No billing records found for the selected period.");
+    return;
+  }
+
+  const segVal = $('billingMarketSeg')?.value || $('billingSegFilter')?.value || 'ALL';
+  const txnVal = $('billingTxnType')?.value || $('billingTxnFilter')?.value || 'ALL';
+  const bs = $('billingStartDate')?.value || '';
+  const be = $('billingEndDate')?.value || '';
+  const sDate = bs ? formatInvoiceDate(bs) : 'Earliest';
+  const eDate = be ? formatInvoiceDate(be) : 'Latest';
+
+  // 1. Corporate Header with Official THDC India Limited Logo (True aspect ratio 4.145:1)
+  const logo = (typeof window !== "undefined" && window.THDC_LOGO_BASE64) || thdcilLogoDataUrl;
+  if (logo) {
+    try {
+      doc.addImage(logo, "PNG", 10, 8, 53.9, 13);
+    } catch (e) {
+      console.warn("Logo render error in PDF:", e);
+    }
+  }
+
+  doc.setFontSize(12);
+  doc.setTextColor(15, 43, 92);
+  doc.setFont('helvetica', 'bold');
+  doc.text("THDC INDIA LIMITED", 68, 13);
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.text("A Schedule 'A' Mini Ratna CPSU • Govt. of India Enterprise | Portfolio: N2UP0NVN0289", 68, 17);
+  doc.text("11 MW Solar PV Project • Annexure 1 to NVVN Reimbursement Invoice (SELL / RTM)", 68, 20.5);
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Ref: THDC/11MW/NVVN/ANNEX-1/" + new Date().getFullYear(), 287, 12, { align: "right" });
+  doc.text("Date Generated: " + new Date().toLocaleDateString('en-IN'), 287, 16, { align: "right" });
+  doc.text("Period: " + sDate + " to " + eDate, 287, 20, { align: "right" });
+  doc.text("Market: " + segVal + " | Txn: " + txnVal, 287, 24, { align: "right" });
+
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.4);
+  doc.line(10, 26, 287, 26);
+
+  // 2. Executive Stat Strip
+  const totals = rows.reduce((s, x) => ({
+    q: s.q + x.q, tradeValue: s.tradeValue + x.tradeValue, corridor: s.corridor + x.corridor,
+    pxFee: s.pxFee + x.pxFee, pxGst: s.pxGst + x.pxGst, powerExchangeNet: s.powerExchangeNet + x.powerExchangeNet,
+    nvvnMargin: s.nvvnMargin + x.nvvnMargin, nvvnGst: s.nvvnGst + x.nvvnGst, nvvnNet: s.nvvnNet + x.nvvnNet
+  }), { q: 0, tradeValue: 0, corridor: 0, pxFee: 0, pxGst: 0, powerExchangeNet: 0, nvvnMargin: 0, nvvnGst: 0, nvvnNet: 0 });
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(10, 28, 277, 9, 1.5, 1.5, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(10, 28, 277, 9, 1.5, 1.5, 'S');
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text("Settlement Records: " + rows.length, 14, 33.8);
+  doc.text("Scheduled Energy: " + totals.q.toFixed(4) + " MWh", 56, 33.8);
+  doc.text("Gross Trade: Rs. " + formatIndianCurrency(totals.tradeValue), 112, 33.8);
+  doc.text("Corridor & Fees: Rs. " + formatIndianCurrency(totals.corridor + totals.pxFee + totals.pxGst), 170, 33.8);
+  doc.setTextColor(5, 120, 85);
+  doc.text("Final NVVN Net: Rs. " + formatIndianCurrency(totals.nvvnNet), 232, 33.8);
+
+  // 3. Clean Table
+  const head = [[
+    "Sl", "Delivery Date", "Txn", "Seg", "Quantum (MWh)", "Trade Value (Rs.)",
+    "Corridor (Rs.)", "PX Fee (Rs.)", "PX GST (Rs.)", "Net PX (Rs.)",
+    "NVVN Fee (Rs.)", "NVVN GST (Rs.)", "Net NVVN (Rs.)"
+  ]];
+
+  const body = rows.map(x => [
+    x.sl,
+    formatInvoiceDate(x.date),
+    x.txn,
+    x.seg,
+    x.q.toFixed(4),
+    formatIndianCurrency(x.tradeValue),
+    formatIndianCurrency(x.corridor),
+    formatIndianCurrency(x.pxFee),
+    formatIndianCurrency(x.pxGst),
+    formatIndianCurrency(x.powerExchangeNet),
+    formatIndianCurrency(x.nvvnMargin),
+    formatIndianCurrency(x.nvvnGst),
+    formatIndianCurrency(x.nvvnNet)
+  ]);
+
+  const dominantTxn = rows[0]?.txn || "SALE";
+  const foot = [
+    [
+      "Sub Total (" + dominantTxn + ")", "", "", "",
+      totals.q.toFixed(4),
+      formatIndianCurrency(totals.tradeValue),
+      formatIndianCurrency(totals.corridor),
+      formatIndianCurrency(totals.pxFee),
+      formatIndianCurrency(totals.pxGst),
+      formatIndianCurrency(totals.powerExchangeNet),
+      formatIndianCurrency(totals.nvvnMargin),
+      formatIndianCurrency(totals.nvvnGst),
+      formatIndianCurrency(totals.nvvnNet)
+    ],
+    [
+      "Grand Total", "", "", "",
+      totals.q.toFixed(4),
+      formatIndianCurrency(totals.tradeValue),
+      formatIndianCurrency(totals.corridor),
+      formatIndianCurrency(totals.pxFee),
+      formatIndianCurrency(totals.pxGst),
+      formatIndianCurrency(totals.powerExchangeNet),
+      formatIndianCurrency(totals.nvvnMargin),
+      formatIndianCurrency(totals.nvvnGst),
+      formatIndianCurrency(totals.nvvnNet)
+    ]
+  ];
+
   doc.autoTable({
-    html:"#billingTable",startY:25,theme:"grid",
-    styles:{fontSize:6.5,cellPadding:1.5,halign:"right"},
-    headStyles:{fillColor:[55,65,81],fontSize:6.5},
-    columnStyles:{0:{halign:"center"},1:{halign:"left"},2:{halign:"center"},3:{halign:"center"}}
+    head: head,
+    body: body,
+    foot: foot,
+    startY: 39.5,
+    theme: "grid",
+    styles: { fontSize: 6.2, cellPadding: 1.6, halign: "right", textColor: [30, 41, 59] },
+    headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.5, fontStyle: 'bold', halign: 'right' },
+    columnStyles: {
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 20, halign: "left", fontStyle: "bold" },
+      2: { cellWidth: 12, halign: "center" },
+      3: { cellWidth: 16, halign: "center" },
+      4: { cellWidth: 19, halign: "right" },
+      5: { cellWidth: 23, halign: "right" },
+      6: { cellWidth: 17, halign: "right" },
+      7: { cellWidth: 16, halign: "right" },
+      8: { cellWidth: 15, halign: "right" },
+      9: { cellWidth: 24, halign: "right", fontStyle: "bold" },
+      10: { cellWidth: 17, halign: "right" },
+      11: { cellWidth: 15, halign: "right" },
+      12: { cellWidth: 25, halign: "right", fontStyle: "bold", textColor: [5, 120, 85] }
+    },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.5 },
+    didDrawPage: function(data) {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text("THDC India Limited • Official Commercial Settlement Document | Annexure 1 (NVVN Ledger)", 10, 203);
+      doc.text("Page " + data.pageNumber + " of " + pageCount, 287, 203, { align: "right" });
+    }
   });
+
+  // 4. Sign-off Boxes
+  let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 160;
+  if (finalY > 165) {
+    doc.addPage();
+    finalY = 20;
+  }
+  const sigY = finalY + 8;
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineDashPattern([1, 1], 0);
+  const boxW = 84;
+  [10, 106, 203].forEach(bx => doc.rect(bx, sigY, boxW, 16, 'S'));
+  doc.setLineDashPattern([], 0);
+
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(148, 163, 184);
+  doc.text("PREPARED BY", 13, sigY + 4.5);
+  doc.text("CHECKED & RECONCILED BY", 109, sigY + 4.5);
+  doc.text("APPROVED BY", 206, sigY + 4.5);
+
+  doc.setFontSize(7);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Executive (Commercial Settlement)", 13, sigY + 10);
+  doc.text("Sr. Manager (Power Trading & Billing)", 109, sigY + 10);
+  doc.text("Addl. General Manager / Project Head", 206, sigY + 10);
+
+  doc.setFontSize(6);
+  doc.setTextColor(100, 116, 139);
+  doc.text("THDCIL Khurja / Tehri Solar", 13, sigY + 13.5);
+  doc.text("Commercial Directorate, THDCIL", 109, sigY + 13.5);
+  doc.text("11 MW Solar Project, THDCIL", 206, sigY + 13.5);
+
   doc.save("THDC_11MW_NVVN_Annexure_Billing.pdf");
 }
 
@@ -1304,7 +2815,62 @@ function getGroupingKey(dateStr, type) {
 function getReportDateFilteredTrades(){
   const s=$("reportStartDate")?.value || "";
   const e=$("reportEndDate")?.value || "";
-  return sortedTrades().filter(t=>(!s||t.date>=s)&&(!e||t.date<=e));
+  const seg=$("reportSeg")?.value || "ALL";
+  const txn=$("reportTxn")?.value || "ALL";
+  return sortedTrades().filter(t=>{
+    if(s && t.date < s) return false;
+    if(e && t.date > e) return false;
+    if(seg !== "ALL" && (t.seg || "G-DAM") !== seg) return false;
+    if(txn !== "ALL" && (t.txn || "SELL") !== txn) return false;
+    return true;
+  });
+}
+
+function setReportPreset(p) {
+  document.querySelectorAll('.report-preset-btn').forEach(b => {
+    b.classList.remove('active', 'bg-blue-50', 'text-blue-700', 'border-blue-200');
+    b.classList.add('bg-slate-100', 'text-slate-700');
+  });
+  if (window.event && window.event.currentTarget) {
+    window.event.currentTarget.classList.add('active', 'bg-blue-50', 'text-blue-700', 'border-blue-200');
+    window.event.currentTarget.classList.remove('bg-slate-100', 'text-slate-700');
+  }
+
+  const all = sortedTrades();
+  if (!all.length) {
+    renderReports();
+    return;
+  }
+  const dates = [...new Set(all.map(t => t.date))].sort();
+  const latestDateStr = dates[dates.length - 1];
+  const latestD = new Date(latestDateStr);
+
+  if (p === 'all') {
+    $("reportStartDate").value = "";
+    $("reportEndDate").value = "";
+  } else if (p === 'month') {
+    const y = latestD.getFullYear();
+    const m = String(latestD.getMonth() + 1).padStart(2, '0');
+    $("reportStartDate").value = `${y}-${m}-01`;
+    $("reportEndDate").value = latestDateStr;
+  } else if (p === '30d') {
+    const past = new Date(latestD.getTime() - 29 * 86400000);
+    $("reportStartDate").value = past.toISOString().slice(0, 10);
+    $("reportEndDate").value = latestDateStr;
+  } else if (p === 'quarter') {
+    const y = latestD.getFullYear();
+    const q = Math.floor(latestD.getMonth() / 3);
+    const startM = String(q * 3 + 1).padStart(2, '0');
+    $("reportStartDate").value = `${y}-${startM}-01`;
+    $("reportEndDate").value = latestDateStr;
+  } else if (p === 'fy') {
+    const y = latestD.getFullYear();
+    const m = latestD.getMonth();
+    const fyStart = m < 3 ? y - 1 : y;
+    $("reportStartDate").value = `${fyStart}-04-01`;
+    $("reportEndDate").value = latestDateStr;
+  }
+  renderReports();
 }
 
 function setReportPeriodFromData(){
@@ -1318,19 +2884,25 @@ function setReportPeriodFromData(){
 function clearReportPeriod(){
   $("reportStartDate").value="";
   $("reportEndDate").value="";
+  if($("reportSeg")) $("reportSeg").value="ALL";
+  if($("reportTxn")) $("reportTxn").value="ALL";
   renderReports();
 }
 
 function renderReports() {
-  let groupBy=$("reportGroup").value;
+  let groupBy=$("reportGroup")?.value || "day";
   let map={};
   const trades=getReportDateFilteredTrades();
+  const selectedSeg = $("reportSeg")?.value || "ALL";
+  const selectedTxn = $("reportTxn")?.value || "ALL";
 
   let dailyMap={};
   trades.forEach(t=>{
-    if(!dailyMap[t.date]) dailyMap[t.date]={q:0,r:0};
+    if(!dailyMap[t.date]) dailyMap[t.date]={q:0,r:0,segs:new Set(),txns:new Set()};
     dailyMap[t.date].q+=qtyMwh(t);
     dailyMap[t.date].r+=amount(t);
+    dailyMap[t.date].segs.add(t.seg || "G-DAM");
+    dailyMap[t.date].txns.add(t.txn || "SELL");
   });
 
   Object.keys(dailyMap).sort().forEach(d=>{
@@ -1342,63 +2914,344 @@ function renderReports() {
     let nvM=roundPrecise(dayData.q*1000*nvvnRate);
     let nvG=roundPrecise(nvM*(nvvnGst/100));
     let key=getGroupingKey(d,groupBy);
-    if(!map[key]) map[key]={q:0,r:0,grid:0,px:0,nvvn:0};
+    if(!map[key]) map[key]={q:0,r:0,grid:0,px:0,nvvn:0,segs:new Set(),txns:new Set()};
     map[key].q+=dayData.q;
     map[key].r+=dayData.r;
     map[key].grid+=gridChg;
     map[key].px+=(pxM+pxG);
     map[key].nvvn+=(nvM+nvG);
+    dayData.segs.forEach(s=>map[key].segs.add(s));
+    dayData.txns.forEach(tx=>map[key].txns.add(tx));
   });
 
-  $("reportRows").innerHTML=Object.entries(map).map(([k,x])=>{
-    let w=x.q?x.r/x.q:0;
-    let totalDed=roundPrecise(x.grid+x.px+x.nvvn);
-    let net=roundPrecise(x.r-totalDed);
-    return `<tr class="hover:bg-slate-50 font-medium">
+  let totQ=0, totR=0, totGrid=0, totPx=0, totNvvn=0, totDed=0, totNet=0;
+
+  const getSegBadge = s => {
+    const map = {
+      'G-DAM': 'bg-teal-100 text-teal-800 border-teal-300',
+      'DAM': 'bg-blue-100 text-blue-800 border-blue-300',
+      'TAM': 'bg-purple-100 text-purple-800 border-purple-300',
+      'RTM': 'bg-amber-100 text-amber-800 border-amber-300'
+    };
+    const cls = map[s] || 'bg-slate-100 text-slate-800 border-slate-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold border ${cls}">${s}</span>`;
+  };
+
+  const getTxnBadge = tx => {
+    const cls = tx === 'SELL' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-rose-100 text-rose-800 border-rose-300';
+    return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold border ${cls}">${tx}</span>`;
+  };
+
+  const rowKeys = Object.keys(map);
+  const rowsHtml = rowKeys.map(k => {
+    const x = map[k];
+    let w = x.q ? x.r / x.q : 0;
+    let rowDed = roundPrecise(x.grid + x.px + x.nvvn);
+    let rowNet = roundPrecise(x.r - rowDed);
+    let netTariff = x.q ? rowNet / (x.q * 1000) : 0;
+
+    totQ += x.q;
+    totR += x.r;
+    totGrid += x.grid;
+    totPx += x.px;
+    totNvvn += x.nvvn;
+    totDed += rowDed;
+    totNet += rowNet;
+
+    const segStr = selectedSeg !== "ALL" ? selectedSeg : (x.segs.size ? [...x.segs].join(",") : "G-DAM");
+    const txnStr = selectedTxn !== "ALL" ? selectedTxn : (x.txns.size ? [...x.txns].join(",") : "SELL");
+
+    return `<tr class="hover:bg-blue-50/40 transition font-medium border-b border-slate-100">
       <td class="p-3 text-left font-bold text-slate-800">${k}</td>
+      <td class="p-3 text-center">${getSegBadge(segStr)}</td>
+      <td class="p-3 text-center">${getTxnBadge(txnStr)}</td>
       <td class="p-3 text-blue-700 font-bold">${x.q.toFixed(3)}</td>
       <td class="p-3 text-slate-600">₹${w.toFixed(2)}</td>
-      <td class="p-3 text-emerald-700 font-bold">₹${x.r.toFixed(2)}</td>
+      <td class="p-3 text-slate-900 font-bold">₹${x.r.toFixed(2)}</td>
       <td class="p-3 text-rose-600 font-semibold">₹${x.grid.toFixed(2)}</td>
-      <td class="p-3 text-amber-600 font-semibold">₹${x.px.toFixed(2)}</td>
-      <td class="p-3 text-blue-600 font-semibold">₹${x.nvvn.toFixed(2)}</td>
-      <td class="p-3 text-rose-700 font-bold">₹${totalDed.toFixed(2)}</td>
-      <td class="p-3 text-emerald-700 font-black bg-emerald-50/50">₹${net.toFixed(2)}</td>
+      <td class="p-3 text-amber-700 font-semibold">₹${x.px.toFixed(2)}</td>
+      <td class="p-3 text-blue-700 font-semibold">₹${x.nvvn.toFixed(2)}</td>
+      <td class="p-3 text-rose-700 font-bold">₹${rowDed.toFixed(2)}</td>
+      <td class="p-3 text-emerald-800 font-extrabold bg-emerald-50/60">₹${rowNet.toFixed(2)}</td>
+      <td class="p-3 text-indigo-700 font-bold bg-indigo-50/40">₹${netTariff.toFixed(3)}</td>
     </tr>`;
-  }).join("") || '<tr><td colspan="9" class="p-6 text-center text-slate-400">No data available for selected period</td></tr>';
+  }).join("");
 
-  const s=$("reportStartDate")?.value||"All";
-  const e=$("reportEndDate")?.value||"All";
+  $("reportRows").innerHTML = rowsHtml || '<tr><td colspan="12" class="p-8 text-center text-slate-400 font-medium">No settlement records found for selected period and filters.</td></tr>';
+
+  let totAvgMcp = totQ ? totR / totQ : 0;
+  let totTariff = totQ ? totNet / (totQ * 1000) : 0;
+
+  // GRAND TOTAL IN FOOTER
+  const foot = $("reportFoot");
+  if (foot) {
+    if (rowKeys.length > 0) {
+      foot.innerHTML = `<tr>
+        <td class="p-3 text-left font-black text-slate-900 uppercase">Grand Total (${rowKeys.length} Lines)</td>
+        <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedSeg}</td>
+        <td class="p-3 text-center text-[10px] font-bold text-slate-500">${selectedTxn}</td>
+        <td class="p-3 font-black text-blue-900">${totQ.toFixed(3)}</td>
+        <td class="p-3 text-slate-700 font-bold">₹${totAvgMcp.toFixed(2)}</td>
+        <td class="p-3 font-black text-slate-950">₹${totR.toFixed(2)}</td>
+        <td class="p-3 font-bold text-rose-700">₹${totGrid.toFixed(2)}</td>
+        <td class="p-3 font-bold text-amber-800">₹${totPx.toFixed(2)}</td>
+        <td class="p-3 font-bold text-blue-800">₹${totNvvn.toFixed(2)}</td>
+        <td class="p-3 font-black text-rose-900">₹${totDed.toFixed(2)}</td>
+        <td class="p-3 font-black text-emerald-900 bg-emerald-100/70">₹${totNet.toFixed(2)}</td>
+        <td class="p-3 font-black text-indigo-900 bg-indigo-100/60">₹${totTariff.toFixed(3)}</td>
+      </tr>`;
+    } else {
+      foot.innerHTML = '';
+    }
+  }
+
+  // SUMMARY CARDS RIBBON
+  const summaryCards = $("reportSummaryCards");
+  if (summaryCards) {
+    const dedPercent = totR ? ((totDed / totR) * 100).toFixed(1) : "0.0";
+    summaryCards.innerHTML = [
+      {
+        t: "Total Scheduled Energy",
+        v: (totQ / 1000).toFixed(3) + " MU",
+        sub: totQ.toFixed(2) + " MWh Delivered",
+        c: "blue",
+        i: "fa-bolt"
+      },
+      {
+        t: "Gross Market Value",
+        v: money(totR),
+        sub: "IEX Gross Traded Value",
+        c: "emerald",
+        i: "fa-sack-dollar"
+      },
+      {
+        t: "Commercial Deductions",
+        v: money(totDed),
+        sub: dedPercent + "% of Gross (Grid+PX+NVVN)",
+        c: "rose",
+        i: "fa-receipt"
+      },
+      {
+        t: "Net Receivable to THDCIL",
+        v: money(totNet),
+        sub: "Effective Tariff: ₹" + totTariff.toFixed(3) + "/kWh",
+        c: "indigo",
+        i: "fa-scale-balanced"
+      }
+    ].map(card => `
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">${card.t}</p>
+          <h3 class="text-xl font-black text-slate-800 mt-0.5">${card.v}</h3>
+          <p class="text-[10px] font-semibold text-slate-400 mt-0.5">${card.sub}</p>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-${card.c}-50 text-${card.c}-600 flex items-center justify-center text-xl shrink-0 border border-${card.c}-100">
+          <i class="fa-solid ${card.i}"></i>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  const s=$("reportStartDate")?.value||"Start";
+  const e=$("reportEndDate")?.value||"Present";
   const note=$("reportPeriodNote");
-  if(note) note.textContent=`Report Period: ${s} → ${e} • ${trades.length} trade rows`;
+  if(note) {
+    const daysCount = new Set(trades.map(t=>t.date)).size;
+    note.innerHTML = `<span class="font-bold text-slate-700">Active Scope:</span> ${s} → ${e} • Segment: <span class="font-bold text-blue-700">${selectedSeg}</span> • Txn: <span class="font-bold text-emerald-700">${selectedTxn}</span> • <span class="font-bold text-blue-700">${trades.length}</span> trades across <span class="font-bold text-blue-700">${daysCount}</span> days • View: <span class="uppercase font-bold text-slate-700">${groupBy}</span>`;
+  }
 }
 
 function exportReportExcel() {
-  let wb=XLSX.utils.table_to_book(document.getElementById("reportsTable"),{sheet:"Summary"});
-  const s=$("reportStartDate").value||"ALL", e=$("reportEndDate").value||"ALL";
-  XLSX.writeFile(wb,`THDC_11MW_${$("reportGroup").value}_${s}_TO_${e}_Report.xlsx`);
+  const groupBy = $("reportGroup")?.value || "day";
+  const s = $("reportStartDate")?.value || "ALL";
+  const e = $("reportEndDate")?.value || "ALL";
+  const segVal = $("reportSeg")?.value || "ALL";
+  const txnVal = $("reportTxn")?.value || "ALL";
+
+  // Build clean AoA workbook
+  const aoa = [
+    ["THDC INDIA LIMITED (A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise)"],
+    ["11 MW Solar PV Power Plant — Commercial Settlement & Energy Reconciliation Statement"],
+    [`Portfolio ID: N2UP0NVN0289`, `Trader: NVVN Limited`, `Report Period: ${s} to ${e}`, `Grouping View: ${groupBy.toUpperCase()}`],
+    [`Market Segment Filter: ${segVal}`, `Transaction Type Filter: ${txnVal}`, `Rates Applied: PX Fee ₹${pxRate}/kWh (+${pxGst}% GST) | NVVN Margin ₹${nvvnRate}/kWh (+${nvvnGst}% GST)`],
+    [`Generated On: ${new Date().toLocaleString('en-IN')}`],
+    [],
+    ["Period / Date", "Market Segment", "Transaction Type", "Traded Quantum (MWh)", "Avg MCP (₹/MWh)", "Gross Trade Value (₹)", "Grid Charges (₹)", "PX Fees + GST (₹)", "NVVN Margin + GST (₹)", "Total Deductions (₹)", "Net Receivable (₹)", "Effective Net Tariff (₹/kWh)"]
+  ];
+
+  // Populate data rows from DOM
+  const rows = document.querySelectorAll("#reportRows tr");
+  rows.forEach(r => {
+    const cols = Array.from(r.querySelectorAll("td")).map(td => td.innerText.replace(/[₹,]/g, "").trim());
+    if (cols.length === 12) {
+      aoa.push([
+        cols[0],
+        cols[1],
+        cols[2],
+        parseFloat(cols[3]) || 0,
+        parseFloat(cols[4]) || 0,
+        parseFloat(cols[5]) || 0,
+        parseFloat(cols[6]) || 0,
+        parseFloat(cols[7]) || 0,
+        parseFloat(cols[8]) || 0,
+        parseFloat(cols[9]) || 0,
+        parseFloat(cols[10]) || 0,
+        parseFloat(cols[11]) || 0
+      ]);
+    }
+  });
+
+  // Footer Grand Total
+  const footRow = document.querySelector("#reportFoot tr");
+  if (footRow) {
+    const footCols = Array.from(footRow.querySelectorAll("td")).map(td => td.innerText.replace(/[₹,]/g, "").trim());
+    if (footCols.length === 12) {
+      aoa.push([]);
+      aoa.push([
+        "GRAND TOTAL",
+        footCols[1],
+        footCols[2],
+        parseFloat(footCols[3]) || 0,
+        parseFloat(footCols[4]) || 0,
+        parseFloat(footCols[5]) || 0,
+        parseFloat(footCols[6]) || 0,
+        parseFloat(footCols[7]) || 0,
+        parseFloat(footCols[8]) || 0,
+        parseFloat(footCols[9]) || 0,
+        parseFloat(footCols[10]) || 0,
+        parseFloat(footCols[11]) || 0
+      ]);
+    }
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [
+    { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 20 },
+    { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+    { wch: 20 }, { wch: 18 }
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, "Commercial Settlement");
+  XLSX.writeFile(wb, `THDC_11MW_Settlement_${groupBy.toUpperCase()}_${segVal}_${txnVal}_${s}_TO_${e}.xlsx`);
 }
 
 function exportReportPDF() {
   const { jsPDF } = window.jspdf; 
-  const doc = new jsPDF('landscape');
-  doc.setFontSize(14); 
-  doc.setTextColor(30, 64, 175); 
-  doc.text("THDCIL 11 MW Solar — Performance & Settlement Report", 14, 15);
-  const rs=$("reportStartDate").value||"ALL", re=$("reportEndDate").value||"ALL";
-  doc.text(`Report Period: ${rs} to ${re}`,14,20);
-  doc.setFontSize(9); 
-  doc.setTextColor(100); 
-  doc.text(`Generated: ${new Date().toLocaleDateString()} | NVVNL Rate: ₹${nvvnRate}/kWh (+${nvvnGst}% GST) | PX Rate: ₹${pxRate}/kWh (+${pxGst}% GST)`, 14, 22);
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const rs = $("reportStartDate")?.value || "ALL";
+  const re = $("reportEndDate")?.value || "ALL";
+  const segVal = $("reportSeg")?.value || "ALL";
+  const txnVal = $("reportTxn")?.value || "ALL";
+  const groupBy = ($("reportGroup")?.value || "day").toUpperCase();
+
+  // 1. Corporate header with official THDC India Limited logo (Aspect ratio 4.145:1)
+  const logo = (typeof window !== "undefined" && window.THDC_LOGO_BASE64) || thdcilLogoDataUrl;
+  if (logo) {
+    try { 
+      doc.addImage(logo, 'PNG', 12, 8, 53.9, 13); 
+    } catch(e) {
+      console.warn("Logo render error in PDF:", e);
+    }
+  }
+
+  doc.setFontSize(12); 
+  doc.setTextColor(15, 43, 92); // Corporate Navy
+  doc.setFont('helvetica', 'bold');
+  doc.text("THDC INDIA LIMITED", 70, 13);
+
+  doc.setFontSize(7.5); 
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.text("A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise | Portfolio: N2UP0NVN0289", 70, 17);
+  doc.text("11 MW Solar Power Project • Commercial Settlement & Power Trading Reconciliation Report", 70, 20.5);
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Ref: THDC/11MW/COMM/SETTL/${new Date().getFullYear()}`, 285, 12, { align: 'right' });
+  doc.text(`Date Generated: ${new Date().toLocaleDateString('en-IN')}`, 285, 16, { align: 'right' });
+  doc.text(`Market: ${segVal} | Txn: ${txnVal}`, 285, 20, { align: 'right' });
+  doc.text(`Scope: ${rs} to ${re} | View: ${groupBy}`, 285, 24, { align: 'right' });
+
+  // Divider Line
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.4);
+  doc.line(12, 26, 285, 26);
+
+  // Executive Stat Box in PDF
+  const footRow = document.querySelector("#reportFoot tr");
+  if (footRow) {
+    const footCols = Array.from(footRow.querySelectorAll("td")).map(td => td.innerText.trim());
+    if (footCols.length >= 11) {
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(12, 28, 273, 9, 1.5, 1.5, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(12, 28, 273, 9, 1.5, 1.5, 'S');
+
+      doc.setFontSize(7.2);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Delivered: ${footCols[3] || '0.00'} MWh`, 16, 33.8);
+      doc.text(`Gross Trade: ${footCols[5] || '0.00'}`, 75, 33.8);
+      doc.text(`Deductions: ${footCols[9] || '0.00'}`, 142, 33.8);
+      doc.setTextColor(5, 120, 85);
+      doc.text(`Net Receivable: ${footCols[10] || '0.00'} (Tariff: ${footCols[11] || '0.00'}/u)`, 212, 33.8);
+    }
+  }
 
   doc.autoTable({ 
     html: '#reportsTable', 
-    startY: 32, 
+    startY: 39.5, 
     theme: 'grid', 
-    headStyles: { fillColor: [30, 58, 138], fontSize: 8 }, 
-    styles: { fontSize: 7.5, cellPadding: 2.5 } 
+    headStyles: { fillColor: [15, 43, 92], textColor: 255, fontSize: 6.8, fontStyle: 'bold', halign: 'right' }, 
+    styles: { fontSize: 6.2, cellPadding: 1.8, halign: 'right', textColor: [30, 41, 59] },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' } },
+    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 6.8 },
+    didDrawPage: function(data) {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text("THDC India Limited • Commercial Directorate • Certified True Extract of Settlement Records", 12, 203);
+      doc.text("Page " + data.pageNumber + " of " + pageCount, 285, 203, { align: 'right' });
+    }
   });
-  doc.save(`THDC_11MW_${$("reportGroup").value}_${rs}_TO_${re}_Report.pdf`);
+
+  // Corporate Sign-off Block on the last page
+  let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 160;
+  if (finalY > 165) {
+    doc.addPage();
+    finalY = 20;
+  }
+  const sigY = finalY + 8;
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineDashPattern([1, 1], 0);
+  
+  // 3 Sign-off Boxes
+  const boxW = 82;
+  [12, 107, 203].forEach(bx => {
+    doc.rect(bx, sigY, boxW, 16, 'S');
+  });
+  doc.setLineDashPattern([], 0);
+
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(148, 163, 184);
+  doc.text("PREPARED BY", 15, sigY + 4.5);
+  doc.text("CHECKED & RECONCILED BY", 110, sigY + 4.5);
+  doc.text("APPROVED BY", 206, sigY + 4.5);
+
+  doc.setFontSize(7);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Executive (Commercial Settlement)", 15, sigY + 10);
+  doc.text("Sr. Manager (Power Trading & Billing)", 110, sigY + 10);
+  doc.text("Addl. General Manager / Project Head", 206, sigY + 10);
+
+  doc.setFontSize(6);
+  doc.setTextColor(100, 116, 139);
+  doc.text("THDCIL Khurja / Tehri Solar", 15, sigY + 13.5);
+  doc.text("Commercial Directorate, THDCIL", 110, sigY + 13.5);
+  doc.text("11 MW Solar Project, THDCIL", 206, sigY + 13.5);
+
+  doc.save(`THDC_11MW_Settlement_${groupBy}_${rs}_TO_${re}.pdf`);
 }
 
 // OBLIGATIONS TAB
@@ -1549,6 +3402,7 @@ async function bootstrapSolarApp(){
     if($("tTo"))$("tTo").value=l;
     if($("oDate"))$("oDate").value=l;
     if($("clearDateInput"))$("clearDateInput").value=l;
+    if($("heatmapDate"))$("heatmapDate").value=l;
   }
   renderDashboard();
   if(sortedTrades().length){
@@ -1562,24 +3416,138 @@ bootstrapSolarApp();
 </script>
 
 <script>
+function getHeatmapColor(mw) {
+  if (!mw || mw <= 0.0001) {
+    return {
+      bg: "bg-slate-100 text-slate-400 border border-slate-200/70 hover:bg-slate-200",
+      tier: "Zero"
+    };
+  }
+  if (mw <= 2.0) {
+    return {
+      bg: "bg-amber-100 text-amber-900 border border-amber-200 hover:bg-amber-200",
+      tier: "Low"
+    };
+  } else if (mw <= 5.0) {
+    return {
+      bg: "bg-amber-200 text-amber-950 border border-amber-300 hover:bg-amber-300",
+      tier: "Moderate"
+    };
+  } else if (mw <= 7.5) {
+    return {
+      bg: "bg-amber-300 text-amber-950 border border-amber-400 hover:bg-amber-400 font-medium",
+      tier: "High"
+    };
+  } else if (mw <= 9.5) {
+    return {
+      bg: "bg-amber-400 text-amber-950 border border-amber-500 hover:bg-amber-500 font-bold",
+      tier: "Very High"
+    };
+  } else {
+    return {
+      bg: "bg-amber-500 text-white border border-amber-600 hover:bg-amber-600 font-extrabold shadow-sm",
+      tier: "Peak"
+    };
+  }
+}
+
+function selectHeatmapBlock(b, mw, mwh, mcp, amt, periodStr) {
+  const el = $("heatmapSelectedBlockInfo");
+  if (!el) return;
+  if (mw > 0) {
+    el.innerHTML = `<strong>Block ${b} (${periodStr}):</strong> <span class="text-amber-700 font-bold">${mw.toFixed(3)} MW</span> (${mwh.toFixed(3)} MWh) • MCP: <strong>₹${mcp.toFixed(2)}</strong> • Value: <strong class="text-emerald-700">₹${amt.toLocaleString("en-IN", {maximumFractionDigits: 2})}</strong>`;
+  } else {
+    el.innerHTML = `<strong>Block ${b} (${periodStr}):</strong> 0.000 MW • Night / Inactive Block`;
+  }
+}
+
+function hoverHeatmapBlock(b, mw, mwh, mcp, periodStr) {
+  const el = $("heatmapSelectedBlockInfo");
+  if (!el) return;
+  if (mw > 0) {
+    el.innerHTML = `Block ${b} (${periodStr}): <span class="font-bold text-amber-700">${mw.toFixed(3)} MW</span> (${mwh.toFixed(3)} MWh) • MCP: ₹${mcp.toFixed(2)}/MWh`;
+  } else {
+    el.innerHTML = `Block ${b} (${periodStr}): 0.000 MW (Zero output)`;
+  }
+}
+
 function render96BlockStudy(date){
-  const heat=$("heatmap96"), rows=$("blockStudyRows");
-  if(!heat||!rows)return;
-  const d=date || $("clearDateInput")?.value || sortedTrades()[0]?.date || "";
+  const heat=$("heatmap96");
+  if(!heat) return;
+  const rows=$("blockStudyRows");
+  let d = date || $("heatmapDate")?.value || $("clearDateInput")?.value || "";
+  if (!d) {
+    const all = sortedTrades();
+    if (all.length > 0) d = all[all.length - 1].date;
+  }
+  if ($("heatmapDate") && d) $("heatmapDate").value = d;
+  if ($("clearDateInput") && d && !$("clearDateInput").value) $("clearDateInput").value = d;
+
   const by={};
-  sortedTrades().filter(t=>t.date===d).forEach(t=>by[t.block]=t);
+  const seg = window.dashSeg || "ALL";
+  const txn = window.dashTxn || "ALL";
+  let dayTrades = sortedTrades().filter(t=>t.date===d);
+  if (seg !== "ALL") dayTrades = dayTrades.filter(t=>(t.seg||"G-DAM")===seg);
+  if (txn !== "ALL") dayTrades = dayTrades.filter(t=>(t.txn||"SELL")===txn);
+  dayTrades.forEach(t=>by[t.block]=t);
+
+  const maxMw = dayTrades.reduce((mx, t) => Math.max(mx, Math.abs(t.qty || 0)), 0);
+  const totalValue = dayTrades.reduce((sum, t) => sum + amount(t), 0);
+
   const p=b=>{let s=(b-1)*15,e=b*15,f=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");return f(s)+"-"+(b===96?"24:00":f(e));};
+  
   heat.innerHTML=Array.from({length:96},(_,i)=>{
-    const b=i+1,t=by[b],m=t?Math.abs(t.qty)*0.25:0;
-    const cls=t?(m>2.75?"bg-blue-800":m>0?"bg-blue-500":"bg-slate-300"):"bg-slate-200";
-    return `<div class="${cls} rounded text-white text-[9px] h-7 flex items-center justify-center" title="Block ${b}: ${t?m.toFixed(3)+' MWh':'No Data'}">${b}</div>`;
+    const b=i+1, t=by[b];
+    const mw = t ? Math.abs(t.qty) : 0;
+    const m = mw * 0.25;
+    const mcp = t ? (+t.mcp || 0) : 0;
+    const amt = t ? amount(t) : 0;
+    const sTag = t ? (t.seg || "G-DAM") : "";
+    const txTag = t ? (t.txn || "SELL") : "";
+    const { bg } = getHeatmapColor(mw);
+    return `<div class="${bg} rounded-md p-1 min-h-[44px] flex flex-col items-center justify-between cursor-pointer transition-transform hover:scale-105 hover:z-10 hover:shadow select-none text-center"
+      onclick="selectHeatmapBlock(${b}, ${mw}, ${m}, ${mcp}, ${amt}, '${p(b)}')"
+      onmouseenter="hoverHeatmapBlock(${b}, ${mw}, ${m}, ${mcp}, '${p(b)}')"
+      title="Block ${b} (${p(b)}): ${mw>0 ? mw.toFixed(3)+' MW ('+m.toFixed(3)+' MWh)' : '0 MW'} | MCP: ₹${mcp.toFixed(2)}${t ? ' | ' + sTag + ' ' + txTag : ''}">
+      <span class="text-[8px] sm:text-[9px] font-mono leading-none opacity-80">B${b}</span>
+      <span class="text-[9px] sm:text-[10px] leading-tight font-bold">${mw > 0 ? (mw >= 10 ? mw.toFixed(1) : mw.toFixed(2)) : '—'}</span>
+      <span class="text-[7px] sm:text-[8px] leading-none opacity-70">${mw > 0 ? m.toFixed(2)+'u' : ''}</span>
+    </div>`;
   }).join("");
-  rows.innerHTML=Array.from({length:96},(_,i)=>{
-    const b=i+1,t=by[b],m=t?Math.abs(t.qty)*0.25:0;
-    return `<tr class="border-b"><td class="p-2 text-left font-bold">${b}</td><td class="p-2">${p(b)}</td><td class="p-2">${t?Math.abs(t.qty).toFixed(4):"—"}</td><td class="p-2">${m.toFixed(4)}</td><td class="p-2">${t?(+t.mcp).toFixed(2):"—"}</td><td class="p-2">${t?(m*t.mcp).toFixed(2):"0.00"}</td><td class="p-2 font-bold ${t?'text-emerald-600':'text-rose-500'}">${t?'VALID':'NO DATA'}</td></tr>`;
-  }).join("");
+
+  if(rows) {
+    rows.innerHTML=Array.from({length:96},(_,i)=>{
+      const b=i+1, t=by[b];
+      const mw = t ? Math.abs(t.qty) : 0;
+      const m = mw * 0.25;
+      const mcp = t ? (+t.mcp || 0) : 0;
+      const amt = t ? amount(t) : 0;
+      const sTag = t ? (t.seg || "G-DAM") : "—";
+      const txTag = t ? (t.txn || "SELL") : "—";
+      return `<tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="p-2 text-left font-bold text-slate-800">Block ${b}</td>
+        <td class="p-2 font-mono text-slate-500">${p(b)}</td>
+        <td class="p-2 font-semibold ${mw>0?'text-slate-800':'text-slate-400'}">${mw > 0 ? mw.toFixed(3) : "—"}</td>
+        <td class="p-2 font-bold ${m>0?'text-blue-700':'text-slate-400'}">${m > 0 ? m.toFixed(4) : "—"}</td>
+        <td class="p-2">${t ? "₹" + mcp.toFixed(2) : "—"}</td>
+        <td class="p-2 font-bold ${amt>0?'text-emerald-700':'text-slate-400'}">${amt > 0 ? "₹" + amt.toFixed(2) : "₹0.00"}</td>
+        <td class="p-2 text-center font-bold ${t ? (mw > 0 ? 'text-emerald-600' : 'text-amber-600') : 'text-slate-400'}">
+          ${t ? (mw > 0 ? `${sTag} ${txTag}` : 'ZERO') : 'NO DATA'}
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
   const v=validateDaily11MW(d);
-  if($("heatmapStatus")) $("heatmapStatus").textContent=`${d||"No date"} • ${v.blocks}/96 blocks • ${v.energy.toFixed(3)} MWh • ${v.physicalOK?"PHYSICAL LIMIT OK":"PHYSICAL LIMIT ERROR"}`;
+  if($("heatmapStatus")) {
+    if (!d) {
+      $("heatmapStatus").textContent = "No date selected. Upload IEX DOR Excel/PDF to view 96-block generation.";
+    } else {
+      let filterNote = "";
+      if (seg !== "ALL" || txn !== "ALL") filterNote = ` [Filter: ${seg}/${txn}]`;
+      $("heatmapStatus").textContent = `${d}${filterNote} • ${dayTrades.length}/96 blocks scheduled • Total Energy: ${dayTrades.reduce((s,x)=>s+qtyMwh(x),0).toFixed(3)} MWh (${money(totalValue)}) • Peak: ${maxMw.toFixed(3)} MW • ${v.physicalOK ? "11 MW Limit OK" : "PHYSICAL LIMIT ERROR"}`;
+    }
+  }
 }
 const _rd=window.renderDashboard;
 window.renderDashboard=function(){try{_rd&&_rd();}finally{render96BlockStudy();}};
