@@ -47,13 +47,17 @@ async function initFirebase() {
       }
     });
 
-    // Test Firestore connection as mandated by skill
-    await testConnection();
+    // Test Firestore connection as mandated by skill without blocking
+    testConnection().then(() => {
+      console.log("Firebase initialized successfully for project:", firebaseConfig.projectId);
+      updateFirebaseStatusBadge(true, "Firebase Connected");
+    }).catch(err => {
+      console.warn("Firebase initialization or connection test note:", err.message);
+      updateFirebaseStatusBadge(false, "Offline / Local Mode");
+    });
 
-    console.log("Firebase initialized successfully for project:", firebaseConfig.projectId);
-    updateFirebaseStatusBadge(true, "Firebase Connected");
   } catch (err) {
-    console.warn("Firebase initialization or connection test note:", err.message);
+    console.warn("Firebase initialization failed:", err.message);
     updateFirebaseStatusBadge(false, "Offline / Local Mode");
   }
 }
@@ -62,11 +66,19 @@ async function initFirebase() {
 async function testConnection() {
   if (!db) return;
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    await Promise.race([
+      getDocFromServer(doc(db, 'test', 'connection')),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
     isConnected = true;
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error("Please check your Firebase configuration.");
+    }
+    if (error.message === 'timeout') {
+      console.warn("Firestore connection test timed out.");
+      isConnected = false;
+      throw error;
     }
     // Note: permission errors on unseeded test docs are normal and verify server reachability
     isConnected = true;
