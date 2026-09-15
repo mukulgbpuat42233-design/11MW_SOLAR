@@ -39,9 +39,12 @@ async function initFirebase() {
     auth = getAuth(app);
 
     // Track Authentication state
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       updateFirebaseUI(user);
+      if (user) {
+        await syncTradesFromCloud();
+      }
     });
 
     // Test Firestore connection as mandated by skill

@@ -3345,8 +3345,9 @@ function buildBillingRows() {
 }
 
 function formatInvoiceDate(d) {
-  const p=d.split("-");
-  return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
+  if (!d) return '';
+  const p = d.split("-");
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
 }
 
 function applyBillingPeriod() {
@@ -3784,22 +3785,26 @@ function exportBillingSummaryExcel() {
       "MoM Growth (%)",
       "Seasonal Var vs Mean (%)"
     ],
-    ...summaryRows.map(x => [
-      x.monthLabel,
-      x.isCurrentMonth ? "Current Month" : "Previous Month",
-      x.seasonCategory,
-      x.days,
-      Number(x.mu.toFixed(4)),
-      Number(x.q.toFixed(4)),
-      x.tradeValue,
-      x.totalDeductions,
-      x.netRevenue,
-      Number(x.effectiveTariff.toFixed(4)),
-      x.avgDailyNet,
-      x.momDiff !== null ? x.momDiff : 0,
-      x.momPct !== null ? Number(x.momPct.toFixed(2)) : 0,
-      Number(x.seasonalVarPct.toFixed(2))
-    ])
+    ...summaryRows.map((x, i) => {
+      const rowNum = 6 + i;
+      const prevRow = i > 0 ? rowNum - 1 : rowNum;
+      return [
+        x.monthLabel,
+        x.isCurrentMonth ? "Current Month" : "Previous Month",
+        x.seasonCategory,
+        x.days,
+        Number(x.mu.toFixed(4)),
+        { t: 'n', f: `E${rowNum}*1000`, v: Number(x.q.toFixed(4)) }, // F
+        x.tradeValue,
+        x.totalDeductions,
+        { t: 'n', f: `G${rowNum}-H${rowNum}`, v: x.netRevenue }, // I
+        { t: 'n', f: `IF(F${rowNum}>0, I${rowNum}/(F${rowNum}*1000), 0)`, v: Number(x.effectiveTariff.toFixed(4)) }, // J
+        { t: 'n', f: `IF(D${rowNum}>0, I${rowNum}/D${rowNum}, 0)`, v: x.avgDailyNet }, // K
+        { t: 'n', f: i > 0 ? `I${rowNum}-I${prevRow}` : "0", v: x.momDiff !== null ? x.momDiff : 0 }, // L
+        { t: 'n', f: i > 0 ? `IF(I${prevRow}<>0, (L${rowNum}/I${prevRow})*100, 0)` : "0", v: x.momPct !== null ? Number(x.momPct.toFixed(2)) : 0 }, // M
+        Number(x.seasonalVarPct.toFixed(2))
+      ];
+    })
   ];
 
   const wb = XLSX.utils.book_new();
@@ -4155,7 +4160,24 @@ function exportBillingExcel() {
     ["Client: THDC INDIA LIMITED","Portfolio: N2UP0NVN0289", `Segment Filter: ${segVal}`, `Txn Filter: ${txnVal}`],
     [],
     ["Sl.No.","Delivery (Schedule) Date","Txn Type (Sale/Buy)","Mkt Seg#","Traded Quantum","Trade Value","Corridor Charges","Power Exchange Fees","GST on Power Exchange Fees","Net receivable (+) / payable (-) Power Exchange","NVVN Margin","GST on NVVN Margin","Net receivable (+) / payable (-) NVVN"],
-    ...rows.map(x=>[x.sl,formatInvoiceDate(x.date),x.txn,x.seg,x.q,x.tradeValue,x.corridor,x.pxFee,x.pxGst,x.powerExchangeNet,x.nvvnMargin,x.nvvnGst,x.nvvnNet])
+    ...rows.map((x, i) => {
+      const rowNum = 5 + i; // Header is at row 4
+      return [
+        x.sl,
+        formatInvoiceDate(x.date),
+        x.txn,
+        x.seg,
+        x.q,
+        x.tradeValue,
+        x.corridor,
+        { t: 'n', f: `E${rowNum}*1000*${pxRate}`, v: x.pxFee },
+        { t: 'n', f: `H${rowNum}*(${pxGst}/100)`, v: x.pxGst },
+        { t: 'n', f: `F${rowNum}-G${rowNum}-H${rowNum}-I${rowNum}`, v: x.powerExchangeNet },
+        { t: 'n', f: `E${rowNum}*1000*${nvvnRate}`, v: x.nvvnMargin },
+        { t: 'n', f: `K${rowNum}*(${nvvnGst}/100)`, v: x.nvvnGst },
+        { t: 'n', f: `J${rowNum}-K${rowNum}-L${rowNum}`, v: x.nvvnNet }
+      ];
+    })
   ];
   const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"]=[8,18,16,10,15,16,16,18,22,27,16,19,27].map(w=>({wch:w}));
@@ -4410,7 +4432,7 @@ function exportBillingPDF() {
 
 function getGroupingKey(dateStr, type) {
     let d = new Date(dateStr); let y = d.getFullYear(); let m = d.getMonth(); 
-    if (type === 'day') return dateStr; 
+    if (type === 'day') return formatInvoiceDate(dateStr); 
     if (type === 'month') return `${mNames[months[(m-3+12)%12]]} ${y}`;
     let fyYr = m < 3 ? y - 1 : y; 
     let fy = `FY ${String(fyYr).slice(-2)}-${String(fyYr+1).slice(-2)}`;
@@ -4688,9 +4710,11 @@ function exportReportExcel() {
 
   // Populate data rows from DOM
   const rows = document.querySelectorAll("#reportRows tr");
+  let rowIndex = 8;
   rows.forEach(r => {
     const cols = Array.from(r.querySelectorAll("td")).map(td => td.innerText.replace(/[₹,]/g, "").trim());
     if (cols.length === 12) {
+      const rowNum = rowIndex + 1;
       aoa.push([
         cols[0],
         cols[1],
@@ -4699,12 +4723,13 @@ function exportReportExcel() {
         parseFloat(cols[4]) || 0,
         parseFloat(cols[5]) || 0,
         parseFloat(cols[6]) || 0,
-        parseFloat(cols[7]) || 0,
-        parseFloat(cols[8]) || 0,
-        parseFloat(cols[9]) || 0,
-        parseFloat(cols[10]) || 0,
-        parseFloat(cols[11]) || 0
+        { t: 'n', f: `ROUND(D${rowNum}*1000*${pxRate}*(1+${pxGst}/100), 2)`, v: parseFloat(cols[7]) || 0 },
+        { t: 'n', f: `ROUND(D${rowNum}*1000*${nvvnRate}*(1+${nvvnGst}/100), 2)`, v: parseFloat(cols[8]) || 0 },
+        { t: 'n', f: `G${rowNum}+H${rowNum}+I${rowNum}`, v: parseFloat(cols[9]) || 0 },
+        { t: 'n', f: `F${rowNum}-J${rowNum}`, v: parseFloat(cols[10]) || 0 },
+        { t: 'n', f: `IF(D${rowNum}>0, K${rowNum}/(D${rowNum}*1000), 0)`, v: parseFloat(cols[11]) || 0 }
       ]);
+      rowIndex++;
     }
   });
 
@@ -7136,8 +7161,11 @@ function renderWeatherTable() {
         ${d.pr.toFixed(1)}%
       </td>
       <td class="p-3 text-center">
-        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${d.badgeCls}" title="${d.explanation}">
-          <i class="fa-solid ${d.causeIcon}"></i> ${d.causeLabel}
+        <span class="group relative inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border cursor-help ${d.badgeCls} hover:max-w-xs transition-all overflow-hidden whitespace-nowrap overflow-ellipsis" title="${d.explanation}">
+          <i class="fa-solid ${d.causeIcon}"></i> <span class="truncate transition-all">${d.causeLabel}</span>
+          <span class="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 text-white bg-slate-800 rounded-lg shadow-lg text-[10px] whitespace-normal z-50">
+            ${d.explanation}
+          </span>
         </span>
       </td>
       <td class="p-3 text-center no-print">
@@ -7223,8 +7251,9 @@ function openWeatherDayModal(dateStr) {
     const headingCls = isDrop ? "text-rose-900" : "text-emerald-900";
     const iconCls = isDrop ? "fa-circle-exclamation text-rose-600" : "fa-circle-check text-emerald-600";
 
-    $("modalDayDiagnosticBox").className = `p-4 rounded-xl border ${borderCls} space-y-1.5`;
-    $("modalDayDiagnosticBox").innerHTML = `
+    const box = $("modalDayDiagnosticBox");
+    box.className = `p-4 rounded-xl border ${borderCls} space-y-1.5 opacity-0 transform translate-y-4 transition-all duration-700 ease-out`;
+    box.innerHTML = `
       <div class="flex items-center gap-2">
         <i class="fa-solid ${iconCls} text-base"></i>
         <h4 class="font-extrabold text-sm ${headingCls}">Diagnostic Assessment: ${day.causeLabel}</h4>
@@ -7239,6 +7268,10 @@ function openWeatherDayModal(dateStr) {
         <span>Specific Yield: <strong>${day.specificYield.toFixed(2)} kWh/kWp</strong></span>
       </div>
     `;
+    // Trigger reflow to restart animation
+    void box.offsetWidth;
+    box.classList.remove("opacity-0", "translate-y-4");
+    box.classList.add("opacity-100", "translate-y-0");
   }
 
   // 96-block generation profile chart
@@ -8641,17 +8674,18 @@ function exportYoyReportExcel() {
     const compPeak = comp ? +comp.maxMw.toFixed(2) : 0;
     const diff = +(curMwh - compMwh).toFixed(2);
     const pct = compMwh > 0 ? +((diff / compMwh) * 100).toFixed(1) : 0;
+    const rowNum = 1 + day;
 
     tableAoa.push([
       day,
       cur ? cur.date : `${d.curYear}-${String(d.monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
-      curMwh,
-      curPeak,
-      comp ? comp.date : `${d.compYear}-${String(d.monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
-      compMwh,
-      compPeak,
-      diff,
-      pct,
+      curMwh, // C
+      curPeak, // D
+      comp ? comp.date : `${d.compYear}-${String(d.monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`, // E
+      compMwh, // F
+      compPeak, // G
+      { t: 'n', f: `C${rowNum}-F${rowNum}`, v: diff }, // H
+      { t: 'n', f: `IF(F${rowNum}>0, (H${rowNum}/F${rowNum})*100, 0)`, v: pct }, // I
       cw ? +cw.solarInsolationKwh.toFixed(2) : "-",
       cw && cw.precipMm >= 5 ? `Rainfall (${cw.precipMm} mm)` : (cw && cw.cloudCover >= 65 ? `Cloudy (${cw.cloudCover}%)` : "Clear sky window")
     ]);
