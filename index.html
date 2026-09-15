@@ -33,6 +33,16 @@
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+  /* Subtle CSS Fade-in for Table Rows */
+  @keyframes fadeInRow {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-row {
+    animation: fadeInRow 0.35s ease-out forwards;
+    opacity: 0;
+  }
+
   /* Official Print CSS */
   @media print {
     body { background: white !important; color: #0f172a !important; font-size: 10pt !important; }
@@ -2556,8 +2566,8 @@ function renderDataManager() {
   
   const sortedDates = Object.keys(dateMap).sort((a,b) => b.localeCompare(a));
   
-  tbody.innerHTML = sortedDates.map(d => `
-    <tr class="hover:bg-slate-50 transition-colors">
+  tbody.innerHTML = sortedDates.map((d, i) => `
+    <tr class="hover:bg-slate-50 transition-colors animate-fade-in-row" style="animation-delay: ${Math.min(i * 30, 800)}ms">
       <td class="px-4 py-3 font-bold text-slate-800">${formatInvoiceDate(d)}</td>
       <td class="px-4 py-3 text-slate-600 font-medium text-center">${dateMap[d].blocks} / 96</td>
       <td class="px-4 py-3 text-emerald-700 font-bold tabular-nums text-right">${dateMap[d].energy.toFixed(3)}</td>
@@ -3416,8 +3426,8 @@ function renderTrades() {
     return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${cls}">${tx}</span>`;
   };
 
-  $("tradeRows").innerHTML = filtered.map(x=>`
-    <tr class="hover:bg-slate-50 font-medium">
+  $("tradeRows").innerHTML = filtered.map((x, i)=>`
+    <tr class="hover:bg-slate-50 font-medium animate-fade-in-row" style="animation-delay: ${Math.min(i * 10, 800)}ms">
       <td class="p-3 font-semibold">${x.date}</td>
       <td class="p-3 text-center font-bold text-slate-600">${x.block}</td>
       <td class="p-3 font-mono text-slate-500">${period(x.block)}</td>
@@ -4280,8 +4290,8 @@ function renderBilling() {
     return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold border ${cls}">${tx}</span>`;
   };
 
-  $("billRows").innerHTML=rows.map(x=>`
-    <tr class="hover:bg-slate-50 font-medium">
+  $("billRows").innerHTML=rows.map((x, i)=>`
+    <tr class="hover:bg-slate-50 font-medium animate-fade-in-row" style="animation-delay: ${Math.min(i * 15, 800)}ms">
       <td class="p-2 border text-center">${x.sl}</td>
       <td class="p-2 border text-left font-bold">${formatInvoiceDate(x.date)}</td>
       <td class="p-2 border text-center">${getTxnBadge(x.txn)}</td>
