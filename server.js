@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenAI, Type } from "@google/genai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -214,4 +215,45 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
+});
+
+// AI ASSISTANT CHAT ENDPOINT
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    }
+  }
+});
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, history } = req.body;
+    
+    // Construct standard history format
+    const contents = [];
+    if (history && Array.isArray(history)) {
+      history.forEach(msg => {
+        contents.push({ role: msg.role === 'assistant' ? 'model' : 'user', parts: [{ text: msg.text }] });
+      });
+    }
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
+    const systemInstruction = "You are an expert Commercial Power Trading AI Assistant for the THDCIL 11 MW Floating Solar PV Plant at Khurja STPP. Your name is 'Gemini Trading Assistant'. You help analyze market clearing prices (MCP), generation blocks, weather correlations, and IEX trading regulations. Provide professional, concise, and accurate responses. You have access to Google Search to look up the latest IEX circulars, CERC regulations, and UP SLDC updates.";
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: contents,
+      tools: [{ googleSearch: {} }],
+      config: {
+        systemInstruction: systemInstruction,
+      },
+    });
+
+    res.json({ success: true, text: response.text });
+  } catch (error) {
+    console.error('Chat endpoint error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });

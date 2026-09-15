@@ -148,6 +148,9 @@
     <button id="navYoyBtn" class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5 font-semibold" data-target="yoy">
       <i class="fa-solid fa-code-compare text-emerald-300"></i><span>YoY Seasonal Comparison</span>
     </button>
+    <button id="navAiBtn" class="nav-btn px-3.5 py-1.5 rounded-lg text-blue-100 hover:bg-white/10 whitespace-nowrap transition flex items-center gap-1.5 font-semibold" data-target="ai_assistant">
+      <i class="fa-solid fa-sparkles text-purple-300"></i> <span>AI Assistant</span>
+    </button>
   </div>
 </header>
 
@@ -179,7 +182,11 @@
           <button type="button" data-txn="BUY" class="dash-txn-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 font-semibold transition-all duration-150 cursor-pointer select-none" onclick="setDashboardTxn('BUY')"><i class="fa-solid fa-arrow-trend-down text-rose-500 mr-1"></i>BUY</button>
         </div>
       </div>
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50/70 border border-indigo-100 rounded-lg shadow-inner">
+          <i class="fa-regular fa-calendar text-indigo-500"></i>
+          <span class="text-[10px] font-extrabold text-indigo-900 uppercase tracking-wide" id="dashDateRange">NO DATA</span>
+        </div>
         <button type="button" onclick="downloadColorfulDashboardPDF()" class="bg-gradient-to-r from-blue-700 via-indigo-700 to-emerald-600 hover:from-blue-800 hover:to-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-2 shadow-sm hover:shadow-md cursor-pointer shrink-0" title="Export Executive Full-Color Dashboard Report in PDF format">
           <i class="fa-solid fa-file-pdf text-amber-300"></i>
           <span>Dashboard Report (PDF)</span>
@@ -478,6 +485,46 @@
           </button>
         </div>
       </div>
+
+      <!-- Data Management / Upload Viewer -->
+      <div class="mt-6 border-t border-slate-200/80 pt-6">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-lg shadow-inner">
+              <i class="fa-solid fa-server"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-800 text-lg">Uploaded Data Manager</h3>
+              <p class="text-[11px] text-slate-500 font-medium">View uploaded dates. Data is locked after upload to prevent accidental overrides.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="clearAllData()" class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition shadow-sm">
+              <i class="fa-solid fa-trash-can mr-1"></i> Clear All Data
+            </button>
+            <button onclick="renderDataManager()" class="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 transition">
+              <i class="fa-solid fa-rotate-right mr-1"></i> Refresh
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+          <table class="w-full text-left text-xs whitespace-nowrap">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+              <tr>
+                <th class="px-4 py-3 font-extrabold uppercase tracking-wider">Date</th>
+                <th class="px-4 py-3 font-extrabold uppercase tracking-wider text-center">Data Blocks</th>
+                <th class="px-4 py-3 font-extrabold uppercase tracking-wider text-right">Energy (MWh)</th>
+                <th class="px-4 py-3 font-extrabold uppercase tracking-wider text-center">Status</th>
+                <th class="px-4 py-3 font-extrabold uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dataManagerRows" class="divide-y divide-slate-100 bg-white">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -715,7 +762,7 @@
             </span>
           </div>
           <h3 class="text-sm sm:text-lg font-black text-amber-300 mt-1 tracking-wide">11 MW Khurja Floating Solar Power Plant</h3>
-          <p class="text-xs text-blue-200 mt-0.5 font-medium">Commercial Analysis & Settlement Reconciliation • Mukul Singh, Assistant Manager (Commercial - Power Trading), THDCIL Rishikesh</p>
+          <p class="text-xs text-blue-200 mt-0.5 font-medium">Commercial Analysis & Settlement Reconciliation • Mukul Singh, Assistant Manager (Power Trading Cell), THDCIL Rishikesh</p>
           <div class="flex items-center gap-3 text-[11px] text-blue-300 mt-1.5 flex-wrap">
             <span><strong>Portfolio ID:</strong> N2UP0NVN0289</span>
             <span>•</span>
@@ -874,23 +921,23 @@
           </div>
           <div class="mt-4 pt-3 border-t border-slate-200 text-[11px] text-slate-600 flex items-center gap-2 font-medium">
             <i class="fa-solid fa-building-columns text-blue-700"></i>
-            <span>Commercial - Power Trading Department, THDCIL, Rishikesh</span>
+            <span>Power Trading Cell, THDCIL, Rishikesh</span>
           </div>
         </div>
 
         <div class="border border-dashed border-slate-300 rounded-xl p-5 bg-slate-50/70 flex flex-col justify-between min-h-[150px]">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-slate-600 tracking-wider">COMMERCIAL ANALYSIS BY</span>
-            <span class="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">Physical Sign / Stamp</span>
+            
           </div>
           <div class="h-10 border-b-2 border-dashed border-slate-300 my-2 flex items-end justify-between pb-1">
-            <span class="text-[10px] text-slate-500 font-medium italic">(Physical Signature)</span>
+            <span class="text-[10px] text-slate-500 font-medium italic"></span>
             <span class="text-[10px] font-bold text-slate-700" id="uiSignAutoDate">Date: <span class="auto-report-date"></span></span>
           </div>
           <div>
             <p class="text-sm font-black text-slate-900">Mukul Singh</p>
-            <p class="text-xs font-bold text-slate-700">Assistant Manager (Commercial - Power Trading)</p>
-            <p class="text-[11px] font-extrabold text-blue-900 uppercase tracking-wide">Commercial - Power Trading Department, THDCIL, Rishikesh</p>
+            <p class="text-xs font-bold text-slate-700">Assistant Manager (Power Trading Cell)</p>
+            <p class="text-[11px] font-extrabold text-blue-900 uppercase tracking-wide">Power Trading Cell, THDCIL, Rishikesh</p>
             <p class="text-[10px] text-slate-500 italic mt-0.5">Using data for Commercial Analysis & Settlement</p>
           </div>
         </div>
@@ -1680,7 +1727,7 @@
               <span>Official Commercial Settlement Memorandum</span>
               <span class="text-[9px] uppercase font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded shadow-2xs">Print-Ready</span>
             </h3>
-            <p class="text-xs text-blue-200">11 MW Khurja Floating Solar Power Plant • Commercial - Power Trading Department, THDCIL, Rishikesh</p>
+            <p class="text-xs text-blue-200">11 MW Khurja Floating Solar Power Plant • Power Trading Cell, THDCIL, Rishikesh</p>
           </div>
         </div>
         <button onclick="closeOfficialMemoPrintModal()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer">
@@ -1701,7 +1748,7 @@
                 <h2 class="text-lg font-black tracking-tight text-[#0f2b5c]">टीएचडीसी इंडिया लिमिटेड • THDC INDIA LIMITED</h2>
                 <p class="text-[11px] font-bold text-slate-600">A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise</p>
                 <h3 class="text-sm font-black text-[#0f2b5c] mt-0.5">11 MW Khurja Floating Solar Power Plant</h3>
-                <p class="text-[11px] text-slate-600 font-semibold">Commercial - Power Trading Department, THDCIL, Rishikesh</p>
+                <p class="text-[11px] text-slate-600 font-semibold">Power Trading Cell, THDCIL, Rishikesh</p>
               </div>
             </div>
             <div class="text-right text-xs space-y-1 font-mono">
@@ -1804,23 +1851,23 @@
               </div>
               <div class="mt-3 pt-2.5 border-t border-slate-200 text-[10px] text-slate-500 flex items-center gap-1.5">
                 <i class="fa-solid fa-stamp text-blue-700"></i>
-                <span>Commercial - Power Trading Department, THDCIL, Rishikesh</span>
+                <span>Power Trading Cell, THDCIL, Rishikesh</span>
               </div>
             </div>
 
             <div class="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50/70 flex flex-col justify-between min-h-[140px]">
               <div class="flex items-center justify-between">
                 <span class="text-[9px] font-bold uppercase text-slate-600 tracking-wider">COMMERCIAL ANALYSIS BY</span>
-                <span class="text-[8px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Physical Sign / Stamp</span>
+                
               </div>
               <div class="h-8 border-b-2 border-dashed border-slate-300 my-1.5 flex items-end justify-between pb-0.5">
-                <span class="text-[9px] text-slate-500 font-medium italic">(Physical Signature)</span>
+                <span class="text-[9px] text-slate-500 font-medium italic"></span>
                 <span class="text-[9px] font-bold text-slate-700" id="memoSignAutoDate">Date: <span class="auto-report-date"></span></span>
               </div>
               <div>
                 <p class="text-xs font-black text-slate-900">Mukul Singh</p>
-                <p class="text-[11px] font-bold text-slate-700">Assistant Manager (Commercial - Power Trading)</p>
-                <p class="text-[10px] font-extrabold text-blue-900 uppercase">Commercial - Power Trading Department, THDCIL, Rishikesh</p>
+                <p class="text-[11px] font-bold text-slate-700">Assistant Manager (Power Trading Cell)</p>
+                <p class="text-[10px] font-extrabold text-blue-900 uppercase">Power Trading Cell, THDCIL, Rishikesh</p>
                 <p class="text-[9px] text-slate-500 italic mt-0.5">Using data for Commercial Analysis & Settlement</p>
               </div>
             </div>
@@ -1853,6 +1900,47 @@
   </div>
 
   <!-- FLOATING UNDO TOAST NOTIFICATION -->
+  <!-- AI ASSISTANT -->
+  <section id="ai_assistant" class="page-sec hidden flex flex-col h-[calc(100vh-140px)]">
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex-1 flex flex-col overflow-hidden max-w-7xl mx-auto w-full">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-lg shadow-inner">
+            <i class="fa-solid fa-sparkles"></i>
+          </div>
+          <div>
+            <h2 class="font-extrabold text-slate-800 text-xl tracking-tight">Gemini AI Assistant</h2>
+            <p class="text-xs text-slate-500 font-medium">Power Trading Analysis, Grounded Search & Generative Insights</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Thread -->
+      <div id="aiChatThread" class="flex-1 overflow-y-auto py-4 space-y-4 pr-2">
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+            <i class="fa-solid fa-robot text-sm"></i>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none p-4 text-sm text-slate-700 w-full max-w-3xl">
+            Hello! I'm your Gemini-powered assistant for the THDCIL 11 MW Floating Solar PV Plant. I can analyze market clearing prices, generated blocks, correlate weather data, and search the web for the latest energy trading regulations using Google Search grounding. How can I help you today?
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="pt-4 border-t border-slate-100 shrink-0">
+        <form id="aiChatForm" class="flex items-end gap-2 relative">
+          <textarea id="aiChatInput" rows="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-12 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 resize-none" placeholder="Ask about trading insights, weather, or regulatory updates..."></textarea>
+          <button id="aiChatSubmitBtn" type="submit" class="absolute right-2 bottom-2 w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
   <div id="undoToast" class="fixed bottom-6 right-6 z-50 transform translate-y-28 opacity-0 pointer-events-none transition-all duration-300 ease-out flex items-center gap-3 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md max-w-md">
     <div class="flex items-center gap-3 flex-1 min-w-0">
       <span id="undoToastIcon" class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold text-sm shrink-0 border border-amber-400/30">
@@ -2287,16 +2375,21 @@ function clearDateData() {
   let matchingTrades = state.trades.filter(x => x.date === d).length;
   let matchingObs = state.obligations.filter(x => x.date === d).length;
   if (matchingTrades === 0 && matchingObs === 0) {
-    alert(`No data found in the system for ${d}.`);
+    showUndoToast(`No data found for ${formatInvoiceDate(d)} to clear.`, false);
+    // Flash the input red briefly to indicate error visually
+    const input = $("clearDateInput");
+    input.classList.add("bg-rose-500/20", "text-white");
+    setTimeout(() => input.classList.remove("bg-rose-500/20", "text-white"), 800);
     return;
   }
-  if (confirm(`⚠️ Are you sure you want to delete ALL trades and obligations for ${d}?\n(${matchingTrades} blocks, ${matchingObs} obligations)\n\nYou can click Undo (Ctrl+Z) anytime to restore.`)) {
+  if (confirm(`⚠️ Are you sure you want to delete ALL trades and obligations for ${formatInvoiceDate(d)}?\n(${matchingTrades} blocks, ${matchingObs} obligations)\n\nYou can click Undo (Ctrl+Z) anytime to restore.`)) {
     pushUndoSnapshot(`Clear Day ${d}`);
     state.trades = state.trades.filter(x => x.date !== d);
     state.obligations = state.obligations.filter(x => x.date !== d);
     save();
     refreshAllPages();
-    showUndoToast(`Cleared ${matchingTrades} blocks & ${matchingObs} obligations for ${d}.`, true);
+    showUndoToast(`Cleared ${matchingTrades} blocks & ${matchingObs} obligations for ${formatInvoiceDate(d)}.`, true);
+    $("clearDateInput").value = "";
   }
 }
 
@@ -2311,6 +2404,7 @@ function clearAllData() {
     pushUndoSnapshot(`Wipe All Data (${trCount} blocks)`);
     state = { trades: [], obligations: [] };
     save();
+    updateUndoUI();
     refreshAllPages();
     showUndoToast(`Wiped ${trCount} trade blocks & ${obCount} obligations.`, true);
   }
@@ -2406,6 +2500,7 @@ window.openYoyForMonth = openYoyForMonth;
 
 function refreshPage(p) {
   if(p==="dashboard") renderDashboard();
+  if(p==="entry") { if (typeof renderDataManager === "function") renderDataManager(); }
   if(p==="trades") renderTrades();
   if(p==="reports") renderReports();
   if(p==="billing") renderBilling();
@@ -2421,6 +2516,7 @@ function refreshAllPages() {
   renderTrades();
   renderBilling();
   renderReports();
+  if (typeof renderDataManager === "function") renderDataManager();
   if (typeof renderObligations === "function") renderObligations();
   if (typeof renderWeatherCorrelation === "function") {
     try {
@@ -2438,6 +2534,60 @@ function refreshAllPages() {
   updateUndoUI();
 }
 window.refreshAllPages = refreshAllPages;
+
+// ---- DATA MANAGER LOGIC ----
+function renderDataManager() {
+  const tbody = document.getElementById("dataManagerRows");
+  if (!tbody) return;
+  
+  // Exclude YoY mock data
+  const realTrades = state.trades.filter(t => t.date && !t.date.startsWith("2023-"));
+  if (!realTrades || !realTrades.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 font-medium">No data uploaded yet.</td></tr>';
+    return;
+  }
+  
+  const dateMap = {};
+  realTrades.forEach(t => {
+    if (!dateMap[t.date]) dateMap[t.date] = { blocks: 0, energy: 0 };
+    dateMap[t.date].blocks++;
+    dateMap[t.date].energy += qtyMwh(t);
+  });
+  
+  const sortedDates = Object.keys(dateMap).sort((a,b) => b.localeCompare(a));
+  
+  tbody.innerHTML = sortedDates.map(d => `
+    <tr class="hover:bg-slate-50 transition-colors">
+      <td class="px-4 py-3 font-bold text-slate-800">${formatInvoiceDate(d)}</td>
+      <td class="px-4 py-3 text-slate-600 font-medium text-center">${dateMap[d].blocks} / 96</td>
+      <td class="px-4 py-3 text-emerald-700 font-bold tabular-nums text-right">${dateMap[d].energy.toFixed(3)}</td>
+      <td class="px-4 py-3 text-center">
+        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full"><i class="fa-solid fa-lock text-blue-500"></i> Locked</span>
+      </td>
+      <td class="px-4 py-3 text-right">
+        <button onclick="deleteDataForDate('${d}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg text-xs font-bold transition border border-rose-100">
+          <i class="fa-solid fa-trash-can mr-1"></i> Delete
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+window.renderDataManager = renderDataManager;
+
+function deleteDataForDate(date) {
+  if (confirm(`Are you sure you want to completely delete all data for ${formatInvoiceDate(date)}?`)) {
+    pushUndoSnapshot(`Delete data for ${date}`);
+    state.trades = state.trades.filter(t => t.date !== date);
+    if (state.obligations) {
+      state.obligations = state.obligations.filter(t => t.date !== date);
+    }
+    save();
+    updateUndoUI();
+    refreshAllPages();
+    showUndoToast(`Deleted data for ${formatInvoiceDate(date)}`, true);
+  }
+}
+window.deleteDataForDate = deleteDataForDate;
 
 // UNIFIED UPLOADER
 
@@ -2541,6 +2691,12 @@ function importStrictSheet1(workbook, forcedDate=""){
     }
   }
   if(!tradeDate) throw new Error("Delivery Date not found in Sheet1. Please select Trade Date Override.");
+
+  // Data Lock functionality
+  const existingForDate = state.trades.filter(x => x.date === tradeDate);
+  if (existingForDate.length > 0) {
+    throw new Error(`Data for date ${formatInvoiceDate ? formatInvoiceDate(tradeDate) : tradeDate} is already uploaded. Please delete the existing data from the Data Manager to re-upload.`);
+  }
 
   // ---- IEX Sheet1 Charges section ----
   // IEX DOR Sheet1: charge labels are in column E (index 4),
@@ -3050,6 +3206,17 @@ function renderDashboard() {
   let ts = sortedTrades();
   if (window.dashSeg && window.dashSeg !== "ALL") ts = ts.filter(t => (t.seg || "G-DAM") === window.dashSeg);
   if (window.dashTxn && window.dashTxn !== "ALL") ts = ts.filter(t => (t.txn || "SELL") === window.dashTxn);
+
+  const dRange = $("dashDateRange");
+  if (dRange) {
+    if (ts.length > 0) {
+      const fromD = formatInvoiceDate(ts[0].date);
+      const toD = formatInvoiceDate(ts[ts.length - 1].date);
+      dRange.innerText = fromD === toD ? fromD : `${fromD} to ${toD}`;
+    } else {
+      dRange.innerText = "NO DATA";
+    }
+  }
 
   let totalQty = ts.reduce((s,t)=>s+qtyMwh(t),0), rev = ts.reduce((s,t)=>s+amount(t),0), avg = totalQty ? rev/totalQty : 0;
   
@@ -4010,7 +4177,7 @@ function exportBillingSummaryPDF() {
   doc.setTextColor(71, 85, 105);
   doc.text("• Plant Facility: 11 MW Khurja Floating Solar Power Plant (Khurja STPP, UP)", 12, sigY + 10);
   doc.text("• Commercial Analysis: Reconciled for energy trading, billing, and settlement analysis.", 12, sigY + 14);
-  doc.text("• Department: Commercial - Power Trading Department, THDCIL, Rishikesh", 12, sigY + 18);
+  doc.text("• Department: Power Trading Cell, THDCIL, Rishikesh", 12, sigY + 18);
   doc.text("• Source: Reconciled from IEX Daily Settlement & NVVN Obligation statements.", 12, sigY + 22);
 
   // Right Sign-off Box
@@ -4035,7 +4202,7 @@ function exportBillingSummaryPDF() {
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(100, 116, 139);
-  doc.text("(Physical Signature)", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
+  doc.text("", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
@@ -4043,11 +4210,11 @@ function exportBillingSummaryPDF() {
   doc.text("Mukul Singh", boxX + 4, sigY + 16);
   doc.setFontSize(7.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("Assistant Manager (Commercial - Power Trading)", boxX + 4, sigY + 19.8);
+  doc.text("Assistant Manager (Power Trading Cell)", boxX + 4, sigY + 19.8);
   doc.setFontSize(7.0);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 43, 92);
-  doc.text("Commercial - Power Trading Department, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
+  doc.text("Power Trading Cell, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
 
   doc.save("THDC_11MW_Billing_Summary_Monthly_Comparison.pdf");
 }
@@ -4388,7 +4555,7 @@ function exportBillingPDF() {
   doc.setTextColor(71, 85, 105);
   doc.text("• Plant Facility: 11 MW Khurja Floating Solar Power Plant (Khurja STPP, UP)", 10, sigY + 10);
   doc.text("• Commercial Analysis: Reconciled for energy trading, billing, and settlement analysis.", 10, sigY + 14);
-  doc.text("• Department: Commercial - Power Trading Department, THDCIL, Rishikesh", 10, sigY + 18);
+  doc.text("• Department: Power Trading Cell, THDCIL, Rishikesh", 10, sigY + 18);
   doc.text("• Source: Reconciled from IEX Daily Settlement & NVVN Obligation statements.", 10, sigY + 22);
 
   // Right Sign-off Box
@@ -4413,7 +4580,7 @@ function exportBillingPDF() {
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(100, 116, 139);
-  doc.text("(Physical Signature)", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
+  doc.text("", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
@@ -4421,11 +4588,11 @@ function exportBillingPDF() {
   doc.text("Mukul Singh", boxX + 4, sigY + 16);
   doc.setFontSize(7.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("Assistant Manager (Commercial - Power Trading)", boxX + 4, sigY + 19.8);
+  doc.text("Assistant Manager (Power Trading Cell)", boxX + 4, sigY + 19.8);
   doc.setFontSize(7.0);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 43, 92);
-  doc.text("Commercial - Power Trading Department, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
+  doc.text("Power Trading Cell, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
 
   doc.save(`THDC_11MW_NVVN_Billing_${segVal}_${txnVal}.pdf`);
 }
@@ -4963,7 +5130,7 @@ function exportReportPDF() {
   doc.setTextColor(71, 85, 105);
   doc.text("• Plant Facility: 11 MW Khurja Floating Solar Power Plant (Khurja STPP, UP)", 12, sigY + 10);
   doc.text("• Commercial Analysis: Reconciled for energy trading, billing, and settlement analysis.", 12, sigY + 14);
-  doc.text("• Department: Commercial - Power Trading Department, THDCIL, Rishikesh", 12, sigY + 18);
+  doc.text("• Department: Power Trading Cell, THDCIL, Rishikesh", 12, sigY + 18);
   doc.text("• Source: Reconciled from IEX Daily Settlement & NVVN Obligation statements.", 12, sigY + 22);
 
   // Right Sign-off Box
@@ -4988,7 +5155,7 @@ function exportReportPDF() {
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(100, 116, 139);
-  doc.text("(Physical Signature)", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
+  doc.text("", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
@@ -4996,11 +5163,11 @@ function exportReportPDF() {
   doc.text("Mukul Singh", boxX + 4, sigY + 16);
   doc.setFontSize(7.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("Assistant Manager (Commercial - Power Trading)", boxX + 4, sigY + 19.8);
+  doc.text("Assistant Manager (Power Trading Cell)", boxX + 4, sigY + 19.8);
   doc.setFontSize(7.0);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 43, 92);
-  doc.text("Commercial - Power Trading Department, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
+  doc.text("Power Trading Cell, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
 
   doc.save(`THDC_11MW_Settlement_${groupBy}_${segVal}_${txnVal}_${rs}_TO_${re}.pdf`);
 }
@@ -5324,7 +5491,7 @@ function autoDownloadDailySettlementPDF(targetDate) {
     doc.setTextColor(71, 85, 105);
     doc.text("• Plant Facility: 11 MW Khurja Floating Solar Power Plant (Khurja STPP, UP)", 12, sigY + 10);
     doc.text("• Commercial Analysis: Daily 96-block trade dispatch and clearing reconciliation.", 12, sigY + 14);
-    doc.text("• Department: Commercial - Power Trading Department, THDCIL, Rishikesh", 12, sigY + 18);
+    doc.text("• Department: Power Trading Cell, THDCIL, Rishikesh", 12, sigY + 18);
     doc.text("• Source: Reconciled from IEX Daily Settlement & NVVN Obligation statements.", 12, sigY + 22);
 
     // Right Sign-off Box
@@ -5349,7 +5516,7 @@ function autoDownloadDailySettlementPDF(targetDate) {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(100, 116, 139);
-    doc.text("(Physical Signature)", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
+    doc.text("", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
 
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'bold');
@@ -5357,11 +5524,11 @@ function autoDownloadDailySettlementPDF(targetDate) {
     doc.text("Mukul Singh", boxX + 4, sigY + 16);
     doc.setFontSize(7.5);
     doc.setTextColor(30, 41, 59);
-    doc.text("Assistant Manager (Commercial - Power Trading)", boxX + 4, sigY + 19.8);
+    doc.text("Assistant Manager (Power Trading Cell)", boxX + 4, sigY + 19.8);
     doc.setFontSize(7.0);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 43, 92);
-    doc.text("Commercial - Power Trading Department, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
+    doc.text("Power Trading Cell, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
 
     // Save and download the file directly
     const filename = `THDC_11MW_Daily_Settlement_${dateToUse}.pdf`;
@@ -5408,8 +5575,8 @@ function downloadColorfulDashboardPDF() {
     }
 
     const availableDates = [...new Set(trades.map(t => t.date))].sort();
-    const startDate = availableDates[0] || 'N/A';
-    const endDate = availableDates[availableDates.length - 1] || 'N/A';
+    const startDate = availableDates[0] ? formatInvoiceDate(availableDates[0]) : 'N/A';
+    const endDate = availableDates[availableDates.length - 1] ? formatInvoiceDate(availableDates[availableDates.length - 1]) : 'N/A';
 
     // Calculate executive KPIs
     const totalQ_MWh = roundPrecise(trades.reduce((s, x) => s + qtyMwh(x), 0));
@@ -5771,7 +5938,7 @@ function downloadColorfulDashboardPDF() {
     doc.setTextColor(71, 85, 105);
     doc.text("• Plant Facility: 11 MW Khurja Floating Solar Power Plant (Khurja STPP, UP)", 12, sigY + 10);
     doc.text("• Commercial Analysis: Reconciled for energy trading, billing, and settlement analysis.", 12, sigY + 14);
-    doc.text("• Department: Commercial - Power Trading Department, THDCIL, Rishikesh", 12, sigY + 18);
+    doc.text("• Department: Power Trading Cell, THDCIL, Rishikesh", 12, sigY + 18);
     doc.text("• Source: Reconciled from IEX Daily Settlement & NVVN Obligation statements.", 12, sigY + 22);
 
     // Right Sign-off Box
@@ -5796,7 +5963,7 @@ function downloadColorfulDashboardPDF() {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(100, 116, 139);
-    doc.text("(Physical Signature)", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
+    doc.text("", boxX + boxW - 4, sigY + 10.5, { align: 'right' });
 
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'bold');
@@ -5804,11 +5971,11 @@ function downloadColorfulDashboardPDF() {
     doc.text("Mukul Singh", boxX + 4, sigY + 16);
     doc.setFontSize(7.5);
     doc.setTextColor(30, 41, 59);
-    doc.text("Assistant Manager (Commercial - Power Trading)", boxX + 4, sigY + 19.8);
+    doc.text("Assistant Manager (Power Trading Cell)", boxX + 4, sigY + 19.8);
     doc.setFontSize(7.0);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 43, 92);
-    doc.text("Commercial - Power Trading Department, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
+    doc.text("Power Trading Cell, THDCIL, Rishikesh", boxX + 4, sigY + 23.5);
 
     // Page footer (Clean, dignified, without stray "1" or "Page 1 of 1")
     doc.setFontSize(7.5);
@@ -5985,7 +6152,7 @@ function openPrintableMemoTab() {
 <title>THDCIL 11 MW Solar - Official Commercial Settlement Memorandum</title>
 <style>
   @page { size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }
-  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.4; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.4; text-align: justify; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #0f2b5c; padding-bottom: 12px; margin-bottom: 15px; }
   .title-block h1 { font-size: 18px; color: #0f2b5c; margin: 0 0 3px 0; font-weight: 800; }
   .title-block p { font-size: 11px; color: #475569; margin: 2px 0; }
@@ -6024,7 +6191,7 @@ function openPrintableMemoTab() {
       <h1>टीएचडीसी इंडिया लिमिटेड • THDC INDIA LIMITED</h1>
       <p><strong>A Schedule 'A' Mini Ratna CPSU — Govt. of India Enterprise</strong></p>
       <h2 style="font-size: 15px; font-weight: 800; color: #0f2b5c; margin-top: 2px;">11 MW Khurja Floating Solar Power Plant</h2>
-      <p style="font-size: 11px; color: #475569;">Commercial - Power Trading Department, THDCIL, Rishikesh</p>
+      <p style="font-size: 11px; color: #475569;">Power Trading Cell, THDCIL, Rishikesh</p>
     </div>
     <div class="ref-block">
       <div><strong>${refStr}</strong></div>
@@ -6117,22 +6284,22 @@ function openPrintableMemoTab() {
         Reconciled and certified energy injection, settlement prices, transmission open-access fees, and commercial receivables for official analysis.
       </div>
       <div style="font-size: 9.5px; color: #64748b; margin-top: 8px; font-weight: 600;">
-        Commercial - Power Trading Department, THDCIL, Rishikesh
+        Power Trading Cell, THDCIL, Rishikesh
       </div>
     </div>
     <div class="sig-box">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <span class="role-lbl">COMMERCIAL ANALYSIS BY</span>
-        <span style="font-size: 8px; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 5px; border-radius: 3px; font-weight: 700;">Physical Sign / Stamp</span>
+        
       </div>
       <div style="height: 38px; border-bottom: 1.5px dashed #cbd5e1; margin: 6px 0; display: flex; align-items: flex-end; justify-content: space-between;">
-        <span style="font-size: 9px; color: #64748b; font-style: italic; font-weight: 500;">(Physical Signature)</span>
+        <span style="font-size: 9px; color: #64748b; font-style: italic; font-weight: 500;"></span>
         <span style="font-size: 9px; color: #334155; font-weight: bold;">Date: ${dateStr}</span>
       </div>
       <div>
         <div class="desig" style="font-size: 12px; font-weight: 800; color: #0f172a;">Mukul Singh</div>
-        <div style="font-size: 11px; font-weight: 700; color: #334155;">Assistant Manager (Commercial - Power Trading)</div>
-        <div class="dept" style="font-size: 10px; font-weight: 800; color: #1e3a8a;">Commercial - Power Trading Department, THDCIL, Rishikesh</div>
+        <div style="font-size: 11px; font-weight: 700; color: #334155;">Assistant Manager (Power Trading Cell)</div>
+        <div class="dept" style="font-size: 10px; font-weight: 800; color: #1e3a8a;">Power Trading Cell, THDCIL, Rishikesh</div>
         <div class="dept" style="font-size: 9.5px; color: #64748b; font-style: italic;">Using data for Commercial Analysis & Settlement</div>
       </div>
     </div>
@@ -8734,3 +8901,114 @@ if (document.readyState === "loading") {
 </script>
 </body>
 </html>
+<script>
+// --- AI ASSISTANT CHAT LOGIC ---
+const aiChatForm = document.getElementById('aiChatForm');
+const aiChatInput = document.getElementById('aiChatInput');
+const aiChatThread = document.getElementById('aiChatThread');
+const aiChatSubmitBtn = document.getElementById('aiChatSubmitBtn');
+
+let chatHistory = [];
+
+if (aiChatForm) {
+  aiChatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = aiChatInput.value.trim();
+    if (!message) return;
+
+    // Append user message to UI
+    appendMessage(message, 'user');
+    chatHistory.push({ role: 'user', text: message });
+    aiChatInput.value = '';
+    aiChatSubmitBtn.disabled = true;
+
+    // Show loading indicator
+    const loadingId = 'loading-' + Date.now();
+    appendLoading(loadingId);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history: chatHistory.slice(0, -1) })
+      });
+      const data = await response.json();
+
+      // Remove loading
+      const loadingEl = document.getElementById(loadingId);
+      if (loadingEl) loadingEl.remove();
+
+      if (data.success) {
+        appendMessage(data.text, 'assistant');
+        chatHistory.push({ role: 'assistant', text: data.text });
+      } else {
+        appendMessage('Error: ' + data.error, 'error');
+      }
+    } catch (err) {
+      const loadingEl = document.getElementById(loadingId);
+      if (loadingEl) loadingEl.remove();
+      appendMessage('Connection error. Please try again.', 'error');
+    } finally {
+      aiChatSubmitBtn.disabled = false;
+      aiChatInput.focus();
+    }
+  });
+
+  aiChatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      aiChatForm.dispatchEvent(new Event('submit'));
+    }
+  });
+}
+
+function appendMessage(text, role) {
+  const div = document.createElement('div');
+  div.className = 'flex gap-3 ' + (role === 'user' ? 'flex-row-reverse' : '');
+  
+  let avatarHtml = '';
+  if (role === 'user') {
+    avatarHtml = `<div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 shrink-0"><i class="fa-solid fa-user text-sm"></i></div>`;
+  } else if (role === 'assistant') {
+    avatarHtml = `<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0"><i class="fa-solid fa-robot text-sm"></i></div>`;
+  } else {
+    avatarHtml = `<div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0"><i class="fa-solid fa-triangle-exclamation text-sm"></i></div>`;
+  }
+
+  const bgClass = role === 'user' ? 'bg-purple-600 text-white border-purple-700 rounded-tr-none' : 
+                  (role === 'error' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-100 rounded-tl-none');
+  
+  // Format markdown-like bold text (simple replacement for **text**)
+  let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Simple line breaks
+  formattedText = formattedText.replace(/\n/g, '<br>');
+
+  div.innerHTML = `
+    ${avatarHtml}
+    <div class="border rounded-2xl p-4 text-sm w-full max-w-3xl ${bgClass}">
+      ${formattedText}
+    </div>
+  `;
+  
+  aiChatThread.appendChild(div);
+  aiChatThread.scrollTop = aiChatThread.scrollHeight;
+}
+
+function appendLoading(id) {
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'flex gap-3';
+  div.innerHTML = `
+    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+      <i class="fa-solid fa-robot text-sm"></i>
+    </div>
+    <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none p-4 w-24 flex justify-center items-center gap-1 text-purple-400">
+      <div class="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"></div>
+      <div class="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+      <div class="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+    </div>
+  `;
+  aiChatThread.appendChild(div);
+  aiChatThread.scrollTop = aiChatThread.scrollHeight;
+}
+</script>
